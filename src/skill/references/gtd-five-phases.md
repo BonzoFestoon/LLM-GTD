@@ -1,15 +1,15 @@
-# GTD 五步工作流（David Allen 原书）
+# The Five Steps of GTD (David Allen's book)
 
-横轴引擎——处理任何输入的五个阶段，缺一环系统就漏水。
+The horizontal engine — five stages for processing any input; miss one and the system leaks.
 
-| 步 | 英文 | 做什么 | 铁律 | 本包命令 |
+| Step | Name | What you do | Hard rule | Command in this package |
 |---|---|---|---|---|
-| 1 | Capture | 把一切占用心智的事丢进收件箱 | 100% 捕捉、零评判；大脑用来产生想法不是储存 | `capture` |
-| 2 | Clarify | 逐条问：是什么？需要行动吗？下一步是什么？ | 把「东西」变成「下一步行动」 | `clarify` |
-| 3 | Organize | 把结果放进正确清单 | 提醒物放在「你信任会再次看到」的地方 | `organize`（clarify 兼做即时落位） |
-| 4 | Reflect | 定期审视全部清单 | **每周回顾 = 关键成功因子** | `review` |
-| 5 | Engage | 凭情境/时间/精力/优先级选下一步做 | 靠四要素，不靠「应该感」 | `engage` |
+| 1 | Capture | Drop everything that has your attention into the inbox | 100% capture, no judgment; your mind is for having ideas, not holding them | `capture` |
+| 2 | Clarify | Ask of each item: What is it? Is it actionable? What's the next action? | Turn "stuff" into "next actions" | `clarify` |
+| 3 | Organize | Put the results in the right lists | Keep reminders where you trust you'll see them again | `organize` (clarify also does on-the-spot filing) |
+| 4 | Reflect | Review all lists regularly | **Weekly Review = the critical success factor** | `review` |
+| 5 | Engage | Choose the next action by context / time / energy / priority | Rely on the four criteria, not a sense of "should" | `engage` |
 
-**本质**（Allen）：GTD = 把承诺从大脑搬到一个完全可信的外部系统，让大脑回到 mind like water 去思考，而非记忆。系统可信，焦虑才消失。
+**The essence** (Allen): GTD = moving commitments out of your head into a completely trusted external system, so the mind can return to mind like water and think instead of remember. When the system is trusted, anxiety disappears.
 
-**常见失败**：只做 1+2+5（捕捉、记下一步、做），跳过 4（回顾）→ 系统在两周内失信，退回大脑焦虑。这是 GTD 实施崩塌的头号原因。
+**Common failure**: doing only 1+2+5 (capture, write next actions, do) and skipping 4 (review) → the system loses trust within two weeks and you fall back to anxiety in your head. This is the number-one reason GTD implementations collapse.

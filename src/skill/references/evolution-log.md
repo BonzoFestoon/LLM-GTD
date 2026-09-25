@@ -1,87 +1,92 @@
-# gtd-harness 演化日志
+# gtd-harness Evolution Log
 
-## v1.0 — 首版
-David Allen GTD × Karpathy「Agent = LLM + harness」。四层 harness：
-- **状态层**：`memory/gtd/` 八清单（GTD-native，next-actions 行动池 + Engage 镜头筛选）
-- **逻辑层**：七命令 SKILL.md（平台中立，无工具名）
-- **适配层**：三平台薄入口 + `capability-map.md`
-- **节律层**：每周回顾命令（cron 可选，不默认开）
+## v1.0 — First release
+David Allen's GTD × Karpathy's "Agent = LLM + harness". A four-layer harness:
+- **State layer**: `memory/gtd/` eight lists (GTD-native, next-actions action pool + Engage lens filtering)
+- **Logic layer**: seven SKILL.md commands (platform-neutral, no tool names)
+- **Adapter layer**: thin entry points for three platforms + `capability-map.md`
+- **Cadence layer**: the Weekly Review command (cron optional, off by default)
 
-设计原则：
-- 按 GTD 第一性原理独立建系统；若工作区已有别的待办系统，本包独立共存，可选 `init --import-legacy` 一次性导入。
-- next-actions 行动池 + Engage 镜头筛选（@电脑/@电话/@外出/@家/@议程-人），回归真正的 GTD 模型。
-- `init` 作为首次运行/重装入口（幂等自检）——harness 必须能自我初始化。
-- **Allen × Luhmann 接缝**：捕捉共享、clarify 分流。行动进 GTD，知识进笔记系统。不重造捕捉。
+Design principles:
+- Build the system independently from GTD first principles; if the workspace already has another to-do system, this package coexists independently, with an optional one-time `init --import-legacy`.
+- next-actions action pool + Engage lens filtering (@computer/@calls/@errands/@home/@agenda-person), returning to the true GTD model.
+- `init` as the first-run / reinstall entry point (idempotent self-check) — a harness must be able to initialize itself.
+- **Allen × Luhmann seam**: capture is shared, clarify triages. Actions go into GTD, knowledge goes into the note system. Capture isn't reinvented.
 
-## v1.1 — 日历复用（external calendar provider 读+确认写）
-- **单一日历**：外部 calendar provider 可达时为唯一 hard landscape，`calendar.md` 退为不可达兜底，不抄副本（Allen 双日历铁律）。
-- **读**：engage 读今天硬约定、review 读本周 hard landscape，先 external calendar provider、不可达降级。
-- **写（旧策略）**：v1.1 曾采用确认门；当前写入规则已由 v1.10 改为完整日程自动写入。
+## v1.1 — Calendar reuse (external calendar provider read + confirmed write)
+- **One calendar**: when an external calendar provider is reachable it is the only hard landscape; `calendar.md` becomes the unreachable fallback, with no copy (Allen's two-calendar hard rule).
+- **Read**: engage reads today's hard appointments, review reads this week's hard landscape; external calendar provider first, falling back when unreachable.
+- **Write (old policy)**: v1.1 used a confirmation gate; the current write rule was changed in v1.10 to auto-writing complete events.
 
-## v1.2 — Codex slash 命令 + 三平台触发齐活
-- Codex `~/.codex/prompts/gtd*.md`（8 条），vault 感知 fail-soft（Codex prompts 仅全局，无项目级）。
-- AGENTS.md 自动路由，Codex「说人话即触发」。
-- 三平台触发：cc `/gtd-*`（项目级命令）· Cursor 关键词（skill-rules）· Codex `/gtd-*` + AGENTS 路由 + orchestrator agent。同一真源、同一 `memory/gtd/`。
+## v1.2 — Codex slash commands + triggers complete on all three platforms
+- Codex `~/.codex/prompts/gtd*.md` (8 prompts), vault-aware fail-soft (Codex prompts are global only, no project level).
+- AGENTS.md auto-routing, so Codex "triggers on plain language".
+- Triggers on three platforms: cc `/gtd-*` (project-level commands) · Cursor keywords (skill-rules) · Codex `/gtd-*` + AGENTS routing + orchestrator agent. One source of truth, one `memory/gtd/`.
 
-## v1.3 — capture 默认自动 clarify（AI-native）
-- Allen 原把 capture/clarify 分开是为人脑（切决策模式有成本）；AI 切换成本≈0，故默认 capture→自动 clarify。
-- 保留两条真智慧：① 落盘永远第一步（不丢）；② 批量/mind-sweep 不逐条打断。
-- 单条 act-then-surface：理清归位 + 一行回报 + 可一句话纠错。
-- 人类判断守卫：仅「行动vs知识 / 推不出下一步 / 隐含承诺 / 项目成果不清」四类停下问。
+## v1.3 — capture auto-clarifies by default (AI-native)
+- Allen originally separated capture/clarify for the human mind (switching into decision mode has a cost); the AI's switching cost is ≈0, so capture → auto-clarify by default.
+- Keeps two real insights: ① writing to file always comes first (nothing lost); ② batches / mind sweeps are never interrupted item by item.
+- Single-item act-then-surface: clarify and file + one-line report + correctable in one sentence.
+- Human-judgment guard: stop and ask only in four cases — "action vs knowledge / no derivable next action / implied commitment / unclear project outcome".
 
-## v1.4 — organize 改为 AI 自动结构卫生
-- organize = 结构卫生（per-item 落位已在 clarify 完成）。最该 AI 全自动：大部分纯机械记账。
-- 机械类静默自动做（孤儿/错情境/死勾/重复/stalled 补下一步），一行汇总；判断类批量问。
-- engage 前置自动扫一遍；review 的 Get Current 内跑。
+## v1.4 — organize becomes AI-automated structural hygiene
+- organize = structural hygiene (per-item filing already happens in clarify). This is what the AI should fully automate: mostly pure mechanical bookkeeping.
+- Mechanical issues handled silently and automatically (orphans / wrong contexts / stale checkmarks / duplicates / next actions for stalled projects), with a one-line summary; judgment calls asked in a batch.
+- Runs automatically before engage; runs inside review's Get Current.
 
-## v1.5 — 完成项目自动闭环
-- **硬规则**：项目期望成果已达成且无仍需推动的下一步 → 删除整个项目块；不归档、不写「下一步行动：无」。
-- **顺序修正**：organize/review 先判断项目是否已完成；未完成才补 stalled 下一步，避免给已闭环项目硬造动作。
-- **防回归**：`gtd_status.sh` 把「下一步行动：无/已完成/安排已确认」视为无有效下一步，提示跑 `/gtd-organize`。
+## v1.5 — Completed projects close automatically
+- **Hard rule**: project desired outcome achieved and no next action still needs pushing → delete the whole project block; no archiving, no "Next actions: none".
+- **Order fix**: organize/review first judge whether a project is complete; only unfinished ones get stalled next actions, avoiding forced actions for closed projects.
+- **Regression guard**: `gtd_status.sh` treats "Next actions: none / done / confirmed" as no valid next action and prompts to run `/gtd-organize`.
 
-## v1.6 — review 升级为 AI 预回顾包
-- **边界重画**：review 不再只是提醒用户翻清单；AI 先做系统体检、机械整理、候选动作、话术草稿，用户只确认少数承诺判断。
-- **新增只读脚本**：`scripts/gtd_review_prep.sh` 生成预回顾包：dashboard、inbox 摘要、stalled projects、waiting-for、模糊 next-action、someday 候选、确认队列。
-- **流程升级**：review 先跑预回顾包 + organize 机械卫生，再进入 Get Clear / Get Current / Get Creative / Horizons。
-- **定时边界**：未来 cron / loop / launchd 只能提醒并调用预回顾脚本；不自动删改清单、不写日历、不发消息、不确定下周重点。
-- **模板同步**：weekly review 快照新增「AI 预回顾包」与「确认后已落盘」两段。
+## v1.6 — review upgraded to an AI review prep pack
+- **Boundary redrawn**: review no longer just reminds the user to go through lists; the AI first does a system check-up, mechanical cleanup, candidate actions, and message drafts, and the user confirms only a few commitment decisions.
+- **New read-only script**: `scripts/gtd_review_prep.sh` generates the review prep pack: dashboard, inbox summary, stalled projects, waiting-for, vague next actions, someday candidates, confirmation queue.
+- **Flow upgrade**: review first runs the review prep pack + organize mechanical hygiene, then goes into Get Clear / Get Current / Get Creative / Horizons.
+- **Scheduling boundary**: future cron / loop / launchd may only remind and call the review prep script; never auto-edit lists, write to the calendar, send messages, or decide next week's focus.
+- **Template sync**: the weekly review snapshot gains "AI review prep pack" and "Written to file after confirmation" sections.
 
-## v1.7 — GTD 内部链接改为 Obsidian heading link
-- **规则**：指向 `memory/gtd/` 文件内标题时，统一写 `[[文件名#标题|标题]]`。
-- **例子**：项目引用 `[[projects#项目名|项目名]]`；支持材料引用 `[[reference#条目名|条目名]]`。
-- **边界**：裸 `[[文件名]]` 仍用于真实独立文件，例如 `[[projects]]`、`[[next-actions]]`。
+## v1.7 — GTD internal links switch to Obsidian heading links
+- **Rule**: when pointing to a heading inside a `memory/gtd/` file, always write `[[filename#Heading|Heading]]`.
+- **Examples**: project reference `[[projects#Project name|Project name]]`; support material reference `[[reference#Entry name|Entry name]]`.
+- **Boundary**: bare `[[filename]]` is still used for real standalone files, e.g. `[[projects]]`, `[[next-actions]]`.
 
-## v1.8 — init 内置 Codex slash 命令安装/刷新
-- `gtd_init.sh` 新增 `~/.codex/prompts/gtd*.md` 安装/刷新逻辑，从 skill 包内 `templates/codex-prompts/` 读取模板。
-- `--status` 自检会报告 Codex slash 命令是否齐全。
-- `install.sh` 会把 `src/codex-prompts/` 同步进已安装 skill 包，保证单独跑 init 也能补齐 `/gtd*`。
+## v1.8 — init has built-in Codex slash command install / refresh
+- `gtd_init.sh` adds install / refresh logic for `~/.codex/prompts/gtd*.md`, reading templates from `templates/codex-prompts/` inside the skill package.
+- The `--status` self-check reports whether the Codex slash commands are complete.
+- `install.sh` syncs `src/codex-prompts/` into the installed skill package, so running init alone can also fill in `/gtd*`.
 
 ## v1.9 — Codex plugin package
-- 新增公开 Codex plugin 打包路径：repo marketplace 指向 `plugins/llm-gtd/`，插件 skill 由 `src/skill/` 同步生成。
-- 脚本状态根解析改为三段：`LLM_GTD_ROOT` 明确指定 → 旧 `.cursor/skills/gtd-harness/` 安装自动定位 vault → 否则使用当前工作区，适配 Codex 插件模式。
-- 插件包只包含 skill 逻辑，不包含用户 `memory/gtd/` 状态；external calendar provider 仍是可选外部能力，不内置 app/MCP。
+- Adds a public Codex plugin packaging path: the repo marketplace points to `plugins/llm-gtd/`, and the plugin skill is generated by syncing from `src/skill/`.
+- Script state-root resolution becomes three-tiered: explicit `LLM_GTD_ROOT` → auto-locate the vault from a legacy `.cursor/skills/gtd-harness/` install → otherwise the current workspace, suiting Codex plugin mode.
+- The plugin package contains only skill logic, not the user's `memory/gtd/` state; the external calendar provider remains an optional external capability, with no built-in app/MCP.
 
-## v1.10 — external calendar provider 自动写入
-- **写**：clarify 出特定时间事且日程信息完整 → 直接写 external calendar provider，不再逐次确认。
-- **缺字段**：缺日期、开始时间、事项标题/对象等关键字段时，只问缺失字段；会议缺时长时默认 60 分钟。
-- **失败降级**：external calendar provider 不可达或 tool 失败 → 如实报告，并把时间事记入 `calendar.md` 兜底，继续遵守“不维护双日历”。
+## v1.10 — external calendar provider auto-write
+- **Write**: when clarify produces a time-specific item with complete event details → write directly to the external calendar provider, no per-item confirmation.
+- **Missing fields**: when key fields such as date, start time, or event title / subject are missing, ask only for the missing fields; meetings without a duration default to 60 minutes.
+- **Failure fallback**: external calendar provider unreachable or tool failure → report honestly and record the time-specific item in the `calendar.md` fallback, still honoring "never maintain two calendars".
 
-## v1.11 — Projects 支持多个当前 next action
-- **格式升级**：`projects.md` 的 `下一步行动` 可写成多行 block links，指向 `next-actions.md` 或 `waiting-for.md`。
-- **边界保留**：只挂当前可并行推进的物理动作；有先后依赖的任务树仍放支持材料/自然计划模型，不把 `projects.md` 变成项目管理软件。
-- **防回归**：`gtd_status.sh` 与 `gtd_review_prep.sh` 的 stalled 检查改为识别有效 block link；空标题、「下一步行动：无」或泛泛 `见 next-actions` 不再算有效下一步。
+## v1.11 — Projects support multiple current next actions
+- **Format upgrade**: `Next actions` in `projects.md` can be multiple lines of block links pointing to `next-actions.md` or `waiting-for.md`.
+- **Boundary kept**: attach only physical actions that can move forward in parallel right now; sequentially dependent task trees still go in support material / the Natural Planning Model, so `projects.md` doesn't become project management software.
+- **Regression guard**: the stalled checks in `gtd_status.sh` and `gtd_review_prep.sh` now recognize valid block links; an empty heading, "Next actions: none", or a generic `see next-actions` no longer counts as a valid next action.
 
-## v1.12 — update 场景命令
-- **新增命令**：`gtd-update` 处理用户汇报的现实变化：已完成行动、项目进展、waiting-for 回应、日程细节变化、取消或纠错。
-- **路由修正**：`/gtd` 遇到「做完了 / 已确认 / 对方回了 / 日程改了 / 取消」类措辞时优先走 update，不把已发生事实重新 capture 成 inbox。
-- **项目推进**：已完成 next-action 从清单删除；若项目仍未完成，则基于新事实起草新的当前 next-action；若成果已达成，则删除项目块。
-- **边界**：新输入仍走 capture；结构漂移仍走 organize；高风险项目删除、多匹配或日历事件不唯一时只问一句。
+## v1.12 — update scenario command
+- **New command**: `gtd-update` handles changes in reality the user reports: completed actions, project progress, waiting-for replies, changed event details, cancellations or corrections.
+- **Routing fix**: when `/gtd` sees phrasing like "done / confirmed / they replied / the schedule changed / cancelled", it goes to update first, instead of re-capturing facts that already happened as inbox items.
+- **Project advancement**: completed next actions are deleted from the list; if the project is still unfinished, a new current next action is drafted from the new facts; if the outcome is achieved, the project block is deleted.
+- **Boundary**: new input still goes to capture; structural drift still goes to organize; for risky project deletion, multiple matches, or a non-unique calendar event, ask only one question.
+
+## v1.13 — English translation
+- All skill prompts, templates, and script output translated from Chinese to English using David Allen's GTD terminology.
+- **Parsed labels changed**: `- 下一步行动：` → `- Next actions:`, `- [ ] 机会：` → `- [ ] Opportunity:`, `- GTD 可见性：` → `- GTD visibility:`; eval-check headings and the vague-verb list are now English. Existing `memory/gtd/` files written in the old Chinese format need these labels updated for the stalled / visibility checks to work.
+- **Kept**: `--import-legacy` still reads the Chinese `@自己` / `@等待` / `@项目` sections of a legacy `open loops.md`.
 
 ---
 
-**AI 自动化总览**：capture→clarify 自动、明确 update 自动、organize（机械）自动；review 先预处理；engage 给候选，用户保留承诺、选择与反思。
+**AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.
 
-## 待办 / v2 候选
-- `calendar.md` 接 reminder provider + 双向对账。
-- review 自动节律：cron / 定时提醒（默认不开，需用户同意）。
-- engage 挂接每日例程。
+## To do / v2 candidates
+- Connect `calendar.md` to a reminder provider + two-way reconciliation.
+- Review automation cadence: cron / scheduled reminders (off by default, requires user consent).
+- Hook engage into a daily routine.

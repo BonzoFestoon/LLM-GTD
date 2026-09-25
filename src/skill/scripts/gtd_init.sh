@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# gtd_init.sh — 幂等搭建 GTD 可信系统（memory/gtd/ 核心八清单 + 产品想法扩展清单）+ 自检适配层 + 自动节律只读检查
+# gtd_init.sh — idempotently build the GTD trusted system (memory/gtd/ eight core lists + product-ideas extension list) + adapter self-check + read-only automation cadence check
 #
-# 用法：
-#   bash gtd_init.sh                 # 幂等建核心八清单 + 产品想法扩展清单 + 自检 + 自动节律只读检查（已存在的不覆盖）
-#   bash gtd_init.sh --import-legacy # 额外：一次性从旧 memory/open loops.md 导入（旧文件不改）
-#   bash gtd_init.sh --status        # 只做自检、自动节律只读检查与就绪报告，不写文件
-#   bash gtd_init.sh --install-cron  # 显式请求安装 GTD 自动节律；纯 shell 只输出 agent handoff，创建由 gtd-init skill 调用平台 automation 工具完成
+# Usage:
+#   bash gtd_init.sh                 # idempotently create the eight core lists + product-ideas extension list + self-check + read-only automation check (existing files are never overwritten)
+#   bash gtd_init.sh --import-legacy # also: one-time import from the old memory/open loops.md (old file is not modified)
+#   bash gtd_init.sh --status        # self-check, read-only automation check, and readiness report only; writes no files
+#   bash gtd_init.sh --install-cron  # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
 #
-# 设计：David Allen GTD —— 可信系统必须完整（核心八清单物理分开）且零数据破坏（重跑安全）。
-# 兼容 macOS bash 3.2（不使用关联数组 / mapfile）。
+# Design: David Allen's GTD — a trusted system must be complete (eight core lists kept physically separate) and non-destructive (safe to re-run).
+# Compatible with macOS bash 3.2 (no associative arrays / mapfile).
 
 set -euo pipefail
 
@@ -32,14 +32,14 @@ for arg in "$@"; do
     --import-legacy) IMPORT_LEGACY=1 ;;
     --status)        STATUS_ONLY=1 ;;
     --install-cron)  INSTALL_CRON=1 ;;
-    *) echo "未知参数：$arg" >&2; exit 2 ;;
+    *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
 done
 
 created=0
 skipped=0
 
-# 仅当文件不存在时写入（幂等、零破坏）
+# Write only if the file does not exist (idempotent, non-destructive)
 seed() {
   local path="$1"; shift
   if [ -f "$path" ]; then
@@ -48,34 +48,34 @@ seed() {
   fi
   cat > "$path"
   created=$((created+1))
-  echo "  ✅ 新建 ${path#$VAULT_ROOT/}"
+  echo "  ✅ Created ${path#$VAULT_ROOT/}"
 }
 
-# ── 自检：适配层完整性 ──
+# ── Self-check: adapter layer integrity ──
 selfcheck() {
   echo ""
-  echo "── 适配层自检 ──"
+  echo "── Adapter layer self-check ──"
   local skill_real="$VAULT_ROOT/.cursor/skills/gtd-harness/SKILL.md"
   if [ -f "$skill_real" ]; then
-    echo "  ✅ 真源可达：.cursor/skills/gtd-harness/SKILL.md"
+    echo "  ✅ Source of truth reachable: .cursor/skills/gtd-harness/SKILL.md"
   elif [ -f "$SKILL_DIR/SKILL.md" ]; then
-    echo "  ✅ 插件真源可达：$SKILL_DIR/SKILL.md"
+    echo "  ✅ Plugin source of truth reachable: $SKILL_DIR/SKILL.md"
   else
-    echo "  ⚠️  真源缺失：找不到 gtd-harness/SKILL.md"
+    echo "  ⚠️  Source of truth missing: cannot find gtd-harness/SKILL.md"
   fi
 
   if [ "$GTD_LEGACY_VAULT_INSTALL" -eq 1 ]; then
     local entry
     for entry in .claude/skills .agent/skills .agents/skills; do
       if [ -e "$VAULT_ROOT/$entry/gtd-harness/SKILL.md" ]; then
-        echo "  ✅ 入口可达：$entry/gtd-harness（→ .cursor/skills）"
+        echo "  ✅ Entry point reachable: $entry/gtd-harness (→ .cursor/skills)"
       else
-        echo "  ℹ️  入口未解析：$entry/gtd-harness（旧适配入口，可选）"
+        echo "  ℹ️  Entry point not resolved: $entry/gtd-harness (legacy adapter entry, optional)"
       fi
     done
     local chk="$VAULT_ROOT/.codex/scripts/check-agent-dirs.sh"
     if [ -f "$chk" ]; then
-      echo "  ℹ️  深度校验可跑：bash .codex/scripts/check-agent-dirs.sh"
+      echo "  ℹ️  Deep check available: bash .codex/scripts/check-agent-dirs.sh"
     fi
 
     local missing_codex=0
@@ -86,25 +86,25 @@ selfcheck() {
       fi
     done
     if [ "$missing_codex" -eq 0 ]; then
-      echo "  ✅ Codex slash 命令可达：$CODEX_PROMPTS_DIR/gtd*.md"
+      echo "  ✅ Codex slash commands reachable: $CODEX_PROMPTS_DIR/gtd*.md"
     else
-      echo "  ⚠️  Codex slash 命令缺失 $missing_codex 个：$CODEX_PROMPTS_DIR/gtd*.md（旧安装模式下 init 会自动安装/刷新）"
+      echo "  ⚠️  $missing_codex Codex slash command(s) missing: $CODEX_PROMPTS_DIR/gtd*.md (in legacy install mode, init installs/refreshes them automatically)"
     fi
   else
-    echo "  ℹ️  插件模式：以当前工作区作为 GTD 状态根；不需要旧符号链接入口。"
+    echo "  ℹ️  Plugin mode: the current workspace is the GTD state root; legacy symlink entry points are not needed."
   fi
 
   if [ -d "$CODEX_PROMPT_TEMPLATES" ]; then
-    echo "  ✅ Codex prompt 模板可达：$CODEX_PROMPT_TEMPLATES"
+    echo "  ✅ Codex prompt templates reachable: $CODEX_PROMPT_TEMPLATES"
   else
-    echo "  ℹ️  Codex prompt 模板缺失（插件模式不需要）：$CODEX_PROMPT_TEMPLATES"
+    echo "  ℹ️  Codex prompt templates missing (not needed in plugin mode): $CODEX_PROMPT_TEMPLATES"
   fi
 }
 
-# ── 安装/刷新 Codex slash 命令（全局 CODEX_HOME 级）──
+# ── Install/refresh Codex slash commands (global, CODEX_HOME level) ──
 install_codex_prompts() {
   if [ ! -d "$CODEX_PROMPT_TEMPLATES" ]; then
-    echo "  ⚠️  未找到 Codex prompt 模板，跳过：${CODEX_PROMPT_TEMPLATES#$VAULT_ROOT/}"
+    echo "  ⚠️  Codex prompt templates not found, skipping: ${CODEX_PROMPT_TEMPLATES#$VAULT_ROOT/}"
     return 0
   fi
   mkdir -p "$CODEX_PROMPTS_DIR"
@@ -117,7 +117,7 @@ install_codex_prompts() {
     src="$CODEX_PROMPT_TEMPLATES/$prompt"
     dst="$CODEX_PROMPTS_DIR/$prompt"
     if [ ! -f "$src" ]; then
-      echo "  ⚠️  模板缺失：$prompt"
+      echo "  ⚠️  Template missing: $prompt"
       continue
     fi
     if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
@@ -130,10 +130,10 @@ install_codex_prompts() {
       installed=$((installed+1))
     fi
   done
-  echo "  ✅ Codex slash 命令 → ${CODEX_PROMPTS_DIR}/（新装 ${installed}，更新 ${updated}，未变 ${unchanged}）"
+  echo "  ✅ Codex slash commands → ${CODEX_PROMPTS_DIR}/ (new ${installed}, updated ${updated}, unchanged ${unchanged})"
 }
 
-# ── 自检：自动节律现状（只读，不创建 cron / automation）──
+# ── Self-check: current automation cadence (read-only; never creates cron / automation) ──
 automation_status() {
   local id="$1"
   local label="$2"
@@ -144,56 +144,58 @@ automation_status() {
     name="$(awk -F'"' '/^name = / {print $2; exit}' "$file" 2>/dev/null || true)"
     [ -n "$status" ] || status="UNKNOWN"
     [ -n "$name" ] || name="$id"
-    echo "  ✅ ${label}：已安装（${name}，${status}）"
+    echo "  ✅ ${label}: installed (${name}, ${status})"
   else
-    echo "  ⚪ ${label}：未安装（需显式安装；见 references/automation-profiles.md）"
+    echo "  ⚪ ${label}: not installed (requires explicit install; see references/automation-profiles.md)"
   fi
 }
 
 automation_selfcheck() {
   echo ""
-  echo "── 自动节律自检（只读，不创建）──"
+  echo "── Automation cadence self-check (read-only, creates nothing) ──"
   if [ ! -d "$AUTOMATIONS_DIR" ]; then
-    echo "  ⚪ 未找到 Codex automations 目录：$AUTOMATIONS_DIR"
-    echo "  ℹ️  若要安装节律，先读 references/automation-profiles.md，再用平台原生 automation 工具显式创建。"
+    echo "  ⚪ Codex automations directory not found: $AUTOMATIONS_DIR"
+    echo "  ℹ️  To install a cadence, read references/automation-profiles.md first, then create it explicitly with the platform's native automation tool."
     return 0
   fi
 
-  automation_status "gtd-ai" "每周 Review"
-  automation_status "gtd-2" "月度 Reflect"
+  automation_status "gtd-ai" "Weekly Review"
+  automation_status "gtd-2" "Monthly Reflect"
 
   local daily_found=0
   if [ -f "$AUTOMATIONS_DIR/gtd/automation.toml" ]; then
-    automation_status "gtd" "每日 Engage（上午）"
+    automation_status "gtd" "Daily Engage (morning)"
     daily_found=1
   fi
   if [ -f "$AUTOMATIONS_DIR/gtd-engage/automation.toml" ]; then
-    automation_status "gtd-engage" "每日 Engage（晚间）"
+    automation_status "gtd-engage" "Daily Engage (evening)"
     daily_found=1
   fi
   if [ "$daily_found" -eq 0 ]; then
-    echo "  ⚪ 每日 Engage：未安装（可选；Approval Radar 可随 Daily Engage 一起启用）"
+    echo "  ⚪ Daily Engage: not installed (optional; Approval Radar can be enabled together with Daily Engage)"
   fi
 
-  echo "  ℹ️  init 只检查，不静默创建；安装/修改 cron 必须由用户显式同意。"
+  echo "  ℹ️  init only checks and never creates silently; installing or changing cron requires the user's explicit consent."
 }
 
 cron_install_handoff() {
   echo ""
-  echo "── 自动节律安装请求（agent handoff）──"
-  echo "  已检测到 --install-cron。"
-  echo "  纯 shell 不能调用 Codex app 的 automation 工具，也不应手写 ~/.codex/automations。"
-  echo "  在 Codex / gtd-init skill 场景中，请按 references/automation-profiles.md 调用 automation_update："
-  echo "  1. 安装/更新 Weekly Review"
-  echo "  2. 安装/更新 Monthly Reflect"
-  echo "  3. 安装/更新 Daily Engage + Approval Radar（若启用 approval provider）"
-  echo "  完成后重跑：bash scripts/gtd_init.sh --status（旧安装可用 .cursor/skills/gtd-harness/scripts/gtd_init.sh）"
+  echo "── Automation cadence install request (agent handoff) ──"
+  echo "  --install-cron detected."
+  echo "  Plain shell cannot call the Codex app's automation tool and should not hand-write ~/.codex/automations."
+  echo "  In a Codex / gtd-init skill session, call automation_update as described in references/automation-profiles.md:"
+  echo "  1. Install/update Weekly Review"
+  echo "  2. Install/update Monthly Reflect"
+  echo "  3. Install/update Daily Engage + Approval Radar (if an approval provider is enabled)"
+  echo "  Then re-run: bash scripts/gtd_init.sh --status (legacy installs: .cursor/skills/gtd-harness/scripts/gtd_init.sh)"
 }
 
-# ── 可选：从旧 open loops.md 导入（旧文件只读，不改）──
+# ── Optional: import from the old open loops.md (old file is read-only, never modified) ──
+# The section names below (@自己 = self, @等待 = waiting, @项目 = projects) match the legacy
+# Chinese-language open loops.md format and must stay as-is for the import to find them.
 import_legacy() {
   if [ ! -f "$LEGACY_FILE" ]; then
-    echo "  ⚠️  未找到旧文件，跳过导入：${LEGACY_FILE#$VAULT_ROOT/}"
+    echo "  ⚠️  Legacy file not found, skipping import: ${LEGACY_FILE#$VAULT_ROOT/}"
     return 0
   fi
   local na="$GTD_DIR/next-actions.md"
@@ -201,11 +203,11 @@ import_legacy() {
   local pj="$GTD_DIR/projects.md"
   local marker="<!-- imported-from-legacy-open-loops -->"
   if grep -qF "$marker" "$na" 2>/dev/null; then
-    echo "  ⏭️  已导入过（检测到 marker），跳过以保持幂等"
+    echo "  ⏭️  Already imported (marker found), skipping to stay idempotent"
     return 0
   fi
-  echo "  📥 从旧 open loops.md 导入（旧文件保持只读不变）…"
-  # awk：抽取某 section header 之后、下一个 "## " 之前的 "- [ ] " 行
+  echo "  📥 Importing from the old open loops.md (old file stays read-only)…"
+  # awk: extract "- [ ] " lines after a given section header and before the next "## "
   extract() {
     awk -v sec="$1" '
       $0 ~ ("^## " sec) {grab=1; next}
@@ -215,9 +217,9 @@ import_legacy() {
   }
   {
     echo ""
-    echo "## 待补轻字段（legacy import $(cat "$VAULT_ROOT/.gtd_import_stamp" 2>/dev/null || echo "imported"))"
+    echo "## Needs light fields (legacy import $(cat "$VAULT_ROOT/.gtd_import_stamp" 2>/dev/null || echo "imported"))"
     echo "$marker"
-    echo "> 从旧 @自己 导入；逐条用 /gtd-clarify 补预计时长 / 精力档 / 真实约束。旧 @ 分组只作兼容，不强制迁移。"
+    echo "> Imported from the legacy self list; run /gtd-clarify on each item to add Time / Energy / Constraint. Legacy @ groups are kept for compatibility only; migration is not required."
     extract "@自己"
   } >> "$na"
   { echo ""; echo "<!-- imported-from-legacy-open-loops -->"; extract "@等待"; } >> "$wf"
@@ -226,12 +228,12 @@ import_legacy() {
   n_na=$(extract "@自己" | wc -l | tr -d ' ')
   n_wf=$(extract "@等待" | wc -l | tr -d ' ')
   n_pj=$(extract "@项目" | wc -l | tr -d ' ')
-  echo "  ✅ 导入完成：@自己 $n_na → next-actions / @等待 $n_wf → waiting-for / @项目 $n_pj → projects"
+  echo "  ✅ Import complete: self $n_na → next-actions / waiting $n_wf → waiting-for / projects $n_pj → projects"
 }
 
 # ════════════════════════════════════════════════════════
 echo "GTD Skill · init"
-echo "Vault：$VAULT_ROOT"
+echo "Vault: $VAULT_ROOT"
 
 if [ "$STATUS_ONLY" -eq 1 ]; then
   selfcheck
@@ -240,181 +242,181 @@ if [ "$STATUS_ONLY" -eq 1 ]; then
     cron_install_handoff
   fi
   echo ""
-  echo "（--status 模式，未写任何文件）"
+  echo "(--status mode, no files written)"
   exit 0
 fi
 
 mkdir -p "$GTD_DIR"
 echo ""
-echo "── 搭建 memory/gtd/ 核心八清单 + 产品想法扩展清单（已存在的跳过）──"
+echo "── Building memory/gtd/ eight core lists + product-ideas extension list (existing files skipped) ──"
 
 seed "$GTD_DIR/inbox.md" <<'EOF'
-# 📥 Inbox（收件箱）
+# 📥 Inbox
 
-> GTD 第一步 Capture 的唯一落点。**零评判**，先丢进来，理清留给 /gtd-clarify。
-> 凡占用心智的（行动、想法、待办、提醒、未决）都先进这里——大脑只负责产生想法，不负责储存。
+> The single landing spot for GTD step one, Capture. **No judgment**: drop it in first; clarifying is left to /gtd-clarify.
+> Anything that has your attention (actions, ideas, to-dos, reminders, open questions) goes here first. Your mind is for having ideas, not holding them.
 
-## 待理清
+## To clarify
 
 EOF
 
 seed "$GTD_DIR/next-actions.md" <<'EOF'
-# ✅ Next Actions（下一步行动）
+# ✅ Next Actions
 
-> 已理清、可立即执行的单步动作行动池。Engage 按情境 / 时间 / 精力 / 优先级临场筛 3-5 条菜单，不要求你面对全清单。
-> 动词必须具体（确认/发送/打电话/写），不写「跟进/处理/研究」等空动词。
-> 格式：`- [ ] 具体动作 · 预计时长：10分钟 · 精力档：低精力 · 真实约束：需要电脑/采购/准备链/某人在场 · 项目：[[projects#项目名|项目名]]（如属于项目）· 来源：[[笔记]] · 日期：YYYYMMDD`
-> 兼容旧 `@电脑/@电话/@外出/@家/@议程` 分组；它们是工具/场景约束，不再是主结构。
+> The action pool of clarified, single-step actions you can do right away. Engage filters a 3-5 item menu on the spot by context / time / energy / priority; you never face the whole list.
+> Verbs must be concrete (confirm / send / call / write) — no vague verbs like "follow up / handle / research".
+> Format: `- [ ] Concrete action · Time: 10 min · Energy: low energy · Constraint: needs computer / shopping / prep chain / person present · Project: [[projects#Project name|Project name]] (if part of a project) · Source: [[note]] · Date: YYYYMMDD`
+> Legacy `@computer/@calls/@errands/@home/@agenda` groups are still supported; they are tool/setting constraints, no longer the main structure.
 
-## @电脑
-> 旧兼容分组：需要电脑/联网是工具约束，不代表 Engage 默认优先推荐。
+## @computer
+> Legacy compatibility group: needing a computer / internet is a tool constraint, not a reason for Engage to recommend it first.
 
-## @电话
-> 旧兼容分组：电话/语音是渠道约束。
+## @calls
+> Legacy compatibility group: phone / voice is a channel constraint.
 
-## @外出
-> 旧兼容分组：外出顺路 / 采购 / 线下办理等硬场景。
+## @errands
+> Legacy compatibility group: hard settings such as on-the-way errands / shopping / in-person tasks.
 
-## @家
-> 旧兼容分组：在家有材料/设备/环境才能做的。
+## @home
+> Legacy compatibility group: things that need materials / equipment / surroundings at home.
 
-## @议程-[人名]
-> 旧兼容分组：下次见到/聊到某人时要提的（按人开子分组，如 `### @议程-老师A`）。
+## @agenda-[name]
+> Legacy compatibility group: things to raise the next time you see or talk to someone (one subgroup per person, e.g. `### @agenda-Teacher-A`).
 
 EOF
 
 seed "$GTD_DIR/projects.md" <<'EOF'
-# 🎯 Projects（项目）
+# 🎯 Projects
 
-> 任何需要 **>1 步**才能完成的成果。GTD 铁律：每个 project 必须挂**至少一个明确的下一步行动**，否则它会卡住。
-> 格式：
+> Any outcome that takes **more than one step** to complete. GTD hard rule: every project must have **at least one clear next action**, or it stalls.
+> Format:
 > ```
-> ## [项目名]
-> - 期望成果：一句话描述「完成长什么样」
-> - 下一步行动：
->   - [[next-actions#^block-id|具体下一步行动]]（约束/镜头）
->   - [[waiting-for#^block-id|等待某人交付什么]]（等待，可选）
-> - 支持材料：[[reference#条目名|条目名]] / [[项目文档]]
-> - 来源：[[笔记]] · 日期：YYYYMMDD
+> ## [Project name]
+> - Desired outcome: one sentence describing what "done" looks like
+> - Next actions:
+>   - [[next-actions#^block-id|Concrete next action]] (constraint/lens)
+>   - [[waiting-for#^block-id|Waiting for someone to deliver something]] (waiting, optional)
+> - Support material: [[reference#Entry name|Entry name]] / [[project doc]]
+> - Source: [[note]] · Date: YYYYMMDD
 > ```
-> 下一步行动至少 1 条，否则是 stalled；可以多条，但只放当前可并行推进的物理动作，不放完整任务树。
+> At least 1 next action, or the project is stalled. Several are fine, but only list physical actions that can move forward in parallel right now — not a full task tree.
 >
-> 闭环规则：期望成果达成后，删除整个项目块；不要保留「下一步行动：无」。
+> Close-the-loop rule: once the desired outcome is achieved, delete the whole project block; do not leave "Next actions: none".
 
 EOF
 
 seed "$GTD_DIR/waiting-for.md" <<'EOF'
-# ⏳ Waiting For（等待）
+# ⏳ Waiting For
 
-> 已委派出去、或正在等别人回应的——不是你的下一步，但需追踪，别让它在你这边消失。
-> 1:1 / 项目会前扫这里，一条不漏。
-> 格式：`- [ ] [人名] · 在等什么 · 约定：[内容或截止] · 来源：[[笔记]] · 委派日期：YYYYMMDD`
+> Things you delegated or are waiting on someone else for — not your next action, but they must be tracked so they don't vanish on your side.
+> Scan this before any 1:1 or project meeting so nothing slips.
+> Format: `- [ ] [Person] · what you're waiting for · Agreed: [content or deadline] · Source: [[note]] · Delegated: YYYYMMDD`
 
-## 等待中
+## Waiting
 
 EOF
 
 seed "$GTD_DIR/someday-maybe.md" <<'EOF'
-# 💭 Someday / Maybe（将来/也许）
+# 💭 Someday / Maybe
 
-> 暂不承诺、但不愿遗忘的——想做的项目、可能的方向、有趣的念头。
-> **不是** active 清单：这里的东西现在不行动。每月回顾时扫一遍，把成熟的拉进 projects/next-actions。
-> 格式：`- [ ] 想法/可能的项目 · 触发条件（什么情况下值得启动）· 来源：[[笔记]] · 日期：YYYYMMDD`
+> Not committed to yet, but you don't want to forget — projects you'd like to do, possible directions, interesting thoughts.
+> **Not** an active list: nothing here is acted on now. Scan it at the monthly review and pull whatever has ripened into projects/next-actions.
+> Format: `- [ ] Idea / possible project · trigger condition (when it becomes worth starting) · Source: [[note]] · Date: YYYYMMDD`
 
-## 孵化中
+## Incubating
 
 EOF
 
 seed "$GTD_DIR/product-ideas.md" <<'EOF'
-# Product Ideas / Product Work Intake（产品想法 / 产品工作入口）
+# Product Ideas / Product Work Intake
 
-> 明确属于产品、功能、场景、机会域的输入放这里，保留原始机会、假设和证据状态。
-> 本文件不是冷藏箱：产品/需求规划是主要工作，每条 idea 默认还要同步到 `projects.md` / `next-actions.md`，进入日常可见系统。
-> 只有明确说「先存不处理 / 只捕捉」时，才暂不升级为可见工作项。
-> Teresa Torres 口径：先保留 opportunity，不急着变 solution；但 GTD 层必须给出下一步验证动作。
-> 格式：每个想法一个小节；用 `- [ ] 机会：...` 作为计数行，并写明 `GTD 可见性`。
+> Inputs that clearly belong to a product, feature, scenario, or opportunity space go here, keeping the original opportunity, assumptions, and evidence status.
+> This file is not cold storage: product / requirements planning is core work, so by default every idea is also synced to `projects.md` / `next-actions.md` to enter the daily visible system.
+> Only when the user explicitly says "store it, don't process it / capture only" is it left un-promoted.
+> Teresa Torres' framing: keep the opportunity first and don't rush to a solution — but the GTD layer must still give a next validation action.
+> Format: one subsection per idea; use `- [ ] Opportunity: ...` as the counted line, and include `GTD visibility`.
 
-## 机会池
+## Opportunity pool
 
 EOF
 
 seed "$GTD_DIR/calendar.md" <<'EOF'
-# 📅 Calendar（硬性时间地形 · hard landscape）
+# 📅 Calendar (hard landscape)
 
-> **只放**特定日期/特定时间才有意义的事——会议、约定、deadline、特定日才能做的动作。
-> Allen 铁律：日历是「圣地」，**不放**普通待办（那些归 next-actions）。一放杂事，日历就失去可信度。
+> **Only** things that matter on a specific day / at a specific time — meetings, appointments, deadlines, day-specific actions.
+> Allen's hard rule: the calendar is sacred territory. **Do not** put ordinary to-dos here (those go in next-actions). Once clutter gets in, the calendar loses its trustworthiness.
 >
-> **单一日历**：外部 calendar provider 可达时它是 hard landscape，engage/review 直接读它，日程信息完整时可自动写入（见 `references/capability-map.md`）。**本文件仅在外部 provider 不可达时兜底**——记下「待手动加入日历」的时间事，**绝不抄外部日历副本**。reminder provider 留 v2。
-> 兜底格式：`- YYYY-MM-DD [HH:MM] · 事项 · 来源：[[笔记]] · ⚠️待手动加入外部日历`
+> **One calendar**: when an external calendar provider is reachable, it is the hard landscape; engage/review read it directly, and complete event details can be written to it automatically (see `references/capability-map.md`). **This file is only a fallback when the external provider is unreachable** — record time-specific items "to add to the calendar manually", and **never keep a copy of the external calendar**. Reminder provider is deferred to v2.
+> Fallback format: `- YYYY-MM-DD [HH:MM] · Item · Source: [[note]] · ⚠️ add to external calendar manually`
 
-## 时间专属事项（兜底 · 外部 calendar provider 不可达时）
+## Time-specific items (fallback · when the external calendar provider is unreachable)
 
 EOF
 
 seed "$GTD_DIR/reference.md" <<'EOF'
-# 📚 Reference（参考资料）
+# 📚 Reference
 
-> 无需行动、但将来要查的——以及各项目的支持材料指针。
-> 注意：**知识/想法类**笔记走 ZK 管线（fleeting-note → 05_每日记录/），不堆这里；这里只放
-> 与行动/项目直接相关的备查信息（清单、规格、联系方式、项目支持材料链接）。
-> GTD 内部标题引用用 Obsidian heading link：`[[文件名#标题|标题]]`；裸 `[[标题]]` 只用于真实独立文件。
+> Non-actionable information you'll want to look up later — plus pointers to each project's support material.
+> Note: **knowledge / idea** notes go through the ZK pipeline (fleeting-note → your daily-notes folder), not here; this file only holds
+> look-up information tied directly to actions / projects (checklists, specs, contact details, links to project support material).
+> For headings inside GTD files, use Obsidian heading links: `[[filename#Heading|Heading]]`; bare `[[Heading]]` is only for real standalone files.
 
-## 备查
+## General reference
 
-## 项目支持材料
+## Project support material
 
 EOF
 
 seed "$GTD_DIR/horizons.md" <<'EOF'
-# 🔭 Horizons of Focus（六个高度视野）
+# 🔭 Horizons of Focus
 
-> GTD 纵轴：横向五步保证「事情没漏」，纵轴保证「在做对的事」。
-> 大多数人困在跑道与 10k 之间救火，从不抬头——于是「高效地做着不该做的事」。
-> 每周回顾末尾抬升至 30k+，对照「项目是否仍服务于上层」。
+> GTD's vertical focus: the horizontal five steps ensure "nothing slips"; the vertical horizons ensure "you're doing the right things".
+> Most people are stuck firefighting between the runway and 10k and never look up — so they "efficiently do things they shouldn't be doing".
+> At the end of each Weekly Review, rise to 30k+ and check whether projects still serve the higher horizons.
 
-## 50,000 ft · 目的与原则（Purpose / Principles）
-> 我为什么存在？我的核心价值观与底线？
+## 50,000 ft · Purpose & Principles
+> Why do I exist? What are my core values and non-negotiables?
 -
 
-## 40,000 ft · 愿景（Vision）
-> 3–5 年后成功长什么样？
+## 40,000 ft · Vision
+> What does success look like 3–5 years from now?
 -
 
-## 30,000 ft · 目标（Goals）
-> 1–2 年要达成的具体目标？
+## 30,000 ft · Goals & Objectives
+> What specific goals do I want to achieve in 1–2 years?
 -
 
-## 20,000 ft · 责任领域（Areas of Focus & Accountability）
-> 我持续负责的角色/领域（工作、健康、家庭、财务、学习…），每个都需维持在某个标准。
+## 20,000 ft · Areas of Focus & Accountabilities
+> The roles / areas I'm continuously responsible for (work, health, family, finances, learning…), each maintained to some standard.
 -
 
-## 10,000 ft · 项目（Projects）
-> 当前所有项目（= projects.md 镜像，回顾时核对一致）。
-> → 见 [[projects]]
+## 10,000 ft · Projects
+> All current projects (= mirror of projects.md; check they match during review).
+> → see [[projects]]
 
-## 跑道 · 行动（Actions）
-> 此刻的下一步行动清单。
-> → 见 [[next-actions]]
+## Runway · Actions
+> The current next actions list.
+> → see [[next-actions]]
 
 EOF
 
-# horizons 内的 [[projects]]/[[next-actions]] 是同目录文件 wikilink，Obsidian 可解析；
-# 指向文件内标题时用 [[文件名#标题|标题]]，避免误建独立文件。
+# The [[projects]]/[[next-actions]] links in horizons are same-directory file wikilinks that Obsidian can resolve;
+# to point at a heading inside a file use [[filename#Heading|Heading]] to avoid creating a standalone file by mistake.
 
 if [ "$IMPORT_LEGACY" -eq 1 ]; then
   echo ""
-  echo "── 可选导入（旧 open loops.md 只读）──"
+  echo "── Optional import (old open loops.md is read-only) ──"
   import_legacy
 fi
 
 if [ "$GTD_LEGACY_VAULT_INSTALL" -eq 1 ]; then
   echo ""
-  echo "── 安装/刷新 Codex slash 命令（全局）──"
+  echo "── Install/refresh Codex slash commands (global) ──"
   install_codex_prompts
 else
   echo ""
-  echo "── 插件模式 ──"
-  echo "  跳过旧全局 slash prompt 安装；请从插件入口调用 LLM-GTD。"
+  echo "── Plugin mode ──"
+  echo "  Skipping legacy global slash prompt install; invoke LLM-GTD from the plugin entry point."
 fi
 
 selfcheck
@@ -424,13 +426,13 @@ if [ "$INSTALL_CRON" -eq 1 ]; then
 fi
 
 echo ""
-echo "── 就绪报告 ──"
-echo "  新建 $created 个文件，跳过（已存在）$skipped 个。"
-echo "  可信系统位置：memory/gtd/"
+echo "── Readiness report ──"
+echo "  Created $created file(s), skipped $skipped (already exist)."
+echo "  Trusted system location: memory/gtd/"
 if [ "$IMPORT_LEGACY" -eq 0 ]; then
-  echo "  （未导入旧数据。如需一次性导入：bash gtd_init.sh --import-legacy）"
+  echo "  (Legacy data not imported. For a one-time import: bash gtd_init.sh --import-legacy)"
 fi
 echo ""
-echo "  下一步：跑一次捕捉 —— 调用 gtd-harness 的 capture 流程（旧安装可用 /gtd-capture）"
-echo "  看全景仪表盘：运行 scripts/gtd_status.sh（旧安装可用 bash .cursor/skills/gtd-harness/scripts/gtd_status.sh）"
-echo "  自动节律：见 references/automation-profiles.md；通过 gtd init --install-cron 由 agent 调用 automation 工具安装"
+echo "  Next: run a capture — invoke the gtd-harness capture workflow (legacy installs: /gtd-capture)"
+echo "  Dashboard: run scripts/gtd_status.sh (legacy installs: bash .cursor/skills/gtd-harness/scripts/gtd_status.sh)"
+echo "  Automation cadence: see references/automation-profiles.md; install via gtd init --install-cron, which has the agent call the automation tool"

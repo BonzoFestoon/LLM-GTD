@@ -1,7 +1,7 @@
 ---
 name: gtd-update
-description: GTD 更新 — 处理已完成、进展、等待项回应、日程变化、取消或纠错，并推进可信清单
-argument-hint: "[已发生的变化，如 '护照材料交了' '对方回了' '会议改到周三 3 点' '这个项目取消']"
+description: GTD update — handles completions, progress, waiting-for replies, schedule changes, cancellations or corrections, and advances the trusted lists
+argument-hint: "[a change that already happened, e.g. 'submitted the passport paperwork' 'they replied' 'meeting moved to Wednesday 3 pm' 'cancel this project']"
 allowed-tools:
   - Read
   - Write
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
 ---
 <objective>
-GTD Update：把用户汇报的现实变化同步到可信系统。不是捕捉新任务，而是关闭已完成行动、推进项目、处理 waiting-for 回应、更新日历或纠正既有状态。
+GTD Update: sync the changes in reality the user reports into the trusted system. This isn't capturing new tasks; it's closing completed actions, advancing projects, handling waiting-for replies, updating the calendar, or correcting existing state.
 </objective>
 
 <execution_context>
@@ -25,11 +25,11 @@ $ARGUMENTS
 </context>
 
 <process>
-按 update/SKILL.md 执行：
-1. 先读相关清单：next-actions.md / projects.md / waiting-for.md；涉及日程先查外部 calendar provider。
-2. 明确已完成的 next-action → 删除该行，并推进或闭环关联 project。
-3. waiting-for 有回应 → 删除等待项，把回应理清为下一步、支持材料或项目闭环。
-4. 日程细节变化 → 可唯一识别则更新 external calendar provider；信息完整但无事件则新建；不确定问一句。
-5. 取消/纠错 → 最小删除、移动或替换对应状态。
-6. 改完必须检索或读回验证，再简短报告。
+Follow update/SKILL.md:
+1. First read the relevant lists: next-actions.md / projects.md / waiting-for.md; for scheduling, check the external calendar provider first.
+2. A next action that's clearly done → delete that line, and advance or close the related project.
+3. A waiting-for reply → delete the waiting item and clarify the reply into a next action, support material, or project closure.
+4. Changed event details → update the external calendar provider when uniquely identifiable; create an event if details are complete but none exists; ask one question if unsure.
+5. Cancellation / correction → minimally delete, move, or replace the corresponding state.
+6. After changing, always search or read back to verify, then report briefly.
 </process>

@@ -1,19 +1,19 @@
-## [项目名]
+## [Project name]
 
-- 期望成果：一句话描述「完成长什么样」（可视化的结果，不是过程）
-- 下一步行动：
-  - [[next-actions#^na-short-id-YYYYMMDD|具体下一步行动]]（约束：需要电脑 / 10分钟 / 低精力）
-  - [[waiting-for#^wf-short-id-YYYYMMDD|等待某人交付什么]]（等待，可选）
-- 服务于：[20k 责任领域 / 30k 目标]（Horizons 校准，可选）
-- 支持材料：[[reference#条目名|条目名]] / [[项目文档]]
-- 来源：[[笔记]] · 立项日期：YYYYMMDD
+- Desired outcome: one sentence describing what "done" looks like (a visible result, not a process)
+- Next actions:
+  - [[next-actions#^na-short-id-YYYYMMDD|Concrete next action]] (constraint: needs computer / 10 min / low energy)
+  - [[waiting-for#^wf-short-id-YYYYMMDD|Waiting for someone to deliver something]] (waiting, optional)
+- Serves: [20k area of focus / 30k goal] (Horizons calibration, optional)
+- Support material: [[reference#Entry name|Entry name]] / [[project doc]]
+- Source: [[note]] · Started: YYYYMMDD
 
 <!--
-下一步行动至少 1 条，否则是 stalled；可以多条，但只放当前可并行推进的物理动作，不放完整任务树。
-闭环规则：期望成果达成后，删除整个项目块；不要保留「下一步行动：无」。
+At least 1 next action, or the project is stalled. Several are fine, but only list physical actions that can move forward in parallel right now — not a full task tree.
+Close-the-loop rule: once the desired outcome is achieved, delete the whole project block; do not leave "Next actions: none".
 
-复杂项目可用自然计划模型展开（见 references/natural-planning-model.md）：
-目的 → 愿景 → 头脑风暴 → 组织 → 下一步行动
-展开内容放支持材料，不堆在本块正文。
-GTD 内部标题引用用 Obsidian heading link：[[文件名#标题|标题]]。裸 [[标题]] 只用于真实独立文件。
+Complex projects can be expanded with the Natural Planning Model (see references/natural-planning-model.md):
+Purpose & principles → Outcome visioning → Brainstorming → Organizing → Identifying next actions
+Put the expansion in support material, not in the body of this block.
+For headings inside GTD files, use Obsidian heading links: [[filename#Heading|Heading]]. Bare [[Heading]] is only for real standalone files.
 -->

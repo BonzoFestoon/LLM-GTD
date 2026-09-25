@@ -1,21 +1,21 @@
-# 自然计划模型（Natural Planning Model）
+# Natural Planning Model
 
-GTD 的**项目纵向规划法**——大脑天然的五步。用于 projects.md 里复杂项目需要展开时（不是每个项目都需要，简单项目有成果+下一步就够）。
+GTD's **vertical project planning method** — the five steps the mind follows naturally. Use it when a complex project in projects.md needs expanding (not every project needs it; for simple projects an outcome + next action is enough).
 
-| 步 | 问什么 | 产出 |
+| Step | What to ask | Output |
 |---|---|---|
-| 1. 目的 / 原则 | 我们为什么做这个？成功标准与底线？ | 一句话目的 + 约束 |
-| 2. 愿景 / 结果 | 完成后的画面长什么样？ | 可视化的成果描述 |
-| 3. 头脑风暴 | 为达成它，所有可能的想法/步骤/障碍？ | 不评判的发散清单 |
-| 4. 组织 | 哪些是关键？顺序/依赖/分组？ | 结构化的子任务 |
-| 5. 下一步行动 | 现在能推进的第一个物理动作？ | 进 next-actions 的具体动作 |
+| 1. Purpose & principles | Why are we doing this? What are the success criteria and non-negotiables? | A one-sentence purpose + constraints |
+| 2. Outcome visioning | What does it look like when it's done? | A visualized description of the outcome |
+| 3. Brainstorming | All possible ideas / steps / obstacles for getting there? | A non-judgmental divergent list |
+| 4. Organizing | What's key? Sequence / dependencies / groups? | Structured subtasks |
+| 5. Identifying next actions | The first physical action you can take now? | A concrete action going into next-actions |
 
-## 关键洞察
-- **从目的倒推**，不是从「该做什么」正推。目的不清，越规划越乱。
-- 头脑风暴阶段**不组织、不评判**——发散和收敛分开做。
-- 任何卡住的项目，回到上一步：通常是某一层（目的/愿景/组织）没想清。
-- 复杂项目的支持材料放 reference.md，不堆进 projects.md 正文。
+## Key insights
+- **Work backward from purpose**, not forward from "what should I do". If the purpose is unclear, the more you plan the messier it gets.
+- During brainstorming, **don't organize or judge** — keep diverging and converging separate.
+- For any stuck project, go back one step: usually some level (purpose / vision / organizing) hasn't been thought through.
+- Put a complex project's support material in reference.md, not in the body of projects.md.
 
-## 与 ZK / strategic-advisor 的接口
-- 需要深度战略权衡 → 叠加 `strategic-advisor` 或对应领域 perspective skill。
-- 规划中产出的知识/方法论洞察 → 走 ZK 管线沉淀，不留在项目清单。
+## Interface with ZK / strategic-advisor
+- Need a deep strategic trade-off → layer on `strategic-advisor` or the relevant domain perspective skill.
+- Knowledge / methodology insights produced during planning → capture them via the ZK pipeline, not in the project list.

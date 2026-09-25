@@ -1,14 +1,14 @@
 ---
 name: gtd-init
-description: 搭建/自检 GTD 可信系统 — 幂等建 memory/gtd/ 八清单 + 适配层自检（可选导入旧 open loops）
-argument-hint: "[可选：--import-legacy 导入旧数据 / --status 只自检]"
+description: Set up / self-check the GTD trusted system — idempotently creates the memory/gtd/ eight lists + adapter-layer self-check (optionally imports old open loops)
+argument-hint: "[optional: --import-legacy to import old data / --status to self-check only]"
 allowed-tools:
   - Read
   - Bash
   - Glob
 ---
 <objective>
-首次启用或重装 GTD harness：幂等搭建 memory/gtd/ 八清单、自检三平台适配层、可选导入旧 open loops。
+First-time enable or reinstall of the GTD harness: idempotently build the memory/gtd/ eight lists, self-check the three-platform adapter layer, optionally import old open loops.
 </objective>
 
 <execution_context>
@@ -21,5 +21,5 @@ $ARGUMENTS
 </context>
 
 <process>
-按 init/SKILL.md 执行。默认跑幂等初始化；若 $ARGUMENTS 含 --import-legacy 则附带一次性导入（旧文件只读不改）；--status 则只自检不写文件。读就绪报告并引导用户跑第一次 capture。
+Follow init/SKILL.md. By default run the idempotent init; if $ARGUMENTS contains --import-legacy, also do the one-time import (old file read-only, never modified); --status only self-checks and writes no files. Read the readiness report and guide the user to run their first capture.
 </process>

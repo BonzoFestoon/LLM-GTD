@@ -1,15 +1,15 @@
 <!--
-把以下片段追加到你工作区的 AGENTS.md（Codex / 通用 agent 协议文件），
-放在「工具与命令约定」一类的章节里，避开任何 mirror / 同步块。
-作用：让 Codex 读协议时知道 GTD harness 的存在，"说人话即触发"。
+Append the snippet below to your workspace's AGENTS.md (the Codex / general agent protocol file),
+in a section like "tool and command conventions", away from any mirror / sync blocks.
+Purpose: lets Codex know the GTD harness exists when it reads the protocol, so it "triggers on plain language".
 -->
 
-### GTD harness（个人任务系统）
+### GTD harness (personal task system)
 
-用户提到 GTD / 任务 / 收集 / 理清 / 下一步行动 / 每周回顾 / 清空大脑 / 「这周做什么」时，加载 GTD harness：
+When the user mentions GTD / tasks / capture / clarify / next actions / weekly review / mind sweep / "what should I do this week", load the GTD harness:
 
-- **直读真源**：`rtk cat .cursor/skills/gtd-harness/SKILL.md`（包导航），再按意图 `rtk cat` 对应子命令（init/capture/clarify/update/organize/engage/review）。
-- **自主链式**：spawn `gtd-orchestrator` agent（`.codex/agents/gtd-orchestrator.toml`）跑完整流程。
-- **自然语言入口**：用户不必指定子命令；直接说一个任务/承诺时，默认走 capture→clarify。
-- **状态**：可信清单在 `memory/gtd/`（八清单，纯 markdown）；`rtk bash .cursor/skills/gtd-harness/scripts/gtd_status.sh` 看全景；每周回顾先跑 `rtk bash .cursor/skills/gtd-harness/scripts/gtd_review_prep.sh`；首次 `… /gtd_init.sh`。
-- **边界**：个人任务系统；日程信息完整时自动写入 external calendar provider，缺关键字段或 external calendar provider 不可达时降级（见包内 `references/capability-map.md`）。
+- **Read the source directly**: `rtk cat .cursor/skills/gtd-harness/SKILL.md` (package navigation), then `rtk cat` the subcommand matching the intent (init/capture/clarify/update/organize/engage/review).
+- **Autonomous chaining**: spawn the `gtd-orchestrator` agent (`.codex/agents/gtd-orchestrator.toml`) to run the full flow.
+- **Natural-language entry**: the user doesn't have to name a subcommand; when they state a task / commitment directly, default to capture → clarify.
+- **State**: the trusted lists live in `memory/gtd/` (eight lists, plain markdown); `rtk bash .cursor/skills/gtd-harness/scripts/gtd_status.sh` shows the overview; for the weekly review run `rtk bash .cursor/skills/gtd-harness/scripts/gtd_review_prep.sh` first; first time, `… /gtd_init.sh`.
+- **Boundaries**: a personal task system; writes to the external calendar provider automatically when event details are complete, and falls back when key fields are missing or the external calendar provider is unreachable (see `references/capability-map.md` in the package).

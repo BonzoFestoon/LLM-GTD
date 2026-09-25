@@ -2,46 +2,46 @@
 date: YYYYMMDD
 source_skill: gtd-harness
 epistemic_status: working
-description: 第 N 周 GTD 每周回顾快照——系统状态 + 下周聚焦
+description: Week N GTD Weekly Review snapshot — system status + next week's focus
 ---
 
-# 每周回顾 · YYYY-MM-DD（第 N 周）
+# Weekly Review · YYYY-MM-DD (Week N)
 
-## 系统状态（回顾前 dashboard）
-- 📥 Inbox：__ · ✅ Next Actions：__ · 🎯 Projects：__（stalled __）· ⏳ Waiting：__ · 💭 Someday：__ · 💡 Product Ideas：__
+## System status (pre-review dashboard)
+- 📥 Inbox: __ · ✅ Next Actions: __ · 🎯 Projects: __ (stalled __) · ⏳ Waiting: __ · 💭 Someday: __ · 💡 Product Ideas: __
 
-## 0. AI 预回顾包
-- 已自动处理：
-- 建议确认：
-- 下周候选：
+## 0. AI review prep pack
+- Handled automatically:
+- Suggested for confirmation:
+- Next week's candidates:
 
 ## ① Get Clear
-- Inbox 清空：是 / 否（残留 __ 项原因：）
+- Inbox emptied: yes / no (reason for __ remaining items:)
 
 ## ② Get Current
-- 销项：
-- 新增下一步：
-- 该催的等待项：
-- 补了下一步的 stalled 项目：
-- Product Ideas 可见性缺口：
+- Crossed off:
+- New next actions:
+- Waiting-for items to follow up on:
+- Stalled projects given a next action:
+- Product Ideas visibility gaps:
 
 ## ③ Get Creative
-- 从 someday 拉进 active：
-- product ideas 推进 PRD / 补证据 / 降级 / 删除：
-- 本周新念头：
+- Pulled from someday into active:
+- Product ideas advanced to PRD / evidence gathered / downgraded / deleted:
+- New ideas this week:
 
-## ④ Horizons 巡检
-- 仍服务于目标/责任领域的项目：
-- 该砍 / 重估的项目：
+## ④ Horizons check
+- Projects still serving goals / areas of focus:
+- Projects to cut / re-evaluate:
 
-## 确认后已落盘
-- 清 inbox：
-- 销项 / 删除：
-- 新增 / 移动：
-- Product Ideas 可见性补齐：
-- 等待 / 催办：
+## Written to file after confirmation
+- Inbox cleared:
+- Crossed off / deleted:
+- Added / moved:
+- Product Ideas visibility filled:
+- Waiting / follow-ups:
 
-## 下周聚焦的 3 件事
+## Next week's 3 focus items
 1.
 2.
 3.

@@ -1,7 +1,7 @@
 ---
 name: gtd-organize
-description: GTD 结构卫生（AI 自动）— 机械类（孤儿/stalled/情境/死勾/重复）自动修，只把需你拍板的浮上来
-argument-hint: "[可选：'someday 月度扫描' 或指定清单]"
+description: GTD structural hygiene (AI-automated) — fixes mechanical issues (orphans / stalled / contexts / stale checkmarks / duplicates) automatically and surfaces only what needs your decision
+argument-hint: "[optional: 'monthly someday scan' or a specific list]"
 allowed-tools:
   - Read
   - Write
@@ -9,7 +9,7 @@ allowed-tools:
   - Bash
 ---
 <objective>
-GTD 第三步结构卫生（AI-native）：这是最该 AI 全自动的一步。机械类记账（孤儿、stalled、情境归位、死勾、去重）自动修；只有真需用户拍板的（补不出的 stalled / 该砍 / someday 启动）才浮上来。
+GTD step 3, structural hygiene (AI-native): this is the step the AI should most fully automate. Mechanical bookkeeping (orphans, stalled, re-filing contexts, stale checkmarks, dedupe) is fixed automatically; only what truly needs the user's decision (stalled ones it can't fix / should be cut / someday to activate) is surfaced.
 </objective>
 
 <execution_context>
@@ -22,5 +22,5 @@ $ARGUMENTS
 </context>
 
 <process>
-按 organize/SKILL.md 执行：1) 机械类直接修——孤儿挂回、错情境归位、@议程按人聚组、情境过载拆细、清死勾去重；2) stalled 项目 AI 起草下一步写入并挂钩（act-then-surface），起草不出的批量问；3) 月度标出 someday 成熟候选批量问启动；4) 一行汇总自动改了什么 + 把需拍板的一次性列出。不逐条打断、不替用户做承诺/砍项目判断。
+Follow organize/SKILL.md: 1) fix mechanical issues directly — re-link orphans, re-file wrong contexts, group @agenda by person, split overloaded contexts, clear stale checkmarks and dedupe; 2) for stalled projects the AI drafts and writes a next action and links it (act-then-surface), asking in a batch about the ones it can't draft; 3) monthly, flag ripe someday candidates and ask in a batch whether to activate them; 4) give a one-line summary of what was changed automatically + list everything needing a decision at once. Don't interrupt item by item; don't make commitment / project-cutting decisions for the user.
 </process>

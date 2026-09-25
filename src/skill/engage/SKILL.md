@@ -1,70 +1,70 @@
 ---
 name: gtd-engage
-description: GTD skill 场景命令 · 执行。按情境/可用时间/精力/优先级四要素，从清单给出「现在该做什么」。GTD 第五步。
+description: GTD skill scenario command · Engage. Uses the four criteria — context / time available / energy available / priority — to say "what to do right now" from the lists. GTD step 5.
 parent: gtd-harness
 ---
 
 
-# GTD · engage（执行 / 选下一步）
+# GTD · engage (engage / choose the next action)
 
-**视角**：David Allen。Engage 解决「此刻做什么最有把握」。GTD 不靠「应该感」驱动，而靠**四要素模型**当场筛选——前提是前四步已把系统理清，否则选择本身就充满焦虑。
+**Perspective**: David Allen. Engage answers "what can I do right now with the most confidence". GTD isn't driven by a sense of "should"; it filters on the spot with the **four-criteria model** — provided the first four steps have already clarified the system, otherwise the choice itself is full of anxiety.
 
-## 加载与边界
+## Loading and boundaries
 
-- 选行动前先按 `organize/SKILL.md` 做机械卫生；清单边界不明读 `references/list-definitions.md`。
-- 需要 hard landscape / 自由时间窗：读 `references/capability-map.md`。
-- Daily Engage 自动节律或 Approval Radar：读 `references/automation-profiles.md`。
-- 自动化边界：只给 3-5 条候选菜单；不把候选说成今日承诺，不自动排进日历。
+- Before choosing actions, run mechanical hygiene per `organize/SKILL.md`; read `references/list-definitions.md` when list boundaries are unclear.
+- Hard landscape / free time windows: read `references/capability-map.md`.
+- Daily Engage automation cadence or Approval Radar: read `references/automation-profiles.md`.
+- Automation boundary: offer only a 3-5 item candidate menu; never present candidates as today's commitments, never schedule them into the calendar automatically.
 
-## 何时跑
-- 用户问「现在该做什么」「这会儿做点啥」「我有 30 分钟能干嘛」。
-- 早晨/一段空档开始前，要一个聚焦视图。
-- 1:1 / 项目会前，要某人/某项目相关的可推进项（也可走 review 的议程视图）。
+## When to run
+- The user asks "what should I do now", "what can I do for a bit", "I have 30 minutes, what can I get done".
+- In the morning / before a stretch of free time, for a focused view.
+- Before a 1:1 / project meeting, for actionable items related to a person / project (the review agenda view also works).
 
-## 四要素筛选（依次收窄）
+## Four-criteria filter (narrow in order)
 
 ```
-1. 情境（Context）   ——此刻哪些真实约束决定我能不能做？ → 用硬情境 / 工具约束 / 当下状态镜头筛行动池
-2. 可用时间（Time）  ——我有多久？                → 时间短挑短任务
-3. 精力（Energy）    ——我现在脑力/体力如何？      → 精力低挑轻任务
-4. 优先级（Priority）——同等条件下哪个回报最高？    → Horizons 校准（服务于哪个目标/责任领域）
+1. Context          — which real constraints decide whether I can do it right now? → filter the action pool by hard setting / tool constraint / current-state lenses
+2. Time available   — how long do I have?                      → short window, pick short tasks
+3. Energy available — how's my mental / physical energy now?   → low energy, pick light tasks
+4. Priority         — all else equal, which has the highest payoff? → Horizons calibration (which goal / area of focus it serves)
 ```
 
-## 可用镜头（第一版宁少勿多）
+## Available lenses (fewer is better in v1)
 
-- **时间镜头**：2 分钟 / 10 分钟 / 30 分钟 / 60-90 分钟。
-- **精力镜头**：低精力 / 中精力 / 深工作 / 情绪耗能低。
-- **硬情境镜头**：采购、外出顺路、在家有材料、会议前、某人在场、准备链。
-- **工具/渠道约束**：需要电脑、需要电话、需要文件、需要付款、需要证件、需要设备。
-- **协作镜头**：该催办、@议程-人、需要拍板。
+- **Time lens**: 2 min / 10 min / 30 min / 60-90 min.
+- **Energy lens**: low energy / medium energy / deep work / low emotional load.
+- **Hard-setting lens**: shopping, on-the-way errands, materials at home, before a meeting, a person present, prep chain.
+- **Tool / channel constraint**: needs computer, needs phone, needs documents, needs payment, needs ID, needs equipment.
+- **Collaboration lens**: follow-ups due, @agenda-person, needs a decision.
 
-旧 `@电脑/@电话/@外出/@家/@议程` 分组只作为历史兼容信号读取，不能因为某条在 `@电脑` 下就默认推荐。情境的定义是「此刻是否真能做的约束」，不是地点分类。
+Legacy `@computer/@calls/@errands/@home/@agenda` groups are read only as historical compatibility signals; an item is never recommended by default just because it's under `@computer`. Context is defined as "a constraint on whether it can really be done right now", not a location category.
 
-## Allen 判断口径
+## Allen's rules of judgment
 
-- **日历先于清单**：先看 hard landscape，确认下一个硬约定前真实还有多少自由时间。
-- **Next Actions 是行动池里的菜单，不是今日承诺**：clarify 已把行动写清楚；engage 只是用镜头从行动池挑此刻合适的一步，不把清单全部排进日历，也不要求用户面对全清单。
-- **过载分三类**：日程重叠 = 硬冲突；next-actions 很多 = 菜单大；把太多 next-actions 都声明为今天必须完成 = 承诺过载，需要删、延期、委派或降级，而不是硬塞进日历。
+- **Calendar before lists**: look at the hard landscape first and confirm how much free time really remains before the next hard appointment.
+- **Next Actions are a menu from the action pool, not today's commitments**: clarify has already written actions clearly; engage just uses lenses to pick the right step for this moment from the action pool, without scheduling the whole list into the calendar or making the user face the whole list.
+- **Three kinds of overload**: overlapping appointments = hard conflict; lots of next-actions = a big menu; declaring too many next-actions as must-finish-today = overcommitment, which needs deleting, deferring, delegating, or downgrading — not cramming into the calendar.
 
-## 工作流
+## Workflow
 
-0. **先静默跑一遍 organize 结构卫生**（按 `organize/SKILL.md` 的机械类自动项：孤儿/stalled/情境/死勾/重复）——让「现在做什么」基于干净结构，stalled 项目不漏。只在有需你拍板项时附一句，否则不打断。
-1. 先读**今天/当前窗口的硬约定**，计算到下一个 hard landscape 前的自由时间块；外部 calendar provider 可达则以它为准，全部不可达再读 `calendar.md` 兜底并注明「按本地兜底，可能不全」。
-2. 若本次是 Daily Engage 自动节律，且已启用 Approval Radar，按 `references/automation-profiles.md` 做只读 Approval Radar：只提示需要行动或状态变化的 approval，不自动 approve/reject/remind；缺少只读权限时说明缺口后继续 Engage。
-3. 问清（或从上下文推断）用户的**情境、可用时间、精力**。支持自然语言镜头：`我只有 10 分钟`、`我没电了`、`我要出门`、`我在采购`、`明早要准备什么`、`有什么该催的`。若日历算出的时间窗与用户口头时间不同，取更小者。
-4. 读 `next-actions.md` 行动池，兼容旧 `@电脑/@电话/@外出/@家/@议程` 分组信号，但按四要素和镜头筛选，给出 **3–5 条**「现在最该做」的候选，标注每条预估时长和为什么适合“现在”。
-5. 优先级排序时**向上对照 Horizons**：哪条最服务于当前 30k 目标 / 20k 责任领域。不是「最急」而是「最重要且此刻可做」。
-6. 若今天没有足够自由时间，或用户声明的 today-must 明显超过剩余时间，输出「承诺过载」提示，并给出删、延期、委派、降级四类重谈建议；不要自动把 next-actions 排进日历。
-7. 顺带提示：若有 waiting-for 到期该催的，一并点出。
-8. 用户做完某条 → 走闭环（从 next-actions 删除该行）。
+0. **Silently run organize structural hygiene first** (the mechanical automatic items in `organize/SKILL.md`: orphans / stalled / contexts / stale checkmarks / duplicates) — so "what to do now" is based on a clean structure and stalled projects don't slip. Add one line only if something needs your decision; otherwise don't interrupt.
+1. First read **hard appointments for today / the current window** and compute the free time block until the next hard-landscape item; if the external calendar provider is reachable it is authoritative; if all are unreachable, read the `calendar.md` fallback and note "based on local fallback, may be incomplete".
+2. If this run is the Daily Engage automation cadence and Approval Radar is enabled, do the read-only Approval Radar per `references/automation-profiles.md`: flag only approvals needing action or with status changes, never auto approve / reject / remind; if read-only permission is missing, state the gap and continue with Engage.
+3. Ask (or infer from context) the user's **context, time available, energy**. Support natural-language lenses: `I only have 10 minutes`, `I'm out of energy`, `I'm heading out`, `I'm shopping`, `what do I need to prep for tomorrow morning`, `what needs a follow-up`. If the calendar-derived window differs from the time the user states, use the smaller one.
+4. Read the `next-actions.md` action pool, honoring legacy `@computer/@calls/@errands/@home/@agenda` group signals but filtering by the four criteria and lenses, and give **3–5** "best to do now" candidates, each with its time estimate and why it fits "now".
+5. When ranking by priority, **check upward against the Horizons**: which one best serves the current 30k goals / 20k areas of focus. Not "most urgent" but "most important and doable right now".
+6. If there isn't enough free time today, or the user's declared today-musts clearly exceed the remaining time, output an "overcommitment" alert with four kinds of renegotiation suggestions — delete, defer, delegate, downgrade; don't automatically schedule next-actions into the calendar.
+7. Also flag any waiting-for items that are due for a follow-up.
+8. When the user finishes an item → close the loop (delete that line from next-actions).
 
-## 质量检查
-- [ ] 候选都落在用户**当前情境**可执行（没推荐做不了的）
-- [ ] 已先看 hard landscape，并用真实自由时间窗约束候选
-- [ ] 给了时长估计，匹配用户可用时间/精力
-- [ ] `10分钟` / `低精力` / `深工作` / `采购` / `准备` / `该催办` 这类镜头能从行动池筛出候选，且没有把镜头变成要求用户维护的大标签系统
-- [ ] 没有因为某条在旧 `@电脑/@电话` 分组下就默认推荐；硬情境、时间、精力优先于软工具分组
-- [ ] 优先级有 Horizons 依据，不是单纯「看起来急」
-- [ ] 承诺过载时给的是重谈建议，不是把 next-actions 硬塞进日历
-- [ ] 点出了该催的等待项
-- [ ] Daily Engage 自动节律若启用 Approval Radar，只读扫描 approval，不因 approval provider 失败中断 Engage
+## Quality check
+- [ ] All candidates are doable in the user's **current context** (nothing recommended that can't be done)
+- [ ] Looked at the hard landscape first and constrained candidates by the real free time window
+- [ ] Gave time estimates matching the user's time available / energy
+- [ ] Lenses like `10 min` / `low energy` / `deep work` / `shopping` / `prep` / `follow-ups due` can filter candidates from the action pool, without turning lenses into a big tagging system the user must maintain
+- [ ] Nothing recommended by default just because it sits under a legacy `@computer/@calls` group; hard setting, time, and energy take precedence over soft tool groups
+- [ ] Priority is grounded in the Horizons, not just "looks urgent"
+- [ ] On overcommitment, gave renegotiation suggestions instead of cramming next-actions into the calendar
+- [ ] Flagged waiting-for items due for a follow-up
+- [ ] If the Daily Engage cadence has Approval Radar enabled, approvals were scanned read-only, and an approval provider failure did not interrupt Engage

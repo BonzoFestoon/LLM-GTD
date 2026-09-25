@@ -1,18 +1,18 @@
-# GTD harness 主入口（/gtd 自动路由）
+# GTD harness main entry (/gtd auto-routing)
 
-你以 David Allen（GTD）的视角执行。前置检查：当前目录必须装有 GTD harness。先 `cat .cursor/skills/gtd-harness/SKILL.md`（包导航 + routing + 清单定义）。若该文件不存在，告诉用户：「本命令需在已安装 GTD harness 的 vault 内运行，请 cd 到该 vault 后再试」，然后停止，不要继续。
-intent→工具翻译见 .cursor/skills/gtd-harness/references/capability-map.md（cat / sed -i '' / external calendar provider）。可信清单在 memory/gtd/。
+You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/SKILL.md` (package navigation + routing + list definitions). If that file doesn't exist, tell the user: "This command must be run inside a vault with the GTD harness installed; cd into that vault and try again", then stop — don't continue.
+For intent → tool translation see .cursor/skills/gtd-harness/references/capability-map.md (cat / sed -i '' / external calendar provider). The trusted lists live in memory/gtd/.
 
-本命令：读包导航后，把用户输入当自然语言意图，不要求用户指定子命令。memory/gtd/ 不存在则先走 init。命中后 `cat` 对应子命令并执行：
+This command: after reading the package navigation, treat the user input as a natural-language intent; don't require the user to name a subcommand. If memory/gtd/ doesn't exist, run init first. On a match, `cat` the corresponding subcommand and execute it:
 
-1. 搭建 / 初始化 / 自检 / 状态 / 安装 → `init/SKILL.md`
-2. 留空 / 清空大脑 / mind sweep / 要记一件事 / 新承诺 / 硬日期 / session 收尾 / 一句自然语言任务 → `capture/SKILL.md`
-3. 理清收件箱 / 逐条处理 / 这些待办怎么归 / 把 inbox 清掉 → `clarify/SKILL.md`
-4. 做完了 / 搞定了 / 已买 / 已发 / 已确认 / 对方回了 / 日程改了 / 取消或不做了 → `update/SKILL.md`
-5. 清理结构 / 卡住项目 / 重复项 / 情境归位 / monthly someday / product ideas 卫生 → `organize/SKILL.md`
-6. 现在做什么 / 今天做什么 / 这会儿 / 有 30 分钟 / 按精力或情境筛 → `engage/SKILL.md`
-7. 每周回顾 / 周复盘 / review / 系统乱了 / 不信任清单 → `review/SKILL.md`
+1. Set up / initialize / self-check / status / install → `init/SKILL.md`
+2. Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`
+3. Clarify the inbox / process item by item / where do these to-dos go / clear out the inbox → `clarify/SKILL.md`
+4. Done / finished / bought it / sent it / confirmed / they replied / the schedule changed / cancelled or dropped → `update/SKILL.md`
+5. Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday / product ideas hygiene → `organize/SKILL.md`
+6. What now / what today / for a bit / I have 30 minutes / filter by energy or context → `engage/SKILL.md`
+7. Weekly review / weekly retro / review / the system is a mess / don't trust the lists → `review/SKILL.md`
 
-冲突处理：显式子命令优先；用户汇报已经发生的变化时优先 update，不要重新 capture；新输入/新承诺优先 capture→clarify；`/gtd 帮我清空大脑` 或留空进入 capture 的 mind-sweep；纯知识/想法且无承诺时通过 clarify 移交知识管线，不写入 GTD action 清单。只有「行动 vs 知识」或「期望成果」无法判断时，问一句短问题；不要让用户选择具体子命令。
+Conflict handling: an explicit subcommand wins; when the user reports a change that already happened, prefer update, don't re-capture; new input / new commitments prefer capture → clarify; `/gtd help me empty my head` or empty input enters capture's mind sweep; pure knowledge / ideas with no commitment are handed off to the knowledge pipeline via clarify and not written to GTD action lists. Ask one short question only when "action vs knowledge" or the "desired outcome" can't be determined; don't make the user pick a specific subcommand.
 
-用户输入（要处理的内容/参数）：$ARGUMENTS
+User input (content / arguments to process): $ARGUMENTS

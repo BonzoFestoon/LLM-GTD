@@ -1,92 +1,92 @@
 ---
 name: gtd-update
-description: GTD skill 场景命令 · 更新。处理用户汇报的现实变化：已完成、进展、等待项有回应、日程细节变化、项目取消或纠错，并同步推进可信清单。
+description: GTD skill scenario command · Update. Handles changes in reality the user reports — done, progress, a waiting-for reply, changed event details, a cancelled project, or a correction — and syncs the trusted lists forward.
 parent: gtd-harness
 ---
 
 
-# GTD · update（状态更新 / 回报现实）
+# GTD · update (status update / reporting reality)
 
-**视角**：David Allen，AI-native 改良。Update 处理的不是「新东西进系统」，而是**现实已经变化**：某个下一步做完了、等待的人回了、项目事实变了、日程细节确定了、承诺取消了。可信系统必须跟现实同步，否则它很快就会重新变成大脑里的负担。
+**Perspective**: David Allen, with an AI-native refinement. Update is not about "new stuff entering the system" but about **reality having already changed**: a next action got done, the person you were waiting on replied, project facts changed, event details were settled, a commitment was cancelled. A trusted system must stay in sync with reality, or it quickly becomes a burden the mind has to carry again.
 
-## 加载与边界
+## Loading and boundaries
 
-- 清单边界和动作权限：先读 `references/list-definitions.md`。
-- 涉及 hard landscape / 日历改动：读 `references/capability-map.md`。
-- 涉及项目成果或下一步不清：按需读 `references/clarify-decision-tree.md` 和 `references/natural-planning-model.md`。
-- 自动化边界：明确完成、明确等待回应、明确文本纠错可自动更新；多匹配、会删除整个项目块、日历事件无法唯一识别时问一句。
+- List boundaries and action permissions: read `references/list-definitions.md` first.
+- Hard landscape / calendar changes: read `references/capability-map.md`.
+- Unclear project outcome or next action: read `references/clarify-decision-tree.md` and `references/natural-planning-model.md` as needed.
+- Automation boundary: clear completions, clear waiting-for replies, and clear text corrections can be updated automatically; ask one question on multiple matches, when a whole project block would be deleted, or when a calendar event can't be uniquely identified.
 
-## 何时跑
+## When to run
 
-- 用户说「做完了 / 搞定了 / 已买 / 已发 / 已确认 / 已经约好 / 对方回了」。
-- 用户汇报项目进展：「我和家庭成员聊完了，已确认安排边界」。
-- 用户纠正既有状态：「不是周三晚上，是周三中午 13:30 起飞」。
-- 用户取消或降级承诺：「这个先不做了 / 不用跟了 / 这个项目关掉」。
+- The user says "done / finished / bought it / sent it / confirmed / it's scheduled / they replied".
+- The user reports project progress: "I talked it over with my family and we've settled the arrangement."
+- The user corrects an existing state: "Not Wednesday evening — the flight leaves Wednesday at 13:30."
+- The user cancels or downgrades a commitment: "Skip this for now / no need to follow up / close this project."
 
-## 与其他命令的边界
+## Boundaries with other commands
 
-- **新输入 / 新承诺** → `capture/SKILL.md`。
-- **inbox 里的未理清项** → `clarify/SKILL.md`。
-- **机械结构卫生**（孤儿、重复、stalled 扫描）→ `organize/SKILL.md`。
-- **此刻选做什么** → `engage/SKILL.md`。
-- **方向/项目是否还值得** → `review/SKILL.md`。
+- **New input / new commitment** → `capture/SKILL.md`.
+- **Unclarified items in the inbox** → `clarify/SKILL.md`.
+- **Mechanical structural hygiene** (orphans, duplicates, stalled scan) → `organize/SKILL.md`.
+- **Choosing what to do right now** → `engage/SKILL.md`.
+- **Whether a direction / project is still worth it** → `review/SKILL.md`.
 
-Update 只做一件事：把用户刚报告的现实变化同步到 `memory/gtd/` 和真实 hard landscape。
+Update does one thing: sync the change in reality the user just reported into `memory/gtd/` and the real hard landscape.
 
-## 工作流
+## Workflow
 
-1. **读相关清单再改**：
-   - 默认先扫描 `next-actions.md`、`projects.md`、`waiting-for.md`。
-   - 若涉及日期 / 时间 / 地点 / 航班 / 会议 → 先读外部 calendar provider；全部不可达时读 `calendar.md` 兜底。
-   - 若涉及项目支持事实 → 按需读 `reference.md`。
+1. **Read the relevant lists before changing anything**:
+   - By default scan `next-actions.md`, `projects.md`, `waiting-for.md` first.
+   - If dates / times / places / flights / meetings are involved → read the external calendar provider first; if all are unreachable, read the `calendar.md` fallback.
+   - If project support facts are involved → read `reference.md` as needed.
 
-2. **判定 update 类型**：
+2. **Determine the update type**:
 
-   | 类型 | 判断口径 | 动作 |
+   | Type | How to tell | Action |
    |---|---|---|
-   | 下一步已完成 | 明确对应一条 `next-actions` | 删除该 next-action 行；若它挂项目，检查项目是否需要新下一步或已闭环 |
-   | 项目有进展 | 用户给了会影响下一步的事实 | 更新项目支持事实；移除已完成下一步；推导一个新的具体 next-action |
-   | Waiting For 有回应 | 明确对应一条 `waiting-for` | 删除 waiting-for 行；把回应理清为 next-action / reference / 项目闭环 |
-   | 日程细节更新 | 日期 / 时间 / 地点 / 出发窗口变化 | 更新外部 calendar provider 事件；若找不到明确事件且信息完整则新建；不确定时问一句 |
-   | 承诺取消 / 不做 | 用户明确取消 | 删除对应行动或项目块；若只是暂缓且仍想保留，移到 someday-maybe |
-   | 文本纠错 | 用户更正既有事实或措辞 | 最小替换对应清单行或项目支持材料 |
+   | Next action done | Clearly matches one `next-actions` item | Delete that next-action line; if it belongs to a project, check whether the project needs a new next action or is closed |
+   | Project progress | The user gave facts that affect the next action | Update project support facts; remove the completed next action; derive a new concrete next action |
+   | Waiting For reply | Clearly matches one `waiting-for` item | Delete the waiting-for line; clarify the reply into a next action / reference / project closure |
+   | Event details changed | Date / time / place / departure window changed | Update the external calendar provider event; if no clear event is found and details are complete, create one; ask one question if unsure |
+   | Commitment cancelled / dropped | The user explicitly cancels | Delete the corresponding action or project block; if merely paused but still wanted, move it to someday-maybe |
+   | Text correction | The user corrects an existing fact or wording | Minimally replace the corresponding list line or project support material |
 
-3. **匹配规则**：
-   - 只有一个清晰匹配项 → 直接更新。
-   - 多个相似项、会删除整个项目块、或日历事件无法唯一识别 → 先问一句短问题，不猜。
-   - 删除清单行是 GTD 闭环，不是删除文件；本命令可直接删除明确完成的行动行。
-   - 不把「已完成」留成打勾历史；活清单只保留仍需关注的承诺。
+3. **Matching rules**:
+   - Exactly one clear match → update directly.
+   - Several similar items, deleting a whole project block, or a calendar event that can't be uniquely identified → ask one short question first; don't guess.
+   - Deleting a list line closes a GTD loop; it is not deleting a file. This command may directly delete action lines that are clearly done.
+   - Don't keep "done" as checked-off history; live lists hold only commitments that still need attention.
 
-4. **推进项目**：
-   - 已完成行动属于某个 project 时，读该 project 块。
-   - 若期望成果已达成且没有仍需推动的下一步 → 删除整个 project 块。
-   - 若项目仍未完成 → 从新事实中起草**一个**当前最合适的 next-action，并把 project 的下一步指针更新到新行动。
-   - 如果新下一步需要用户价值判断或信息不足 → 不硬造，列出缺口并问一句。
+4. **Advance projects**:
+   - When a completed action belongs to a project, read that project block.
+   - If the desired outcome is achieved and no next action still needs pushing → delete the whole project block.
+   - If the project is still unfinished → draft **one** most suitable current next action from the new facts and point the project's next-action link to it.
+   - If the new next action needs the user's value judgment or information is missing → don't force one; list the gap and ask one question.
 
-5. **日历 update 契约**：
-   - 外部 calendar provider 可达时，它是 hard landscape；更新成功前不得声称已写入。
-   - 能唯一匹配现有事件 → update event。
-   - 找不到现有事件但有标题 + 日期 + 开始时间 → create event。
-   - 缺关键字段或可能重复 → 问缺失字段，不写猜测日程。
-   - 全部外部 provider 不可达 / 失败 → 写 `calendar.md` 兜底并说明「未写入外部日历」。
+5. **Calendar update contract**:
+   - When an external calendar provider is reachable, it is the hard landscape; never claim a write before the update succeeds.
+   - Uniquely matches an existing event → update event.
+   - No existing event found but title + date + start time are present → create event.
+   - Key fields missing or possible duplicate → ask for the missing fields; never write a guessed event.
+   - All external providers unreachable / failing → write the `calendar.md` fallback and say "not written to the external calendar".
 
-6. **验证**：
-   - 改完后检索对应关键词，确认旧行动 / 等待项已消失或新事件 / 新行动存在。
-   - 必要时跑 `scripts/gtd_status.sh` 看 dashboard。
-   - 回报只说关键变化，不转述整张清单。
+6. **Verify**:
+   - After changing, search for the relevant keywords to confirm the old action / waiting-for item is gone or the new event / new action exists.
+   - Run `scripts/gtd_status.sh` to see the dashboard when needed.
+   - Report only the key changes; don't recite the whole list.
 
-## 输出格式
+## Output format
 
-简短输出三件事：
-1. **已更新**：改了哪张清单 / 日历。
-2. **现在剩什么**：项目的新下一步、还在等谁，或确认已闭环。
-3. **验证**：说明已检索或读回确认。
+Briefly output three things:
+1. **Updated**: which list / calendar changed.
+2. **What's left now**: the project's new next action, who you're still waiting on, or confirmation that it's closed.
+3. **Verified**: state that you searched or read back to confirm.
 
-## 质量检查
-- [ ] 先读清单再改，没有凭记忆更新
-- [ ] 区分了新输入 capture 与现实变化 update
-- [ ] 已完成行动从 next-actions 删除，不留打勾历史
-- [ ] waiting-for 回应已重新理清，不再挂在等待清单
-- [ ] 项目仍活着时有新的当前 next-action；项目完成时整个项目块删除
-- [ ] 日历更新只在 calendar provider / tool 成功后声称完成
-- [ ] 多匹配或高风险删除时问一句，没有猜
+## Quality check
+- [ ] Read the lists before changing; nothing updated from memory
+- [ ] Distinguished new input (capture) from changes in reality (update)
+- [ ] Completed actions deleted from next-actions, no checked-off history left
+- [ ] Waiting-for replies re-clarified and no longer on the waiting list
+- [ ] Live projects have a new current next action; completed projects had their whole block deleted
+- [ ] Calendar updates claimed complete only after the calendar provider / tool succeeded
+- [ ] Asked one question on multiple matches or risky deletions; no guessing

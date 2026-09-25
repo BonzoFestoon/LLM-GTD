@@ -76,11 +76,11 @@ report reality.
 ./install.sh ~/my-vault
 ```
 ```
-✅ skill 包 → .cursor/skills/gtd-harness/
-✅ Claude Code 命令 → .claude/commands/（/gtd-* ）
-✅ Codex slash 命令 → ~/.codex/prompts/
+✅ skill package → .cursor/skills/gtd-harness/
+✅ Claude Code commands → .claude/commands/ (/gtd + /gtd-* )
+✅ Codex slash commands → ~/.codex/prompts/ (global /gtd + /gtd-* )
 ✅ Codex agent → .codex/agents/gtd-orchestrator.toml
-── 初始化 memory/gtd/ ──  ✅ 八清单已建
+── Initializing memory/gtd/ ──  ✅ eight lists created
 ```
 
 ---
@@ -93,10 +93,10 @@ report reality.
 ```
 > LLM-GTD:
 ```
-已记并理清：「Renew passport before the summer trip」
-→ projects.md「Renew passport」（成果：有效护照在出行前到手）
-→ next-actions @errands：查最近的受理点与所需材料
-要改归类/动作就说一声。
+Clarified: "Renew passport before the summer trip"
+→ projects.md "Renew passport" (desired outcome: valid passport in hand before the trip)
+→ next-actions @errands: look up the nearest passport office and the documents it needs
+Tell me if you want a different list or action.
 ```
 *It captured first (never lost), then clarified one item and filed it. A multi-step outcome became a
 project with a concrete next action.*
@@ -111,7 +111,7 @@ Help me clear my head.
 ```
 > LLM-GTD walks a trigger list, dumps everything to `inbox.md` **without interrupting**, then:
 ```
-捕捉了 14 项到 inbox。要我现在逐条理清吗？（批量）
+Captured 14 items to the inbox. Want me to clarify them one by one now? (batch)
 ```
 *High-volume capture stays zero-friction; clarify happens as a batch afterward.*
 
@@ -125,11 +125,11 @@ Help me clear my head.
 ```
 > LLM-GTD (silently runs organize hygiene first, then):
 ```
-@电脑 · 30 分钟 · 低精力 —— 现在最值得做：
-1. 回邮件确认下周评审时间（~5 分钟）
-2. 把护照材料清单整理进 reference（~10 分钟）
-3. 草拟周报开头三段（~20 分钟）
-（今天硬约定：16:00 与团队同步 · 该催：上周委派给同事的数据还没回）
+@computer · 30 min · low energy — best to do now:
+1. Reply to the email confirming next week's review time (~5 min)
+2. Put the passport document checklist into reference (~10 min)
+3. Draft the first three paragraphs of the weekly report (~20 min)
+(Today's hard appointments: 16:00 team sync · Follow up: the data delegated to a colleague last week hasn't come back)
 ```
 *Filtered by context + time + energy; priority cross-checked against Horizons. You choose.*
 
@@ -143,12 +143,12 @@ Help me clear my head.
 ```
 > LLM-GTD generates a read-only prep package, cleans mechanical drift, then walks you through:
 ```
-── 系统全景 ── inbox 0 · next-actions 9 · projects 4（stalled 0）· waiting 2 · someday 6
-① Get Clear   ✅ inbox 已清空
-② Get Current 销项 3；该催 1（同事数据）；项目都挂着有效下一步
-③ Get Creative someday「学钢琴」看起来还不到启动时机，保留
-④ Horizons    「重写个人网站」项目不服务于本季任何目标 → 建议砍或移 someday
-下周聚焦 3 件：①… ②… ③…
+── System overview ── inbox 0 · next-actions 9 · projects 4 (stalled 0) · waiting 2 · someday 6
+① Get Clear    ✅ inbox emptied
+② Get Current  crossed off 3; follow up 1 (colleague's data); every project has a valid next action
+③ Get Creative someday "learn piano" doesn't look ready to start yet, keeping it
+④ Horizons     "rewrite personal website" doesn't serve any goal this quarter → suggest cutting or moving to someday
+Next week's 3 focus items: ①… ②… ③…
 ```
 *The AI preps and cleans; **you** do the reflection — that part can't be outsourced.*
 

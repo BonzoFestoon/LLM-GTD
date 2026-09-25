@@ -20,16 +20,16 @@ skill_lines="$(wc -l < "$ROOT/SKILL.md" | tr -d ' ')"
 [ "$skill_lines" -le 120 ] || fail "SKILL.md too long: ${skill_lines} lines"
 ok "SKILL.md <= 120 lines (${skill_lines})"
 
-if grep -q '^## 版本摘要' "$ROOT/SKILL.md"; then
+if grep -q '^## Version summary' "$ROOT/SKILL.md"; then
   fail "SKILL.md still contains version summary"
 fi
 ok "SKILL.md has no version summary"
 
-core_heading_count="$(grep -c '^## 核心清单' "$ROOT/organize/SKILL.md" || true)"
+core_heading_count="$(grep -c '^## Core lists' "$ROOT/organize/SKILL.md" || true)"
 [ "$core_heading_count" -le 1 ] || fail "organize has duplicate core-list headings: $core_heading_count"
 ok "organize has no duplicate core-list definition"
 
-grep -q '^## 动作权限表' "$ROOT/references/list-definitions.md" || fail "list-definitions lacks action permission table"
+grep -q '^## Action permissions' "$ROOT/references/list-definitions.md" || fail "list-definitions lacks action permission table"
 ok "list-definitions carries action permission table"
 
 eval_count="$(grep -c '^| E[0-9][0-9]-' "$ROOT/references/evals.md" || true)"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# gtd_status.sh — 读 memory/gtd/ 全部清单，产出 GTD dashboard（纯 bash，三平台通用）
-# 用法：bash gtd_status.sh
+# gtd_status.sh — read every list in memory/gtd/ and print a GTD dashboard (pure bash, works on all three platforms)
+# Usage: bash gtd_status.sh
 
 set -euo pipefail
 
@@ -10,39 +10,39 @@ VAULT_ROOT="$GTD_WORKSPACE_ROOT"
 GTD_DIR="$VAULT_ROOT/memory/gtd"
 
 if [ ! -d "$GTD_DIR" ]; then
-  echo "memory/gtd/ 不存在。先跑：bash gtd_init.sh"
+  echo "memory/gtd/ does not exist. Run first: bash gtd_init.sh"
   exit 1
 fi
 
-# grep -c 在 0 命中时仍打印 "0" 但退出码为 1 —— 用 || true 吞掉退出码，单值返回
+# grep -c still prints "0" on zero matches but exits 1 — swallow the exit code with || true and return a single value
 cnt() {
   local n
   n=$(grep -cE "$1" "$2" 2>/dev/null) || true
   echo "${n:-0}"
 }
 
-# 统计某文件中 "- [ ] " 开头的未完成项
+# Count open items starting with "- [ ] " in a file
 count_open() {
   local f="$GTD_DIR/$1"
   [ -f "$f" ] || { echo 0; return; }
   cnt '^- \[ \] ' "$f"
 }
 
-# inbox 待理清：bullet 行
+# Inbox items to clarify: bullet lines
 count_inbox() {
   local f="$GTD_DIR/inbox.md"
   [ -f "$f" ] || { echo 0; return; }
   cnt '^- ' "$f"
 }
 
-# projects：## 项目块数（GTD-native 项目用 ## ）
+# projects: number of ## project blocks (GTD-native projects use ## )
 count_projects() {
   local f="$GTD_DIR/projects.md"
   [ -f "$f" ] || { echo 0; return; }
   cnt '^## ' "$f"
 }
 
-# stalled projects：无有效「下一步行动」block link 的项目；「下一步行动：无」按残留处理
+# stalled projects: projects with no valid "Next actions" block link; "Next actions: none" counts as a leftover
 count_stalled() {
   local f="$GTD_DIR/projects.md"
   [ -f "$f" ] || { echo 0; return; }
@@ -51,7 +51,7 @@ count_stalled() {
       return line ~ /\[\[(next-actions|waiting-for)#\^/
     }
     function invalid_next_heading(line) {
-      return line ~ /下一步行动：([[:space:]]*)?(无|没有|无需|不需要|已完成|安排已确认|none|None|N\/A)/
+      return line ~ /Next actions:([[:space:]]*)?(none|None|nothing|not needed|done|Done|completed|confirmed|N\/A)/
     }
     /^## / {
       if (in_project && !has_valid_next) stalled++
@@ -60,7 +60,7 @@ count_stalled() {
       in_next_section=0
       next
     }
-    in_project && /^- 下一步行动：/ {
+    in_project && /^- Next actions:/ {
       in_next_section=1
       if (has_action_link($0)) {
         has_valid_next=1
@@ -83,7 +83,7 @@ count_stalled() {
   ' "$f"
 }
 
-# calendar：日期行
+# calendar: dated lines
 count_calendar() {
   local f="$GTD_DIR/calendar.md"
   [ -f "$f" ] || { echo 0; return; }
@@ -93,19 +93,19 @@ count_calendar() {
 echo "════════════════════════════════════"
 echo "  GTD Dashboard · memory/gtd/"
 echo "════════════════════════════════════"
-printf "  📥 Inbox 待理清       : %s\n" "$(count_inbox)"
+printf "  📥 Inbox to clarify   : %s\n" "$(count_inbox)"
 printf "  ✅ Next Actions       : %s\n" "$(count_open next-actions.md)"
-printf "  🎯 Projects           : %s（其中 stalled≈ %s）\n" "$(count_projects)" "$(count_stalled)"
+printf "  🎯 Projects           : %s (stalled≈ %s)\n" "$(count_projects)" "$(count_stalled)"
 printf "  ⏳ Waiting For        : %s\n" "$(count_open waiting-for.md)"
-printf "  📅 Calendar 硬地形    : %s\n" "$(count_calendar)"
+printf "  📅 Calendar (hard)    : %s\n" "$(count_calendar)"
 printf "  💭 Someday/Maybe      : %s\n" "$(count_open someday-maybe.md)"
 printf "  💡 Product Ideas      : %s\n" "$(count_open product-ideas.md)"
 echo "────────────────────────────────────"
 
-# 提醒信号
+# Alerts
 inbox_n=$(count_inbox)
 stalled_n=$(count_stalled)
-[ "$inbox_n" -gt 0 ] && echo "  ⚠️  收件箱有 $inbox_n 项未理清 → 跑 /gtd-clarify"
-[ "$stalled_n" -gt 0 ] && echo "  ⚠️  约 $stalled_n 个项目缺有效下一步或为已完成残留 → /gtd-organize"
-echo "  🔭 每周回顾（Reflect）是关键成功因子 → /gtd-review"
+[ "$inbox_n" -gt 0 ] && echo "  ⚠️  Inbox has $inbox_n unclarified item(s) → run /gtd-clarify"
+[ "$stalled_n" -gt 0 ] && echo "  ⚠️  ~$stalled_n project(s) lack a valid next action or are completed leftovers → /gtd-organize"
+echo "  🔭 The Weekly Review (Reflect) is the critical success factor → /gtd-review"
 echo "════════════════════════════════════"

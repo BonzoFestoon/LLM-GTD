@@ -1,49 +1,49 @@
-# 核心八清单 + 扩展清单定义（是什么 / 不是什么）
+# Eight Core Lists + Extension List Definitions (what it is / what it isn't)
 
-可信系统的边界。每张清单职责单一，混入异物就失去可信。
+The boundaries of the trusted system. Each list has a single job; mixing in foreign items destroys its trustworthiness.
 
-| 清单 | 是什么 | **不是**什么 | 组织方式 |
+| List | What it is | What it **isn't** | How it's organized |
 |---|---|---|---|
-| `inbox.md` | 未理清的捕捉入口 | 不是待办清单（这里的东西还没被判定） | 先进先出 |
-| `next-actions.md` | 已理清的单步可执行动作行动池 | 不是项目、不是特定时间事，也不是按软工具标签维护的分类系统 | 行动池 + 轻字段：预计时长 / 精力档 / 真实约束；旧 @电脑/@电话/@外出/@家/@议程 分组仅兼容历史 |
-| `projects.md` | >1 步的期望成果 | 不是单步动作、不是模糊愿望、不是完整任务树 | 每条 ## 块 = 成果 + 一个或多个当前下一步 block link + 支持材料指针 |
-| `waiting-for.md` | 委派出去/在等别人的 | 不是自己的下一步 | [人名] + 在等什么 + 约定 + 委派日期 |
-| `calendar.md` | **仅**特定日/时才有意义的硬约定 | 不是普通待办（日历神圣，杂事会毁掉它的可信度） | 按日期 |
-| `someday-maybe.md` | 暂不承诺、孵化中 | 不是已承诺要做的 | 触发条件（什么情况下值得启动） |
-| `product-ideas.md` | 产品、功能、场景、机会域的原始机会与假设；每条还应有 project / next-action 可见性 | 不是普通人生愿望，也不是没有下一步的冷藏 backlog | 机会 / 用户场景 / 假设 / 证据状态 / 升级条件 / GTD 可见性 |
-| `reference.md` | 无需行动的备查 + 项目支持材料 | 不是知识/洞察笔记（那走 ZK 管线） | 备查 / 项目支持两段 |
-| `horizons.md` | 六个高度视野 | 不是任务清单（是方向校准） | 50k→跑道 六层 |
+| `inbox.md` | The capture entry point for unclarified items | Not a to-do list (nothing here has been decided yet) | First in, first out |
+| `next-actions.md` | Action pool of clarified, single-step, doable actions | Not projects, not time-specific items, and not a category system maintained by soft tool tags | Action pool + light fields: Time / Energy / Constraint; legacy @computer/@calls/@errands/@home/@agenda groups kept only for historical compatibility |
+| `projects.md` | Desired outcomes that take >1 step | Not single-step actions, not vague wishes, not a full task tree | Each ## block = outcome + one or more current next-action block links + support material pointers |
+| `waiting-for.md` | Things delegated / waiting on others | Not your own next actions | [Person] + what you're waiting for + agreement + delegated date |
+| `calendar.md` | **Only** hard commitments that matter on a specific day / time | Not ordinary to-dos (the calendar is sacred; clutter destroys its trustworthiness) | By date |
+| `someday-maybe.md` | Not committed yet, incubating | Not things already committed to | Trigger condition (when it becomes worth starting) |
+| `product-ideas.md` | Raw opportunities and assumptions in product, feature, scenario, and opportunity spaces; each should also have project / next-action visibility | Not ordinary life wishes, and not a cold-storage backlog with no next action | Opportunity / user scenario / assumptions / evidence status / promotion criteria / GTD visibility |
+| `reference.md` | Non-actionable reference + project support material | Not knowledge / insight notes (those go to the ZK pipeline) | Two sections: general reference / project support |
+| `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
 
-## 三条最易违反的边界
-1. **next-actions 里塞了多步成果** → 应拆：成果进 projects，第一步留 next-actions。
-2. **calendar 里塞了普通待办** → 日历只放「这天/这点才做」的，其余进 next-actions。
-3. **product-ideas 和 someday 混用** → 产品机会进 `product-ideas.md` 并同步到 project / next-action；普通“也许以后做”进 `someday-maybe.md`。
-4. **GTD 清单里塞了知识笔记** → 知识/洞察走 `fleeting-note` → ZK 管线，不进任何 GTD 清单。
-5. **projects 里塞完整任务树** → 只保留当前可并行的 next-action / waiting-for block links；里程碑、依赖和任务树进 `reference.md` 或项目文档。
+## The boundaries most often violated
+1. **Multi-step outcomes stuffed into next-actions** → split: the outcome goes to projects, the first step stays in next-actions.
+2. **Ordinary to-dos stuffed into the calendar** → the calendar holds only "must happen on this day / at this time"; everything else goes to next-actions.
+3. **Mixing product-ideas and someday** → product opportunities go to `product-ideas.md` and sync to project / next-action; ordinary "maybe someday" goes to `someday-maybe.md`.
+4. **Knowledge notes stuffed into GTD lists** → knowledge / insights go through `fleeting-note` → ZK pipeline, not into any GTD list.
+5. **A full task tree stuffed into projects** → keep only current parallel next-action / waiting-for block links; milestones, dependencies, and task trees go to `reference.md` or a project doc.
 
-## 动作权限表
+## Action permissions
 
-| 动作 | 权限档 | 口径 |
+| Action | Permission tier | Rule |
 |---|---|---|
-| 读取清单、生成 dashboard、生成预回顾包 | 只读 | 不改变 GTD state |
-| 新输入追加到 `inbox.md` | 可自动 | capture 永远先落盘 |
-| 单条 capture 后 clarify 归位 | 可自动 | 只在行动/知识、承诺本身、期望成果不清时问一句 |
-| 从 `inbox.md` 删除已 clarify 的原条目 | 可自动 | 必须已写入目标清单或明确移交 ZK |
-| 移动明显错位条目 | 可自动 | 追加到目标清单后再从原位删除 |
-| 补预计时长 / 精力档 / 真实约束 | 可自动 | 明显不确定时列为待确认 |
-| 删除已完成 next action | 可自动 | 用户明确宣告完成或有强证据 |
-| 删除已完成 project 块 | 可自动 | 期望成果已达成且无仍需推动的下一步 |
-| 起草 stalled project 下一步 | 可自动 | 可 act-then-surface，用户可一句话改 |
-| 启动 someday / 删除 product idea / 砍项目 | 需确认 | 这是承诺判断，不自动拍板 |
-| 写入外部 calendar provider | 条件自动 | 日程信息完整、目标时段无冲突、provider 可达；tool 成功前不得声称完成 |
-| 删除 `calendar.md` 兜底项 | 条件自动 | 已确认写入外部日历，或已移回其他 GTD 清单 |
-| 发消息、催办、通知、委派他人 | 需确认 | 可起草话术，不自动发送 |
-| approve / reject / withdraw / cc approval | 禁止自动 | Approval Radar 只能只读扫描 |
-| 把 Engage 候选排进日历 | 需确认 | 候选是菜单，不是今日承诺 |
+| Read lists, generate dashboard, generate review prep pack | Read-only | Doesn't change GTD state |
+| Append new input to `inbox.md` | Auto | Capture always writes to file first |
+| Clarify and file after a single capture | Auto | Ask one question only when action/knowledge, the commitment itself, or the desired outcome is unclear |
+| Delete a clarified original item from `inbox.md` | Auto | Must already be written to the target list or explicitly handed to ZK |
+| Move clearly misfiled items | Auto | Append to the target list first, then delete from the original spot |
+| Fill in Time / Energy / Constraint | Auto | List as pending confirmation when clearly uncertain |
+| Delete a completed next action | Auto | The user explicitly declared it done or there is strong evidence |
+| Delete a completed project block | Auto | Desired outcome achieved and no next action still needs pushing |
+| Draft a next action for a stalled project | Auto | Act-then-surface; the user can change it in one sentence |
+| Activate someday / delete a product idea / cut a project | Needs confirmation | These are commitment decisions; don't settle them automatically |
+| Write to the external calendar provider | Conditional auto | Event details complete, no conflict in the target slot, provider reachable; never claim done before the tool succeeds |
+| Delete a `calendar.md` fallback item | Conditional auto | Confirmed written to the external calendar, or moved back to another GTD list |
+| Send messages, follow up, notify, delegate to others | Needs confirmation | May draft wording; never send automatically |
+| approve / reject / withdraw / cc approval | Never auto | Approval Radar may only scan read-only |
+| Schedule Engage candidates into the calendar | Needs confirmation | Candidates are a menu, not today's commitments |
 
-## Obsidian 链接规则
+## Obsidian link rules
 
-- 指向 `memory/gtd/` 某个文件内标题：用 `[[文件名#标题|标题]]`，例如 `[[reference#项目支持材料|项目支持材料]]`。
-- 指向 `next-actions.md` / `waiting-for.md` 某条具体行动：优先用 block link，例如 action 行末加 `^na-short-id-YYYYMMDD`，project 里写一个或多个 `[[next-actions#^na-short-id-YYYYMMDD|具体下一步行动]]（约束：需要电脑）`；等待项写 `[[waiting-for#^wf-short-id-YYYYMMDD|等待某人交付什么]]（等待）`。
-- 指向真实独立文件：才用裸 `[[文件名]]`。
-- 不要把清单内标题写成裸 `[[标题]]`，否则 Obsidian 会把它当成待创建的新文件。
+- Pointing to a heading inside a `memory/gtd/` file: use `[[filename#Heading|Heading]]`, e.g. `[[reference#Project support material|Project support material]]`.
+- Pointing to a specific action in `next-actions.md` / `waiting-for.md`: prefer a block link, e.g. append `^na-short-id-YYYYMMDD` to the end of the action line, and write one or more `[[next-actions#^na-short-id-YYYYMMDD|Concrete next action]] (constraint: needs computer)` in the project; waiting items are written `[[waiting-for#^wf-short-id-YYYYMMDD|Waiting for someone to deliver something]] (waiting)`.
+- Pointing to a real standalone file: only then use a bare `[[filename]]`.
+- Don't write in-list headings as bare `[[Heading]]`, or Obsidian will treat it as a new file to be created.

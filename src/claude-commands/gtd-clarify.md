@@ -1,7 +1,7 @@
 ---
 name: gtd-clarify
-description: GTD 理清 — 对 inbox 每项跑决策树（可行动→2分钟/委派/推迟/项目；不可行动→垃圾/someday/reference）并落位
-argument-hint: "[可选：指定只理某几项；留空则理清整个 inbox]"
+description: GTD clarify — runs the decision tree on each inbox item (actionable → 2 minutes / delegate / defer / project; not actionable → trash / someday / reference) and files it
+argument-hint: "[optional: only clarify specific items; leave empty to clarify the whole inbox]"
 allowed-tools:
   - Read
   - Write
@@ -10,7 +10,7 @@ allowed-tools:
   - AskUserQuestion
 ---
 <objective>
-GTD 第二+三步 Clarify+Organize：把 inbox 里的「东西」逐项问成「下一步行动」并落到正确清单。
+GTD steps 2 + 3, Clarify + Organize: question the "stuff" in the inbox item by item into "next actions" and file each in the right list.
 </objective>
 
 <execution_context>
@@ -23,5 +23,5 @@ $ARGUMENTS
 </context>
 
 <process>
-按 clarify/SKILL.md 执行决策树，对 inbox 每项判定「需要行动吗 / 下一步具体动作是什么」，落到对应清单（next-actions 带轻字段标签、>1 步立 project、知识类移交 ZK 管线），落位后从 inbox 删除。识别 2 分钟法则并提示。信息不足时反问一句，不瞎编。
+Run the decision tree in clarify/SKILL.md: for each inbox item decide "is it actionable / what's the next concrete action", file it in the matching list (next-actions with light-field tags, >1 step becomes a project, knowledge handed to the ZK pipeline), and delete it from the inbox after filing. Recognize and flag the two-minute rule. When information is insufficient, ask one question; don't make things up.
 </process>

@@ -1,9 +1,9 @@
-# GTD · clarify（理清+归位）
+# GTD · clarify (clarify + file)
 
-你以 David Allen（GTD）的视角执行。前置检查：当前目录必须装有 GTD harness。先 `cat .cursor/skills/gtd-harness/SKILL.md`（包导航 + routing + 清单定义）。若该文件不存在，告诉用户：「本命令需在已安装 GTD harness 的 vault 内运行，请 cd 到该 vault 后再试」，然后停止，不要继续。
-intent→工具翻译见 .cursor/skills/gtd-harness/references/capability-map.md（cat / sed -i '' / external calendar provider）。可信清单在 memory/gtd/。
+You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/SKILL.md` (package navigation + routing + list definitions). If that file doesn't exist, tell the user: "This command must be run inside a vault with the GTD harness installed; cd into that vault and try again", then stop — don't continue.
+For intent → tool translation see .cursor/skills/gtd-harness/references/capability-map.md (cat / sed -i '' / external calendar provider). The trusted lists live in memory/gtd/.
 
-本命令：读 `cat .cursor/skills/gtd-harness/clarify/SKILL.md` 并执行。对 inbox 每项跑决策树（可行动→2分钟/委派/推迟/项目；不可行动→垃圾/someday/reference），落到正确清单（next-actions 带轻字段、>1步立 project、知识类移交 ZK），落位后从 inbox 删除。特定时间事→外部 calendar provider 可达且日程信息完整则自动写入；缺关键字段只问缺失字段；external calendar provider 不可达或写入失败则记 calendar.md 兜底。
+This command: read `cat .cursor/skills/gtd-harness/clarify/SKILL.md` and execute it. Run the decision tree on each inbox item (actionable → do it in 2 minutes / delegate / defer / project; not actionable → trash / someday / reference), file it in the right list (next-actions with light fields, >1 step becomes a project, knowledge handed to ZK), and delete it from the inbox after filing. Time-specific items → if the external calendar provider is reachable and event details are complete, write automatically; if key fields are missing, ask only for the missing fields; if the external calendar provider is unreachable or the write fails, record it in the calendar.md fallback.
 
 
-用户输入（要处理的内容/参数）：$ARGUMENTS
+User input (content / arguments to process): $ARGUMENTS

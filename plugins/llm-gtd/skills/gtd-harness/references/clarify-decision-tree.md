@@ -1,39 +1,39 @@
-# Clarify 决策树（GTD 最锋利的工序）
+# Clarify Decision Tree (GTD's sharpest step)
 
-对收件箱每一项，逐条走完：
+For every inbox item, walk all the way through:
 
 ```
-这是什么？
+What is it?
 
-┌─ 它需要行动吗？
+┌─ Is it actionable?
 │
-├── 否 ──┬── 没用 / 过期 ────────────→ 🗑️ 删除
-│        ├── 暂不做、但不愿遗忘 ──────→ 💭 someday-maybe.md
-│        ├── 产品 / 功能 / 场景机会 ───→ 💡 product-ideas.md + 🎯 project + ✅ next-action
-│        └── 将来要查 / 支持材料 ─────→ 📚 reference.md
-│                                        （若是知识/洞察 → 移交 ZK 管线 fleeting-note）
+├── No ──┬── Useless / expired ────────────→ 🗑️ Trash
+│        ├── Not now, but don't forget ─────→ 💭 someday-maybe.md (incubate)
+│        ├── Product / feature / scenario opportunity → 💡 product-ideas.md + 🎯 project + ✅ next-action
+│        └── Look up later / support material → 📚 reference.md
+│                                        (if it's knowledge / insight → hand off to the ZK pipeline fleeting-note)
 │
-└── 是 ──→ 下一步具体的物理动作是什么？
-            （必须可见、可执行的物理动作；动词具体，拒绝"处理/跟进/研究"）
+└── Yes ──→ What's the next concrete physical action?
+            (must be a visible, doable physical action; concrete verb — reject "handle / follow up / research")
             │
-            ├── < 2 分钟 ───────────────→ ⚡ 立刻做（two-minute rule），做完销项
-            ├── 该别人做 ───────────────→ ⏳ waiting-for.md（人名+约定+委派日期）
-            └── 自己做、> 2 分钟 ──┬── 特定时间/日才做 → 📅 calendar.md
-                                   └── 尽快做         → ✅ next-actions.md（行动池；写清预计时长 / 精力档 / 真实约束）
+            ├── < 2 minutes ─────────────→ ⚡ Do it (two-minute rule), cross it off when done
+            ├── Someone else should ─────→ ⏳ Delegate it → waiting-for.md (person + agreement + delegated date)
+            └── Mine, > 2 minutes → Defer it ─┬── Time- / day-specific → 📅 calendar.md
+                                              └── As soon as possible  → ✅ next-actions.md (action pool; state Time / Energy / Constraint)
 
-            ※ 若该结果需要 > 1 步才完成：
-              同时在 🎯 projects.md 立项（写期望成果），把当前可执行动作放进 next-actions，再用 block link 挂回项目。
-              若有多个互不等待的当前动作，可以挂多个；有先后依赖的不要写成任务树。
+            ※ If the outcome takes > 1 step to complete:
+              also create a project in 🎯 projects.md (write the desired outcome), put the currently doable action in next-actions, and link it back to the project with a block link.
+              If there are several current actions that don't wait on each other, attach several; don't write sequentially dependent steps as a task tree.
 ```
 
-## 两个判定为什么重要
+## Why the two questions matter
 
-1. **「需要行动吗？」** —— Allen × Luhmann 的分流闸。行动进 GTD，知识进卡片盒。知识堆进 next-actions 会让清单失去「都是可做动作」的可信度。
+1. **"Is it actionable?"** — the Allen × Luhmann triage gate. Actions go into GTD, knowledge goes into the slip box. Piling knowledge into next-actions destroys the list's trustworthiness as "all doable actions".
 
-2. **「下一步具体物理动作是什么？」** —— GTD 的灵魂。
-   - ❌ "资料" / "Project X 规划" / "处理同事 A 的事"（不是动作，是主题）
-   - ✅ "打电话给同事 A，确认资料口径" / "起草 Project X brief 开头三段"
-   - 测试：闭眼能想象自己做这个动作的画面吗？能 = 合格的下一步。
+2. **"What's the next concrete physical action?"** — the soul of GTD.
+   - ❌ "Data" / "Project X planning" / "Deal with Colleague A's thing" (not actions, just topics)
+   - ✅ "Call Colleague A to confirm the data definitions" / "Draft the first three paragraphs of the Project X brief"
+   - Test: can you close your eyes and picture yourself doing it? If yes = a valid next action.
 
-## 2 分钟法则的逻辑
-若下一步动作 < 2 分钟，归档/委派/记录它的成本 ≥ 直接做掉它。所以立刻做，不进系统。
+## The logic of the two-minute rule
+If the next action takes < 2 minutes, the cost of filing / delegating / recording it is ≥ just doing it. So do it immediately; it never enters the system.

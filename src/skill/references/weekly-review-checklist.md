@@ -1,43 +1,43 @@
-# 每周回顾清单（Weekly Review · Allen 标准）
+# Weekly Review Checklist (Allen standard)
 
-> **关键成功因子。** 建议固定时段（如周五下午 60–90 分钟）。节律比完美更重要。
+> **The critical success factor.** Use a fixed time slot (e.g. Friday afternoon, 60–90 minutes). Rhythm matters more than perfection.
 
-## 0. AI 预回顾包（先让系统把脏活做掉）
-- [ ] 跑 `scripts/gtd_review_prep.sh`，拿全景数字 + 风险项 + 确认队列
-- [ ] 自动执行 organize 的机械卫生：错情境、重复、死勾、明显孤儿、stalled 检出
-- [ ] 生成候选：待删/待补下一步/待催办/可能启动的 someday/product ideas 可见性缺口/下周 3 件事
-- [ ] 标出哪些是 AI 已自动处理，哪些必须用户确认
+## 0. AI review prep pack (let the system do the grunt work first)
+- [ ] Run `scripts/gtd_review_prep.sh` to get overall counts + risk items + confirmation queue
+- [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection
+- [ ] Generate candidates: to delete / needing a next action / needing a follow-up / someday items that could be activated / product ideas visibility gaps / next week's 3 things
+- [ ] Mark which items the AI already handled and which must be confirmed by the user
 
-## ① Get Clear（清空）
-- [ ] 收集散落各处的「东西」（脑中、便签、聊天里答应的事）→ 全部捕捉进 inbox
-- [ ] 清空 `inbox.md`：逐项 clarify 到零
+## ① Get Clear
+- [ ] Gather loose "stuff" from everywhere (your head, sticky notes, promises made in chats) → capture it all into the inbox
+- [ ] Empty `inbox.md`: clarify item by item to zero
 
-## ② Get Current（更新）
-- [ ] `next-actions.md`：完成的销项；不再相关的删；每条仍是有效下一步？
-- [ ] `calendar.md`：回看上周（有无遗留收尾）+ 前看本周（硬约定准备好了吗）
-- [ ] `waiting-for.md`：逐条看委派日期，哪些该催了？
-- [ ] `projects.md`：先删掉成果已达成的项目；剩余项目确认挂着至少一个有效下一步 block link；多条只保留可并行动作（stalled 当场补）；成果是否仍想要？
-- [ ] `product-ideas.md`：每条产品机会是否都有 `GTD 可见性`，且能指向 project / next-action？缺失的当场补。
+## ② Get Current
+- [ ] `next-actions.md`: cross off what's done; delete what's no longer relevant; is each still a valid next action?
+- [ ] `calendar.md`: look back at last week (any loose ends?) + look ahead at this week (are hard appointments prepared?)
+- [ ] `waiting-for.md`: check each delegated date — which ones need a follow-up?
+- [ ] `projects.md`: first delete projects whose outcome is achieved; confirm each remaining project has at least one valid next-action block link; keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
+- [ ] `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? Fill any gaps on the spot.
 
-## ③ Get Creative（创造）
-- [ ] `someday-maybe.md`：有哪条成熟了，拉进 active？过时的删
-- [ ] `product-ideas.md`：哪些产品机会需要补证据、删除、降级，或推进到 PRD？这里做产品取舍，不再做结构可见性校验。
-- [ ] 本周有无新念头/项目要加入？
+## ③ Get Creative
+- [ ] `someday-maybe.md`: has anything ripened to pull into active? Delete what's outdated
+- [ ] `product-ideas.md`: which product opportunities need more evidence, deletion, downgrading, or advancing to a PRD? This is product trade-off work, not the structural visibility check.
+- [ ] Any new ideas / projects to add this week?
 
-## ④ Horizons 巡检（纵轴）
-- [ ] 读 `horizons.md`，问：当前项目是否服务于 30k 目标 / 20k 责任领域？
-- [ ] 有没有「高效地做着不该做的事」的项目 → 砍或重估
+## ④ Horizons check (vertical focus)
+- [ ] Read `horizons.md` and ask: do current projects serve the 30k goals / 20k areas of focus?
+- [ ] Any projects where you're "efficiently doing things you shouldn't be doing" → cut or re-evaluate
 
-## ⑤ 三环平衡审计（横轴 · Laura Vanderkam）
-- [ ] 把 20k 责任领域粗分到 career / relationships / self，看是否全压在 career、另两类挂零
-- [ ] 挂零的一类补一件「有名字」的事（具体活动 + 时间 + 频率）占进下周；只提示不评判、可跳过
+## ⑤ Three-ring balance audit (horizontal · Laura Vanderkam)
+- [ ] Roughly sort the 20k areas of focus into career / relationships / self, and see whether everything went to career while the other two got zero
+- [ ] For an empty ring, add one "named" thing (specific activity + time + frequency) to next week; prompt only, no judgment, skippable
 
-## 收尾
-- [ ] 用 `templates/weekly-review-template.md` 记一份快照（落 `05_每日记录/`）
-- [ ] 给出下周最该推进的 **3 件事**；对没排进的做「我没时间=不是优先级」翻译；高价值那件配同周内 back-up slot；重复性的事「三次/周即习惯」
-- [ ] 确认后再落盘：清 inbox、销项、补下一步、移动 someday、补齐 product ideas 可见性、推进/降级/删除 product ideas、更新 waiting-for/projects
+## Close
+- [ ] Record a snapshot with `templates/weekly-review-template.md` (save it in your daily-notes folder)
+- [ ] Give the **3 things** most worth pushing next week; translate what didn't make it in as "I don't have time = it's not a priority"; give the high-value one a same-week back-up slot; for recurring things, "three times a week is a habit"
+- [ ] Write to file only after confirmation: clear the inbox, cross off, add next actions, move someday items, fill product ideas visibility, advance / downgrade / delete product ideas, update waiting-for / projects
 
-## 触发节律建议
-- v1.1：每周固定时段跑 `/gtd-review`；AI 先生成预回顾包，用户只确认少数判断点。
-- 可选自动节律：按 `references/automation-profiles.md` 安装 Weekly Review profile。**需用户明确同意再装**，不默认开启。
-- 定时任务可以生成预回顾包并给出 AI 判断版候选，但不自动删改清单、不写日历、不发消息、不替用户确定下周承诺。
+## Suggested trigger cadence
+- v1.1: run `/gtd-review` at a fixed weekly time; the AI builds the review prep pack first, and the user only confirms a few decision points.
+- Optional automation cadence: install the Weekly Review profile per `references/automation-profiles.md`. **Install only with the user's explicit consent**; not enabled by default.
+- A scheduled task may generate the review prep pack and give AI-judged candidates, but never automatically edits lists, writes to the calendar, sends messages, or decides next week's commitments for the user.

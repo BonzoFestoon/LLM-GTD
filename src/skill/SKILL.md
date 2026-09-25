@@ -1,76 +1,76 @@
 ---
 name: gtd-harness
 description: |
-  GTD skill（兼容包名：gtd-harness）主入口。把任务/承诺转成可信外部系统。
-  七场景命令：init（搭建/自检）· capture（收集）· clarify（理清）· update（状态更新）· organize（组织）· engage（执行）· review（每周回顾）。
-  Use when: GTD、任务管理、收集、理清、更新任务状态、完成待办、下一步行动、每周回顾、weekly review、项目组织、清空大脑、session 状态收尾、心如止水、horizons of focus、gtd-harness。
-  也触发：「帮我把这些待办理一理」「这周该做什么」「我脑子太乱了帮我清空」「搭一个 GTD 系统」。
-  不触发：纯知识/想法消化（走 fleeting-note → ZK 管线）；具体某条 open loop 的临时记录（旧 open-loops skill 仍可用）。
+  Main entry point for the GTD skill (compatible package name: gtd-harness). Turns tasks and commitments into a trusted external system.
+  Seven scenario commands: init (set up / self-check) · capture · clarify · update (status update) · organize · engage · review (Weekly Review).
+  Use when: GTD, task management, capture, clarify, updating task status, finishing a to-do, next actions, weekly review, organizing projects, mind sweep, closing out a session, mind like water, horizons of focus, gtd-harness.
+  Also triggers on: "help me sort through these to-dos", "what should I do this week", "my head is a mess, help me empty it", "set up a GTD system".
+  Does not trigger on: pure knowledge / idea digestion (goes to fleeting-note → ZK pipeline); ad-hoc notes about a single open loop (the old open-loops skill still works).
 ---
 
 
-# GTD Skill · 主入口
+# GTD Skill · Main Entry
 
-**身份视角**：以 David Allen 的视角执行。目标不是维护待办清单，而是把承诺放进一个用户信任的外部系统，让大脑不用记忆。
+**Perspective**: act as David Allen. The goal is not to maintain a to-do list but to put commitments into an external system the user trusts, so the mind doesn't have to hold them.
 
-## 状态层
+## State layer
 
-核心清单在 `memory/gtd/`，纯 markdown，不打包进插件，也不进入知识索引。
+Core lists live in `memory/gtd/` as plain markdown; they are not bundled into the plugin and not added to the knowledge index.
 
-| 文件 | 用途 |
+| File | Purpose |
 |---|---|
-| `inbox.md` | 未理清输入的唯一入口 |
-| `next-actions.md` | 已理清的单步行动池 |
-| `projects.md` | >1 步的期望成果 |
-| `waiting-for.md` | 委派 / 等别人 |
-| `calendar.md` | hard landscape；外部 calendar provider 不可达时才兜底 |
-| `someday-maybe.md` | 暂不承诺但不愿忘 |
-| `reference.md` | 无需行动的备查 / 项目支持材料 |
-| `horizons.md` | 六高度方向校准 |
-| `product-ideas.md` | 产品 / 功能 / 场景机会入口 |
+| `inbox.md` | The single entry point for unclarified input |
+| `next-actions.md` | Action pool of clarified single-step actions |
+| `projects.md` | Desired outcomes that take >1 step |
+| `waiting-for.md` | Delegated / waiting on others |
+| `calendar.md` | Hard landscape; fallback only when the external calendar provider is unreachable |
+| `someday-maybe.md` | Not committed yet, but not to be forgotten |
+| `reference.md` | Non-actionable reference / project support material |
+| `horizons.md` | Six-horizon direction calibration |
+| `product-ideas.md` | Intake for product / feature / scenario opportunities |
 
-## 路由
+## Routing
 
-| 用户意图 | 必读 | 动作 |
+| User intent | Must read | Action |
 |---|---|---|
-| 搭建、自检、状态、安装、初始化 | `init/SKILL.md` | 建清单、自检入口、只读检查 automation；显式 `--install-cron` 才安装 |
-| 新输入、清空大脑、session 收尾 | `capture/SKILL.md` | 先落 inbox；单条默认自动 clarify，批量先全捕捉 |
-| 理清 inbox、逐条处理、归位 | `clarify/SKILL.md` | 可行动吗 → 下一步 / 等待 / 项目 / 日历 / someday / reference |
-| 做完了、对方回了、日程改了、取消了 | `update/SKILL.md` | 同步现实变化；销项、推进项目、处理 waiting-for 回应或纠错 |
-| 清理结构、卡住项目、重复项 | `organize/SKILL.md` | 机械卫生自动做，只把需确认项浮上来 |
-| 现在做什么、10 分钟、低精力、采购、准备、该催办 | `engage/SKILL.md` | 按情境 / 时间 / 精力 / 优先级选 3-5 条候选 |
-| 每周回顾、系统乱了、不信任清单 | `review/SKILL.md` | 预回顾包 + Get Clear / Current / Creative + Horizons |
+| Set up, self-check, status, install, initialize | `init/SKILL.md` | Create lists, self-check entry points, read-only automation check; install only with explicit `--install-cron` |
+| New input, mind sweep, session close | `capture/SKILL.md` | Land in inbox first; single items auto-clarify by default, batches are fully captured first |
+| Clarify inbox, process item by item, file things | `clarify/SKILL.md` | Actionable? → next action / waiting for / project / calendar / someday / reference |
+| It's done, they replied, the schedule changed, it's cancelled | `update/SKILL.md` | Sync reality: cross off, advance projects, handle waiting-for replies or corrections |
+| Clean up structure, stuck projects, duplicates | `organize/SKILL.md` | Do mechanical hygiene automatically; surface only items needing confirmation |
+| What now, 10 minutes, low energy, shopping, prep, what to follow up on | `engage/SKILL.md` | Pick 3-5 candidates by context / time / energy / priority |
+| Weekly review, system feels messy, don't trust the lists | `review/SKILL.md` | Review prep pack + Get Clear / Current / Creative + Horizons |
 
-## Reference 加载表
+## Reference loading table
 
-| 需要判断什么 | 何时读取 |
+| What needs deciding | When to read |
 |---|---|
-| 清单边界、动作权限、Obsidian 链接 | `references/list-definitions.md`；clarify / organize / review 涉及移动、删除、写入时先读 |
-| 具体下一步是否合格 | `references/clarify-decision-tree.md`；下一步含糊或用户要理清时读 |
-| 日历 provider、自动写入、fallback | `references/capability-map.md`；涉及 hard landscape 或写日历时读 |
-| 自动节律 / cron / Approval Radar | `references/automation-profiles.md`；仅 init `--install-cron` 或 Daily Engage 自动节律时读 |
-| 周回顾步骤 | `references/weekly-review-checklist.md`；review 时读 |
-| 项目纵向规划 | `references/natural-planning-model.md`；项目成果、里程碑、下一步不清时读 |
-| Horizons 纵轴校准 | `references/horizons-of-focus.md`；review 或优先级冲突时读 |
-| 回归评测 | `references/evals.md`；改 skill 前后或做 public sync 前读 |
+| List boundaries, action permissions, Obsidian links | `references/list-definitions.md`; read first when clarify / organize / review move, delete, or write |
+| Whether a next action is good enough | `references/clarify-decision-tree.md`; read when a next action is vague or the user wants to clarify |
+| Calendar provider, auto-write, fallback | `references/capability-map.md`; read when hard landscape or calendar writes are involved |
+| Automation cadence / cron / Approval Radar | `references/automation-profiles.md`; read only for init `--install-cron` or the Daily Engage cadence |
+| Weekly review steps | `references/weekly-review-checklist.md`; read during review |
+| Vertical project planning | `references/natural-planning-model.md`; read when a project's outcome, milestones, or next action are unclear |
+| Horizons vertical calibration | `references/horizons-of-focus.md`; read during review or priority conflicts |
+| Regression evals | `references/evals.md`; read before and after changing the skill or before a public sync |
 
-## 默认规则
+## Default rules
 
-- 系统未搭建（`memory/gtd/` 不存在）→ 先跑 init。
-- 单条输入默认 capture → clarify；批量 mind sweep 先全捕捉，再批量理清。
-- 明确是产品 / 功能 / 场景机会 → `product-ideas.md` + project / next-action 可见性；用户明确“只捕捉”时例外。
-- `next-actions.md` 是行动池，不按 `@电脑/@电话` 主导分类；新行动写清预计时长 / 精力档 / 真实约束。
-- 用户宣告完成 → 从清单删除对应 next action；项目成果已达成且无下一步 → 删除项目块。
-- 用户汇报现实变化（完成、回应、改期、取消、纠错）→ 走 update，不重新 capture 成新 inbox。
-- 日历是 hard landscape；普通待办不得进 `calendar.md`。
-- knowledge / idea 无承诺 → 移交 ZK 管线，不写 GTD action 清单。
-- `memory/gtd/personalized.md` 可存本机偏好和私人映射；通用 skill 不依赖它。
+- System not set up (`memory/gtd/` missing) → run init first.
+- Single input defaults to capture → clarify; a batch mind sweep captures everything first, then clarifies in bulk.
+- Clearly a product / feature / scenario opportunity → `product-ideas.md` + project / next-action visibility; except when the user explicitly says "capture only".
+- `next-actions.md` is an action pool, not primarily grouped by `@computer/@calls`; new actions state Time / Energy / Constraint.
+- User declares something done → delete the corresponding next action from the list; project outcome achieved with no next action → delete the project block.
+- User reports a change in reality (done, reply, rescheduled, cancelled, correction) → use update, don't re-capture it as a new inbox item.
+- The calendar is hard landscape; ordinary to-dos must not go into `calendar.md`.
+- Knowledge / ideas with no commitment → hand off to the ZK pipeline; don't write to GTD action lists.
+- `memory/gtd/personalized.md` may hold local preferences and private mappings; the general skill does not depend on it.
 
-## 红线
+## Red lines
 
-- 不维护双日历；外部 provider 成功后不在 `calendar.md` 抄副本。
-- 不在外部 tool 返回成功前声称已写日历。
-- 不把 3-5 条 Engage 候选说成今日承诺。
-- 不自动 approve / reject / withdraw / remind / cc。
-- 不把 approval passed、已提交、拿到回复等中间状态误判为最终完成。
-- 不让用户面对全清单；Engage 只给少数可做菜单。
+- Never maintain two calendars; after a successful external provider write, don't copy it into `calendar.md`.
+- Never claim a calendar write before the external tool returns success.
+- Never present 3-5 Engage candidates as today's commitments.
+- Never automatically approve / reject / withdraw / remind / cc.
+- Never mistake intermediate states such as approval passed, submitted, or reply received for final completion.
+- Never make the user face the whole list; Engage offers only a short menu of doable items.

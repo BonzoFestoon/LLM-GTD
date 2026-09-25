@@ -1,13 +1,13 @@
 ---
 name: gtd-engage
-description: GTD 执行 — 按情境/可用时间/精力/优先级，从清单给出「现在该做什么」
-argument-hint: "[可选：当前情境/可用时间/精力，如 '@电脑 有1小时 精力中']"
+description: GTD engage — says "what to do right now" from the lists by context / time available / energy / priority
+argument-hint: "[optional: current context / time available / energy, e.g. '@computer 1 hour medium energy']"
 allowed-tools:
   - Read
   - Bash
 ---
 <objective>
-GTD 第五步 Engage：用四要素模型从 next-actions 筛出「此刻最该做」的候选。
+GTD step 5, Engage: use the four-criteria model to filter "best to do right now" candidates from next-actions.
 </objective>
 
 <execution_context>
@@ -20,5 +20,5 @@ $ARGUMENTS
 </context>
 
 <process>
-按 engage/SKILL.md 执行：问清/推断情境+时间+精力，从 next-actions 筛 3-5 条候选并标时长，优先级向上对照 horizons，顺带点出今天的硬约定与该催的等待项。缺要素时反问一句。
+Follow engage/SKILL.md: ask about / infer context + time + energy, filter 3-5 candidates from next-actions with time estimates, check priority upward against the horizons, and also flag today's hard appointments and waiting-for items due for a follow-up. If a criterion is missing, ask one question.
 </process>

@@ -1,72 +1,72 @@
-# GTD 自动节律 Profiles
+# GTD Automation Cadence Profiles
 
-> 目的：把可复用的 GTD cron/automation 变成少数可信节律，而不是一套后台任务森林。
-> 默认 `gtd_init.sh` 只做只读检查；用户显式请求 `--install-cron` 时，由当前 agent / 平台 automation 工具创建或更新，不由 shell 手写 automation 文件。
+> Purpose: turn reusable GTD cron/automation into a few trusted cadences, not a forest of background tasks.
+> By default `gtd_init.sh` only does a read-only check; when the user explicitly requests `--install-cron`, the current agent / platform automation tool creates or updates them — the shell never hand-writes automation files.
 
-## 安装原则
+## Install principles
 
-1. **显式创建**：只有用户说“安装/初始化 GTD cron”或使用 `--install-cron` 时才创建或更新后台任务。
-2. **工具创建**：Codex 场景必须调用 `automation_update`；不要直接写 `~/.codex/automations`。
-3. **低频优先**：默认安装 Weekly Review 和 Monthly Reflect；Daily Engage 作为执行入口随 `--install-cron` 一起安装/更新。
-4. **一类只装一个默认入口**：Daily Engage 若已有上午或晚间入口，沿用现有入口；若都没有，默认创建上午入口，避免一天被系统打扰两次。
-5. **只给菜单，不替承诺**：所有自动节律都不能把普通 next actions 自动排进日历，也不能把 3-5 条候选说成今日承诺。
-6. **Approval Radar 只读扫描**：可以发现当前用户相关的 approval 状态变化、待确认项和卡住项，但不能自动同意、拒绝、撤回、催办或抄送。
+1. **Explicit creation**: create or update background tasks only when the user says "install / initialize GTD cron" or uses `--install-cron`.
+2. **Tool creation**: in Codex you must call `automation_update`; never write `~/.codex/automations` directly.
+3. **Low frequency first**: install Weekly Review and Monthly Reflect by default; Daily Engage, as the engage entry point, is installed / updated together with `--install-cron`.
+4. **One default entry per kind**: for Daily Engage, if a morning or evening entry already exists, reuse it; if neither exists, create the morning entry by default, so the system doesn't interrupt the user twice a day.
+5. **Offer a menu, never commit for the user**: no automation cadence may auto-schedule ordinary next actions into the calendar, or present 3-5 candidates as today's commitments.
+6. **Approval Radar scans read-only**: it may detect approval status changes, pending confirmations, and stuck items relevant to the current user, but may never automatically approve, reject, withdraw, remind, or cc.
 
-## Profile 总览
+## Profile overview
 
-| Profile | 推荐度 | 示例 id | 用途 | 边界 |
+| Profile | Recommendation | Example id | Purpose | Boundary |
 |---|---|---|---|---|
-| Weekly Review | 推荐安装 | `gtd-ai` | 每周一次真正 AI 判断版回顾：系统可信度、结构问题、下周 3 件事、容量冲突、催办话术 | 不自动删除、不砍项目、不发消息、不写日历、不替用户做高后果承诺 |
-| Monthly Reflect | 推荐安装 | `gtd-2` | 每月审查 someday-maybe、product-ideas、horizons 与未来 30 天容量 | 用 Reflect 词汇，不叫 organize；只给启动/保留/删除/补信息建议 |
-| Daily Engage + Approval Radar | 随 `--install-cron` 安装/更新 | `gtd` / `gtd-engage` | 每日轻量选择“现在/今晚/明早怎么用第一段时间”，并带 Approval Radar | 不是 daily review；不全量重扫 projects/someday/product-ideas/horizons |
-| Session Clarify | 高级可选 | `gtd-session-clarify` | 扫 session 里的真实承诺并 clarify 归位 | session-provider 特化；高频且扫描面大，不进入通用 init 默认建议 |
+| Weekly Review | Recommended | `gtd-ai` | A true AI-judged review once a week: system trustworthiness, structural issues, next week's 3 things, capacity conflicts, follow-up messages | Never auto-delete, cut projects, send messages, write to the calendar, or make high-consequence commitments for the user |
+| Monthly Reflect | Recommended | `gtd-2` | Monthly review of someday-maybe, product-ideas, horizons, and the next 30 days' capacity | Uses Reflect vocabulary, not organize; only suggests activate / keep / delete / add information |
+| Daily Engage + Approval Radar | Installed / updated with `--install-cron` | `gtd` / `gtd-engage` | A light daily choice of "how to use the first block of time now / tonight / tomorrow morning", with Approval Radar | Not a daily review; never fully re-scans projects/someday/product-ideas/horizons |
+| Session Clarify | Advanced, optional | `gtd-session-clarify` | Scan sessions for real commitments and clarify / file them | Session-provider specific; high frequency and wide scan surface, not part of init's default suggestions |
 
-## Daily Engage + Approval Radar 标准边界
+## Daily Engage + Approval Radar standard boundary
 
-Daily Engage 是 Allen 的 Engage，不是 Review。它只回答“下一段时间怎么用”，输出少数候选菜单。
+Daily Engage is Allen's Engage, not Review. It answers only "how to use the next block of time", outputting a small candidate menu.
 
-必须做：
-- 读取 hard landscape：优先首选 calendar provider；不可达时按 fallback provider chain 降级；全部不可达时读 `calendar.md` 并说明限制。
-- 计算当前/第一段可用时间窗；若与用户口头时间冲突，取更小者。
-- 用四标准筛选行动池：情境 / 时间 / 精力 / 优先级。
-- 扫 Approval Radar：只保留需要行动或状态变化的 approval item；没有就写“今日无 approval 动作”。
-- 输出容量判断：绿 / 黄 / 红；过载时只给删、延期、委派、降级建议。
+Must do:
+- Read the hard landscape: prefer the preferred calendar provider; if unreachable, fall back along the fallback provider chain; if all are unreachable, read `calendar.md` and state the limitation.
+- Compute the current / first available time window; if it conflicts with the time the user states, use the smaller one.
+- Filter the action pool by the four criteria: context / time / energy / priority.
+- Scan Approval Radar: keep only approval items needing action or with status changes; if none, write "no approval actions today".
+- Output a capacity judgment: green / yellow / red; when overloaded, only suggest delete, defer, delegate, downgrade.
 
-不得做：
-- 不把 ordinary next actions 自动塞进日历。
-- 不把 approval passed 误判为最终到账；真实完成条件仍以到账、交付或用户定义的闭环为准。
-- 不自动 approve、reject、withdraw、remind 或 cc。
-- 不把 Approval Radar 失败当成整个 Engage 失败；缺少只读权限时说明缺口，继续完成 Engage。
+Must not do:
+- Never cram ordinary next actions into the calendar automatically.
+- Never mistake approval passed for payment received; real completion is still payment received, delivery, or the user-defined loop closure.
+- Never automatically approve, reject, withdraw, remind, or cc.
+- Never treat an Approval Radar failure as a failure of the whole Engage; if read-only permission is missing, state the gap and finish Engage.
 
-## Approval Radar 检查项
+## Approval Radar checks
 
-运行环境有 approval provider capability 时，Daily Engage 读取对应 approval provider adapter，执行只读扫描：
+When the runtime has an approval provider capability, Daily Engage reads the corresponding approval provider adapter and does a read-only scan:
 
-1. 先检查 approval provider adapter 是否可用；不要输出 token 或 secret。
-2. 扫描当前用户提交的 approval，重点看仍进行中的实例和 GTD `waiting-for.md` / `reference.md` 里记录过的 approval id。
-3. 扫描他人提交、需要当前用户确认的 approval；缺少只读权限时只报告缺口，不尝试自动授权。
-4. 若 approval status 变化会影响 GTD truth，可保守更新 waiting-for/reference：例如从“等 approval”改成“按约定日期核对到账”；但不得把中间状态当成完成。
+1. First check whether the approval provider adapter is available; never output tokens or secrets.
+2. Scan approvals submitted by the current user, focusing on in-progress instances and approval ids recorded in GTD `waiting-for.md` / `reference.md`.
+3. Scan approvals submitted by others that need the current user's confirmation; if read-only permission is missing, report the gap only and never attempt to authorize automatically.
+4. If an approval status change affects GTD truth, you may conservatively update waiting-for/reference: e.g. from "waiting for approval" to "check payment received on the agreed date"; but never treat an intermediate state as done.
 
-## init 口径
+## init rules
 
-`gtd_init.sh --status` 只报告这些 profile 的安装现状：
+`gtd_init.sh --status` only reports the install status of these profiles:
 - Weekly Review
 - Monthly Reflect
-- Daily Engage（上午或晚间）
+- Daily Engage (morning or evening)
 
-若用户说“安装 GTD 自动节律 / 创建 cron / 按建议装”或传入 `--install-cron`，再按本文件创建或更新对应 automation。默认安装顺序：
+If the user says "install the GTD automation cadence / create cron / install as suggested" or passes `--install-cron`, create or update the corresponding automation per this file. Default install order:
 1. Weekly Review
 2. Monthly Reflect
-3. Daily Engage + Approval Radar（未选择时沿用本机已有 daily engage；无已有入口时创建上午入口）
+3. Daily Engage + Approval Radar (if not chosen, reuse the existing local daily engage; with no existing entry, create the morning entry)
 
-Session Clarify 不进默认安装序列，只在用户明确要“自动扫描 Codex session / 每日整理 session 承诺”时安装。
+Session Clarify is not in the default install sequence; install it only when the user explicitly wants to "scan Codex sessions automatically / organize session commitments daily".
 
-## Codex 创建规则
+## Codex creation rules
 
-当 `gtd-init` 在 Codex 中执行 `--install-cron`：
+When `gtd-init` runs `--install-cron` in Codex:
 
-1. 先读取现有 automation toml，匹配 `gtd-ai`、`gtd-2`、`gtd`、`gtd-engage`，避免重复创建。
-2. 已存在的 profile 用 `automation_update` 更新，保留原有启用状态、模型、工作区，除非 profile 本身需要补关键 prompt 边界。
-3. 缺失的 Weekly Review / Monthly Reflect / Daily Engage 用 `automation_update` 创建。
-4. 创建或更新后，运行 `gtd_init.sh --status`，确认状态能被 init 看见。
-5. 不展示底层调度字符串；只用人话说明节律名称、是否已安装、是否 active。
+1. First read the existing automation toml files, matching `gtd-ai`, `gtd-2`, `gtd`, `gtd-engage`, to avoid creating duplicates.
+2. Update existing profiles with `automation_update`, preserving their enabled state, model, and workspace, unless the profile itself needs key prompt boundaries added.
+3. Create missing Weekly Review / Monthly Reflect / Daily Engage with `automation_update`.
+4. After creating or updating, run `gtd_init.sh --status` to confirm init can see the status.
+5. Don't show the underlying schedule strings; describe the cadence name, whether it's installed, and whether it's active in plain language.

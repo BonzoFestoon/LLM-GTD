@@ -1,73 +1,73 @@
 #!/usr/bin/env bash
-# gtd-harness installer — 把 GTD harness 装到一个工作区（vault），并打通三平台触发。
+# gtd-harness installer — installs the GTD harness into a workspace (vault) and wires up triggers on all three platforms.
 #
-# 用法：
-#   ./install.sh [VAULT_DIR]        # 默认 VAULT_DIR = 当前目录
-#   ./install.sh ~/notes            # 装到指定工作区
+# Usage:
+#   ./install.sh [VAULT_DIR]        # default VAULT_DIR = current directory
+#   ./install.sh ~/notes            # install into the given workspace
 #
-# 装什么：
-#   1. skill 包          → <VAULT>/.cursor/skills/gtd-harness/
-#   2. Claude Code 命令  → <VAULT>/.claude/commands/gtd*.md      （/gtd + /gtd-* slash 命令）
-#   3. Codex slash 命令  → ${CODEX_HOME:-~/.codex}/prompts/gtd*.md（全局，含 /gtd）
-#   4. Codex agent       → <VAULT>/.codex/agents/gtd-orchestrator.toml
-#   5. 跑 gtd_init.sh    → 建 <VAULT>/memory/gtd/ 八清单（幂等）
-#   Cursor 关键词触发 + AGENTS.md 自动路由为手动步骤（见末尾提示）。
+# What gets installed:
+#   1. skill package      → <VAULT>/.cursor/skills/gtd-harness/
+#   2. Claude Code commands → <VAULT>/.claude/commands/gtd*.md      (/gtd + /gtd-* slash commands)
+#   3. Codex slash commands → ${CODEX_HOME:-~/.codex}/prompts/gtd*.md (global, includes /gtd)
+#   4. Codex agent        → <VAULT>/.codex/agents/gtd-orchestrator.toml
+#   5. run gtd_init.sh    → creates the <VAULT>/memory/gtd/ eight lists (idempotent)
+#   Cursor keyword triggers + AGENTS.md auto-routing are manual steps (see the note at the end).
 
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT="${1:-$(pwd)}"
-VAULT="$(cd "$VAULT" && pwd)"   # 绝对化
+VAULT="$(cd "$VAULT" && pwd)"   # make absolute
 CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
 
 echo "GTD Harness installer"
-echo "  仓库：$REPO"
-echo "  工作区（VAULT）：$VAULT"
+echo "  Repo: $REPO"
+echo "  Workspace (VAULT): $VAULT"
 echo ""
 
-# 1. skill 包
+# 1. skill package
 mkdir -p "$VAULT/.cursor/skills/gtd-harness"
 cp -R "$REPO/src/skill/." "$VAULT/.cursor/skills/gtd-harness/"
-# 同步 Codex prompt 模板进 skill 包，保证单独跑 gtd_init.sh 也能安装/刷新 /gtd*。
+# Sync the Codex prompt templates into the skill package, so running gtd_init.sh alone can also install/refresh /gtd*.
 mkdir -p "$VAULT/.cursor/skills/gtd-harness/templates/codex-prompts"
 cp "$REPO"/src/codex-prompts/gtd*.md "$VAULT/.cursor/skills/gtd-harness/templates/codex-prompts/"
-echo "✅ skill 包 → .cursor/skills/gtd-harness/"
+echo "✅ skill package → .cursor/skills/gtd-harness/"
 
-# 2. Claude Code 命令（把 __VAULT__ 占位替换成真实绝对路径）
+# 2. Claude Code commands (replace the __VAULT__ placeholder with the real absolute path)
 mkdir -p "$VAULT/.claude/commands"
 for f in "$REPO"/src/claude-commands/gtd*.md; do
   sed "s|__VAULT__|$VAULT|g" "$f" > "$VAULT/.claude/commands/$(basename "$f")"
 done
-echo "✅ Claude Code 命令 → .claude/commands/（/gtd + /gtd-* ）"
+echo "✅ Claude Code commands → .claude/commands/ (/gtd + /gtd-* )"
 
-# 3. Codex slash 命令（全局；Codex prompts 只支持 CODEX_HOME 级）
+# 3. Codex slash commands (global; Codex prompts only support the CODEX_HOME level)
 mkdir -p "$CODEX_HOME_DIR/prompts"
 cp "$REPO"/src/codex-prompts/gtd*.md "$CODEX_HOME_DIR/prompts/"
-echo "✅ Codex slash 命令 → $CODEX_HOME_DIR/prompts/（全局 /gtd + /gtd-* ）"
+echo "✅ Codex slash commands → $CODEX_HOME_DIR/prompts/ (global /gtd + /gtd-* )"
 
 # 4. Codex agent
 mkdir -p "$VAULT/.codex/agents"
 cp "$REPO"/src/codex-agents/*.toml "$VAULT/.codex/agents/"
 echo "✅ Codex agent → .codex/agents/gtd-orchestrator.toml"
 
-# 5. 初始化可信系统
+# 5. Initialize the trusted system
 echo ""
-echo "── 初始化 memory/gtd/ ──"
+echo "── Initializing memory/gtd/ ──"
 bash "$VAULT/.cursor/skills/gtd-harness/scripts/gtd_init.sh"
 
-# 手动步骤提示
+# Manual steps
 cat <<'NOTE'
 
-── 两步手动接线（可选，让「说人话即触发」）──
+── Two manual wiring steps (optional, for "triggers on plain language") ──
 
-A) Cursor 关键词触发：把 snippets/cursor-skill-rules.json 里的 "gtd-harness" 条目
-   合并进你的 <VAULT>/.cursor/skill-rules.json 的 "skills" 对象。
+A) Cursor keyword triggers: merge the "gtd-harness" entry from snippets/cursor-skill-rules.json
+   into the "skills" object of your <VAULT>/.cursor/skill-rules.json.
 
-B) Codex「说人话即触发」：把 snippets/AGENTS.routing.md 的内容追加到你的
-   <VAULT>/AGENTS.md（放在工具/命令约定一节，避开任何 mirror 块）。
+B) Codex "triggers on plain language": append the contents of snippets/AGENTS.routing.md to your
+   <VAULT>/AGENTS.md (in the tool/command conventions section, away from any mirror blocks).
 
-完成。用法：
-  Claude Code：  /gtd  /gtd-init  /gtd-capture  /gtd-clarify  /gtd-update  /gtd-organize  /gtd-engage  /gtd-review
-  Codex：        /gtd 或 /gtd-*；也可以直接说人话
-  全景仪表盘：    bash .cursor/skills/gtd-harness/scripts/gtd_status.sh
+Done. Usage:
+  Claude Code:  /gtd  /gtd-init  /gtd-capture  /gtd-clarify  /gtd-update  /gtd-organize  /gtd-engage  /gtd-review
+  Codex:        /gtd or /gtd-*; or just talk in plain language
+  Dashboard:    bash .cursor/skills/gtd-harness/scripts/gtd_status.sh
 NOTE

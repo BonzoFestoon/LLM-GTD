@@ -1,7 +1,7 @@
 ---
 name: gtd-review
-description: GTD 每周回顾（关键成功因子）— AI 预回顾包 + Get Clear / Current / Creative + Horizons
-argument-hint: "[可选：'monthly' 触发月度深度回顾]"
+description: GTD Weekly Review (the critical success factor) — AI review prep pack + Get Clear / Current / Creative + Horizons
+argument-hint: "[optional: 'monthly' for a deeper monthly review]"
 allowed-tools:
   - Read
   - Write
@@ -10,7 +10,7 @@ allowed-tools:
   - AskUserQuestion
 ---
 <objective>
-GTD 第四步 Reflect：每周回顾，保养系统的可信度。Allen 称之为关键成功因子。
+GTD step 4, Reflect: the Weekly Review, maintaining the system's trustworthiness. Allen calls it the critical success factor.
 </objective>
 
 <execution_context>
@@ -23,5 +23,5 @@ $ARGUMENTS
 </context>
 
 <process>
-按 review/SKILL.md 执行：先跑 `scripts/gtd_review_prep.sh` 生成只读预回顾包，缺脚本时退回 dashboard + 手动扫描；再做 organize 机械卫生，把需用户拍板的判断点收束成一批；最后按 ①Get Clear（清空 inbox）②Get Current（过 next-actions/calendar/waiting/projects，stalled 当场补）③Get Creative（someday 重估）④Horizons 巡检推进。用 weekly-review-template 记快照（落 05_每日记录/），收尾给系统状态总结 + 下周 3 件事。
+Follow review/SKILL.md: first run `scripts/gtd_review_prep.sh` to generate the read-only review prep pack, falling back to the dashboard + a manual scan if the script is missing; then do organize's mechanical hygiene, gathering the points needing the user's decision into one batch; finally proceed through ① Get Clear (empty the inbox) ② Get Current (go through next-actions / calendar / waiting / projects, fixing stalled ones on the spot) ③ Get Creative (re-evaluate someday) ④ Horizons check. Record a snapshot with weekly-review-template (save it in your daily-notes folder), and close with a system status summary + next week's 3 things.
 </process>

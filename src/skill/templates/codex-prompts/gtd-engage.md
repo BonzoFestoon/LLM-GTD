@@ -1,9 +1,9 @@
-# GTD · engage（执行）
+# GTD · engage
 
-你以 David Allen（GTD）的视角执行。前置检查：当前目录必须装有 GTD harness。先 `cat .cursor/skills/gtd-harness/SKILL.md`（包导航 + routing + 清单定义）。若该文件不存在，告诉用户：「本命令需在已安装 GTD harness 的 vault 内运行，请 cd 到该 vault 后再试」，然后停止，不要继续。
-intent→工具翻译见 .cursor/skills/gtd-harness/references/capability-map.md（cat / sed -i '' / external calendar provider）。可信清单在 memory/gtd/。
+You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/SKILL.md` (package navigation + routing + list definitions). If that file doesn't exist, tell the user: "This command must be run inside a vault with the GTD harness installed; cd into that vault and try again", then stop — don't continue.
+For intent → tool translation see .cursor/skills/gtd-harness/references/capability-map.md (cat / sed -i '' / external calendar provider). The trusted lists live in memory/gtd/.
 
-本命令：读 `cat .cursor/skills/gtd-harness/engage/SKILL.md` 并执行。按情境/可用时间/精力/优先级从 next-actions 筛 3-5 条「现在该做」，标时长。今天硬约定先读外部 calendar provider、不可达降级 calendar.md。缺要素先反问一句。
+This command: read `cat .cursor/skills/gtd-harness/engage/SKILL.md` and execute it. Filter 3-5 "do now" items from next-actions by context / time available / energy / priority, with time estimates. For today's hard appointments, read the external calendar provider first, falling back to calendar.md if unreachable. If a criterion is missing, ask one question first.
 
 
-用户输入（要处理的内容/参数）：$ARGUMENTS
+User input (content / arguments to process): $ARGUMENTS
