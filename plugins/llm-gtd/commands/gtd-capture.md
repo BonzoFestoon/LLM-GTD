@@ -13,8 +13,8 @@ GTD step 1, Capture (AI-native): first write to memory/gtd/inbox.md with zero fr
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
-@__VAULT__/.cursor/skills/gtd-harness/capture/SKILL.md
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/SKILL.md` (bundled with the plugin; no install step needed).
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/capture/SKILL.md` (bundled with the plugin; no install step needed).
 </execution_context>
 
 <context>

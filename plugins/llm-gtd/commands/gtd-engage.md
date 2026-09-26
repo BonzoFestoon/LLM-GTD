@@ -11,8 +11,8 @@ GTD step 5, Engage: use the four-criteria model to filter "best to do right now"
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
-@__VAULT__/.cursor/skills/gtd-harness/engage/SKILL.md
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/SKILL.md` (bundled with the plugin; no install step needed).
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/engage/SKILL.md` (bundled with the plugin; no install step needed).
 </execution_context>
 
 <context>

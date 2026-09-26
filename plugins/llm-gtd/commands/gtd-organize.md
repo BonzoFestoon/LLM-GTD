@@ -13,8 +13,8 @@ GTD step 3, structural hygiene (AI-native): this is the step the AI should most 
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
-@__VAULT__/.cursor/skills/gtd-harness/organize/SKILL.md
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/SKILL.md` (bundled with the plugin; no install step needed).
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/organize/SKILL.md` (bundled with the plugin; no install step needed).
 </execution_context>
 
 <context>

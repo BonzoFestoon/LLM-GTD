@@ -14,8 +14,8 @@ GTD steps 2 + 3, Clarify + Organize: question the "stuff" in the inbox item by i
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
-@__VAULT__/.cursor/skills/gtd-harness/clarify/SKILL.md
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/SKILL.md` (bundled with the plugin; no install step needed).
+Read `${CLAUDE_PLUGIN_ROOT}/skills/gtd-harness/clarify/SKILL.md` (bundled with the plugin; no install step needed).
 </execution_context>
 
 <context>
