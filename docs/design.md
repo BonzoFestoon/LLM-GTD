@@ -12,7 +12,8 @@ such a system; this repo implements it as a portable, AI-native harness.
 
 ### Layer 0 — State (the trusted system)
 `memory/gtd/` holds eight plain-markdown lists. Plain files = **zero adaptation** across platforms;
-a file is a file. Lists are physically separated (Allen's rule) so each stays single-purpose:
+a file is a file. Lists are physically separated (Allen's rule) so each stays single-purpose. Two
+layouts hold the same lists and the same rules — only the storage shape differs:
 
 | file | list | note |
 |---|---|---|
@@ -24,6 +25,17 @@ a file is a file. Lists are physically separated (Allen's rule) so each stays si
 | `calendar.md` | Calendar | hard landscape only; an available calendar provider wins when connected |
 | `reference.md` | Reference | non-actionable + project support material |
 | `horizons.md` | Horizons | the six Horizons of Focus (purpose → runway) |
+
+**Single-file (default)** is the table above: one list, one file. **Per-item (opt-in)** turns
+`next-actions`, `waiting-for`, `projects`, `someday-maybe`, `product-ideas`, and `reference` into
+folders of one-commitment-per-note files with the same fields as YAML frontmatter, plus a `_done/`
+record folder for finished work with its outcome — nothing here is deleted outright anymore, so an
+after-action review has raw material to draw on. `inbox.md`, `calendar.md`, `horizons.md`, and
+`personalized.md` always stay single files. Layout is auto-detected from whether `next-actions/`
+exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of the harness one
+compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
+storage shape. Full folder structure, note formats, and the done/AAR record are in
+`references/list-definitions.md`.
 
 ### Layer 1 — Logic (the workflow)
 `skill/SKILL.md` (navigation) + eight sub-command `SKILL.md` files. Written in **intent language**

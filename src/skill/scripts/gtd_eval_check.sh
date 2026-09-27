@@ -108,6 +108,7 @@ bash -n "$ROOT/scripts/gtd_status.sh"
 bash -n "$ROOT/scripts/gtd_review_prep.sh"
 bash -n "$ROOT/scripts/gtd_review_prep_notify.sh"
 bash -n "$ROOT/scripts/gtd_help.sh"
+bash -n "$ROOT/scripts/gtd_list.sh"
 ok "shell scripts pass bash -n"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then

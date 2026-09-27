@@ -25,6 +25,19 @@
 | Read approval radar | approval provider read-only adapter | If the provider is unreachable, state the gap and continue Engage |
 | Send messages / follow up / delegate to others | messaging provider | Draft only; confirmation required before sending |
 
+## Intent verbs by layout
+
+The intent verbs above stay the same in both layouts; only the capability behind each one changes shape. See `references/list-definitions.md`'s "Layouts" section for the folder structure and layout-detection rule this table assumes.
+
+| GTD intent verb | Single-file capability | Per-item capability |
+|---|---|---|
+| Read a list | Read `memory/gtd/<list>.md` | Run `scripts/gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project P]`; falls back to opening every note only if the script is unavailable |
+| Append an item | Append a line to `memory/gtd/<list>.md` | Create `memory/gtd/<list>/<Title>.md` with frontmatter, skipping `README.md` as a reserved filename |
+| Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
+| Complete an item | Delete the line (or, once the lifecycle phase ships, move it under `done.md`'s completion date with its outcome) | Move the note into `memory/gtd/_done/` with `completed`, `result`, and its outcome added to the frontmatter/body |
+| Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `gtd_list.sh <list>` plus a frontmatter scan for missing/invalid fields; never scans `_done/` |
+| Read a list's local rules before writing | Read the top of `memory/gtd/<list>.md` | Read `memory/gtd/<list>/README.md` |
+
 ## Calendar source adapter + auto-write contract
 
 GTD hard rule: **never maintain two calendars.** Once an external calendar provider is reachable, it is the hard landscape; if the preferred provider fails, fall back along the fallback chain; `calendar.md` is the fallback only when all external providers are unreachable — **never keep a copy**.
