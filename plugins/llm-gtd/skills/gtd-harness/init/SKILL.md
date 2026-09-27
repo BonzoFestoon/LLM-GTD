@@ -47,7 +47,14 @@ GTD only works with exactly one inbox per person. The canonical GTD folder is wh
    ```
    It creates the full set of `memory/gtd/` eight core lists (including the next-actions action pool compatibility skeleton and the Horizons template) plus the product-ideas extension list, self-checks the adapter layer, and does a read-only check of the automation cadence install status.
 
-2. **Self-check only, no file writes**: `bash …/scripts/gtd_init.sh --status`
+   **Per-item layout (opt-in)** — only when the user asks for one note per item (for example to filter by time / energy / context in Obsidian):
+   ```
+   bash <this-skill>/scripts/gtd_init.sh --confirm-create --layout notes [--with-bases]
+   ```
+   Creates `inbox.md`, `calendar.md` and `horizons.md` as files; `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, `product-ideas/` and `_done/` as folders, each with a `README.md` holding that list's rules and note format; and a `reference/` folder at the workspace root for general reference. `--with-bases` adds starter Obsidian lens views (`next-actions.base`, `done.base`) — optional, nothing depends on them. Once created, later runs detect the layout by themselves; no flag needed.
+   - **Init never switches layouts.** If the folder already holds single-file lists (or per-item folders, for `--layout files`), the script refuses with exit 4 so no items become invisible. Switching an existing system is a migration (`scripts/gtd_migrate_to_notes.sh`, dry run first) — tell the user that, don't work around it.
+
+2. **Self-check only, no file writes**: `bash …/scripts/gtd_init.sh --status` (also prints the live layout, and warns if both layouts are present)
 
    `--status` checks:
    - Whether the GTD skill source of truth and the three platform entry points are reachable.
@@ -72,7 +79,8 @@ GTD only works with exactly one inbox per person. The canonical GTD folder is wh
 5. **Read the readiness report**: confirm the created / skipped counts, adapter self-check results, and automation cadence status, then guide the user to run their first `capture`.
 
 ## Quality check
-- [ ] Eight core lists + product-ideas extension list all present (`bash …/scripts/gtd_status.sh` produces a dashboard)
+- [ ] Eight core lists + product-ideas extension list all present (`bash …/scripts/gtd_status.sh` produces a dashboard); in the per-item layout, every list folder and `_done/` has its `README.md`
+- [ ] Per-item layout only created when the user asked for it; an existing system in the other layout was left alone (exit 4) and pointed at the migration
 - [ ] Re-running only skips, never overwrites (idempotent)
 - [ ] `--status` gives a read-only report of Weekly Review / Monthly Reflect / Daily Engage install status
 - [ ] Automation created or modified only when the user explicitly requests `--install-cron` / initializing cron

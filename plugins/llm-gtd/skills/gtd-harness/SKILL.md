@@ -31,6 +31,8 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 | `horizons.md` | Six-horizon direction calibration |
 | `product-ideas.md` | Intake for product / feature / scenario opportunities |
 
+**Per-item layout (opt-in)**: if `memory/gtd/next-actions/` is a folder, next-actions / waiting-for / projects / someday-maybe / product-ideas are folders of one note per item (each with a `README.md` of rules), projects are folders, finished work goes to `_done/`, and general reference is `reference/` at the workspace root. Inbox, calendar and horizons stay files. See `references/list-definitions.md` "Layouts".
+
 ## Routing
 
 | User intent | Must read | Action |
@@ -63,7 +65,7 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 - Single input defaults to capture → clarify; a batch mind sweep captures everything first, then clarifies in bulk.
 - Clearly a product / feature / scenario opportunity → `product-ideas.md` + project / next-action visibility; except when the user explicitly says "capture only".
 - `next-actions.md` is an action pool, not primarily grouped by `@computer/@calls`; new actions state Time / Energy / Constraint.
-- User declares something done → delete the corresponding next action from the list; project outcome achieved with no next action → delete the project block.
+- User declares something done → move it to the done record (`done.md` / `_done/`) with its outcome; project outcome achieved → after-action review, then move the project to the done record (`update/SKILL.md`).
 - User reports a change in reality (done, reply, rescheduled, cancelled, correction) → use update, don't re-capture it as a new inbox item.
 - The calendar is hard landscape; ordinary to-dos must not go into `calendar.md`.
 - Knowledge / ideas with no commitment → file to `reference.md`; don't write to GTD action lists.

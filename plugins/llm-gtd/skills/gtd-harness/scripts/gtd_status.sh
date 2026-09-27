@@ -90,21 +90,45 @@ count_calendar() {
   cnt '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$f"
 }
 
+# Per-item layout: count notes through gtd_list.sh (README.md and _done/ never count) and take
+# stalled projects from gtd_check.sh. Inbox and calendar are files in both layouts.
+count_lines() {
+  grep -c . || true
+}
+if [ "$GTD_LAYOUT" = "notes" ]; then
+  n_next="$(bash "$SCRIPT_DIR/gtd_list.sh" next-actions | count_lines)"
+  n_projects="$(bash "$SCRIPT_DIR/gtd_list.sh" projects | count_lines)"
+  n_waiting="$(bash "$SCRIPT_DIR/gtd_list.sh" waiting-for | count_lines)"
+  n_someday="$(bash "$SCRIPT_DIR/gtd_list.sh" someday-maybe | count_lines)"
+  n_ideas="$(bash "$SCRIPT_DIR/gtd_list.sh" product-ideas | count_lines)"
+  stalled_n="$(bash "$SCRIPT_DIR/gtd_check.sh" | awk -F'\t' '$1 == "stalled"' | count_lines)"
+  layout_label="per-item"
+else
+  n_next="$(count_open next-actions.md)"
+  n_projects="$(count_projects)"
+  n_waiting="$(count_open waiting-for.md)"
+  n_someday="$(count_open someday-maybe.md)"
+  n_ideas="$(count_open product-ideas.md)"
+  stalled_n="$(count_stalled)"
+  layout_label="single-file"
+fi
+n_done_week="$(bash "$SCRIPT_DIR/gtd_list.sh" done --since "$(gtd_days_ago 7)" | count_lines)"
+
 echo "════════════════════════════════════"
-echo "  GTD Dashboard · memory/gtd/"
+echo "  GTD Dashboard · memory/gtd/ ($layout_label)"
 echo "════════════════════════════════════"
 printf "  📥 Inbox to clarify   : %s\n" "$(count_inbox)"
-printf "  ✅ Next Actions       : %s\n" "$(count_open next-actions.md)"
-printf "  🎯 Projects           : %s (stalled≈ %s)\n" "$(count_projects)" "$(count_stalled)"
-printf "  ⏳ Waiting For        : %s\n" "$(count_open waiting-for.md)"
+printf "  ✅ Next Actions       : %s\n" "$n_next"
+printf "  🎯 Projects           : %s (stalled≈ %s)\n" "$n_projects" "$stalled_n"
+printf "  ⏳ Waiting For        : %s\n" "$n_waiting"
 printf "  📅 Calendar (hard)    : %s\n" "$(count_calendar)"
-printf "  💭 Someday/Maybe      : %s\n" "$(count_open someday-maybe.md)"
-printf "  💡 Product Ideas      : %s\n" "$(count_open product-ideas.md)"
+printf "  💭 Someday/Maybe      : %s\n" "$n_someday"
+printf "  💡 Product Ideas      : %s\n" "$n_ideas"
+printf "  🏁 Done, last 7 days  : %s\n" "$n_done_week"
 echo "────────────────────────────────────"
 
 # Alerts
 inbox_n=$(count_inbox)
-stalled_n=$(count_stalled)
 [ "$inbox_n" -gt 0 ] && echo "  ⚠️  Inbox has $inbox_n unclarified item(s) → run /gtd-clarify"
 [ "$stalled_n" -gt 0 ] && echo "  ⚠️  ~$stalled_n project(s) lack a valid next action or are completed leftovers → /gtd-organize"
 echo "  🔭 The Weekly Review (Reflect) is the critical success factor → /gtd-review"

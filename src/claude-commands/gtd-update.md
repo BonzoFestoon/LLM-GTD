@@ -26,7 +26,7 @@ $ARGUMENTS
 
 <process>
 Follow update/SKILL.md:
-1. First read the relevant lists: next-actions.md / projects.md / waiting-for.md; for scheduling, check the external calendar provider first.
+1. First read the relevant lists: next-actions / projects / waiting-for (files or per-item folders); for scheduling, check the external calendar provider first.
 2. A next action that's clearly done → move it to the done record (done.md / _done/) with its outcome, and advance the related project, or close it with an after-action review.
 3. A waiting-for reply → move the waiting item to the done record with what arrived, and clarify the reply into a next action, support material, or project closure.
 4. Changed event details → update the external calendar provider when uniquely identifiable; create an event if details are complete but none exists; ask one question if unsure.

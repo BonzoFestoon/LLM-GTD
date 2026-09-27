@@ -25,6 +25,22 @@
 | Read approval radar | approval provider read-only adapter | If the provider is unreachable, state the gap and continue Engage |
 | Send messages / follow up / delegate to others | messaging provider | Draft only; confirmation required before sending |
 
+## Intent verbs by layout
+
+The intent verbs above stay the same in both layouts; only the capability behind each one changes shape. See `references/list-definitions.md`'s "Layouts" section for the folder structure and layout-detection rule this table assumes.
+
+| GTD intent verb | Single-file capability | Per-item capability |
+|---|---|---|
+| Read a list | Read `memory/gtd/<list>.md` | Run `scripts/gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project P]`; falls back to opening every note only if the script is unavailable |
+| Append an item | Append a line to `memory/gtd/<list>.md` | Create `memory/gtd/<list>/<Title>.md` from that list's `templates/*-note.md` with frontmatter, skipping `README.md` as a reserved filename; a project is a folder, `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md`; general reference is `reference/<Title>.md` at the workspace root |
+| Link an item to its project | `Project: [[projects#Name\|Name]]` on the line, plus a block link back from the project | `project: "[[projects/<Project name>/README\|<Project name>]]"` in the note's frontmatter only — the project README's embedded view finds it, nothing is written back |
+| Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
+| Complete an item | Move the line under `done.md`'s completion date with its outcome sub-bullets | Move the note into `memory/gtd/_done/` with `completed`, `result`, `list`, and its outcome added to the frontmatter/body |
+| Close a project | Delete the block from `projects.md`; add a `- [x] Project: …` line with its AAR to `done.md` | AAR in the README, then move the whole folder to `memory/gtd/_done/<Project name>/` and rewrite links to it |
+| Read the done record | Read `done.md` | `gtd_list.sh done [--since DATE] [--project P] [--problems]` (both layouts) |
+| Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, stalled, field, duplicate, filename, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
+| Read a list's local rules before writing | Read the top of `memory/gtd/<list>.md` | Read `memory/gtd/<list>/README.md` |
+
 ## Calendar source adapter + auto-write contract
 
 GTD hard rule: **never maintain two calendars.** Once an external calendar provider is reachable, it is the hard landscape; if the preferred provider fails, fall back along the fallback chain; `calendar.md` is the fallback only when all external providers are unreachable — **never keep a copy**.

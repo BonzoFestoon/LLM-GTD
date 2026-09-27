@@ -87,7 +87,30 @@ LLM-GTD 的运行状态存在八个纯 Markdown 文件里：
 | `memory/gtd/reference.md` | Reference | 无需行动的支持材料 |
 | `memory/gtd/horizons.md` | Horizons | 目的、愿景、目标、责任领域、项目和跑道 |
 
+完成的事不会被删掉，而是带着简短的结果移到完成记录（`memory/gtd/done.md`）：做了什么、遇到了什么问题、怎么解决的。项目完成时先做一次简短的复盘（after-action review）。每周回顾会读完成记录；任何活跃清单和仪表盘计数都不会读它。
+
 没有数据库。没有隐藏状态。没有 vendor lock-in。文件就是文件。
+
+### 可选：每个事项一条笔记
+
+如果你想在 Obsidian 里（桌面或手机）按时长、精力、情境筛选清单，LLM-GTD 也可以把每个事项存成单独的笔记。Next actions、waiting-for、projects、someday/maybe 和 product ideas 变成 `memory/gtd/` 下的文件夹，每个事项一条笔记，字段写成 YAML 属性。每个项目是一个文件夹，里面放它的 README 和支持材料。完成的事进入 `memory/gtd/_done/`，通用参考资料变成工作区根目录下的 `reference/` 文件夹。Inbox、calendar 和 horizons 仍是单个文件，收集方式不变。你不需要手动打标签：clarify 填写属性，organize 修复属性。
+
+所有命令都支持两种布局，并自动识别当前使用的是哪一种。从零开始使用笔记布局：
+
+```bash
+bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
+```
+
+`--with-bases` 会额外生成可选的 Obsidian Bases 视图（"15 min or less"、"Low energy"、"Errands"、"Done this week"），没有任何功能依赖它们。
+
+把现有的单文件系统迁移过去，先提交你的 vault，然后：
+
+```bash
+bash <skill>/scripts/gtd_migrate_to_notes.sh            # 预演：列出将创建的每条笔记、README 和链接改写
+bash <skill>/scripts/gtd_migrate_to_notes.sh --apply    # 需要干净的 git 工作区；旧清单保存在 memory/gtd/_migrated/
+```
+
+迁移会改写整个 vault 中指向清单事项的链接（代码中的除外），把每个清单原来的头部规则保留在对应文件夹的 `README.md` 里，并检查每个清单迁移前后的事项数量一致。可以用 git 撤销，或从 `_migrated/` 恢复。
 
 ## 它怎么工作
 

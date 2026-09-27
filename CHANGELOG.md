@@ -2,6 +2,42 @@
 
 All notable changes.
 
+## v1.16.0 — One note per item (opt-in), done record, after-action reviews
+**Opt-in per-item layout.** Next actions, waiting-for, projects, someday/maybe,
+and product ideas can each be a folder of one note per item, with the same
+fields as YAML properties, so Obsidian (Bases, or plain property search) can
+filter them by time, energy, and context. Each project is a folder holding its
+README and support material; general reference moves to a `reference/` folder
+at the workspace root. The inbox, calendar, and horizons stay single files, so
+capture doesn't change. Single-file stays the default; every command detects
+the layout and works in both. Set up fresh with
+`gtd_init.sh --confirm-create --layout notes [--with-bases]`.
+
+**Migration.** `gtd_migrate_to_notes.sh` moves an existing single-file system
+over. It's a dry run by default, printing every note, README, and link rewrite.
+`--apply` needs a clean git tree, never overwrites, keeps the old lists in
+`memory/gtd/_migrated/`, rewrites links to list items across the workspace
+(never inside code), and refuses if any list's item count would change.
+
+**Behavior change, both layouts: finished work is recorded, not deleted.** A
+finished next action or received waiting-for item moves to a done record
+(`done.md`, or `_done/` per-item) with a short outcome: what was done, and any
+problem and how it was solved. Update writes the outcome from the session, or
+asks one optional question for project work or anything 30+ minutes; quick
+standalone actions are never asked. A finished project gets a short
+after-action review first, with reusable how-tos offered for filing to
+reference, all on one confirmation. The Weekly Review prep pack gains "Done
+since last review". Nothing that counts or offers open work reads the done
+record. This replaces the old "delete, no archive" rule.
+
+**Scripts.** New read-only `gtd_list.sh` (one line per item from either
+layout, with lens filters, and `done --since/--project/--problems`) and
+`gtd_check.sh` (organize's per-item hygiene findings). `gtd_status.sh` and
+`gtd_review_prep.sh` read both layouts.
+
+New evals E16-E23. The static gate gained per-item init, read-path,
+done-record, and migration fixtures.
+
 ## v1.15.1 — Knowledge defaults to reference.md, not a ZK pipeline
 Every place the skill said non-actionable knowledge/insight material gets "handed
 off to the ZK pipeline / fleeting-note" now says it files to `reference.md`

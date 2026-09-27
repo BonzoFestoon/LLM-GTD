@@ -96,7 +96,30 @@ LLM-GTD stores its operating state in eight plain Markdown files:
 | `memory/gtd/reference.md` | Reference | non-actionable support material |
 | `memory/gtd/horizons.md` | Horizons | purpose, vision, goals, areas, projects, and runway |
 
+Finished work isn't deleted. It moves to a done record (`memory/gtd/done.md`) with a short outcome: what was done, what got in the way, and how you got past it. A finished project gets a brief after-action review first. The Weekly Review reads the done record, and no active list or dashboard count ever does.
+
 No database. No hidden app state. No vendor lock-in. A file is a file.
+
+### Optional: one note per item
+
+If you'd rather filter your lists in Obsidian (by time, energy, or context, on desktop or phone), LLM-GTD can keep each item as its own note instead. Next actions, waiting-for, projects, someday/maybe, and product ideas become folders under `memory/gtd/`, one note per item, with the same fields as YAML properties. Each project is a folder that holds its README and support material. Finished work goes to `memory/gtd/_done/`, and general reference becomes a `reference/` folder at the workspace root. The inbox, calendar, and horizons stay single files, so capture is unchanged. You never tag anything by hand: clarify fills the properties and organize repairs them.
+
+Every command works in both layouts and detects which one is live. To start fresh with notes:
+
+```bash
+bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
+```
+
+`--with-bases` adds optional Obsidian Bases lens views ("15 min or less", "Low energy", "Errands", "Done this week"). Nothing depends on them.
+
+To move an existing single-file system over, commit your vault first, then:
+
+```bash
+bash <skill>/scripts/gtd_migrate_to_notes.sh            # dry run: every note, README and link rewrite it would make
+bash <skill>/scripts/gtd_migrate_to_notes.sh --apply    # needs a clean git tree; old lists are kept in memory/gtd/_migrated/
+```
+
+The migration rewrites links to your list items anywhere in the vault (never inside code), keeps each list's header rules in its folder's `README.md`, and checks that every list has the same number of items before and after. Undo it with git, or restore from `_migrated/`.
 
 ## How It Works
 
