@@ -15,7 +15,7 @@
 
 | GTD intent verb | Capability needed | Fallback rule |
 |---|---|---|
-| Read a list | Read `memory/gtd/<list>.md` | If the file is missing, run init first |
+| Read a list | Read `memory/gtd/<list>.md` | If the file is missing, do not run init automatically — ask the user whether GTD is already set up somewhere else first (see `init/SKILL.md`'s "One inbox per human" rule) |
 | Append / delete / minimally replace a line | File editing | Ask one question when high-risk or multiple matches |
 | Scan all lists | Walk `memory/gtd/` | If the read-only scan fails, report the gap |
 | Run the dashboard / init / review prep scripts | shell/script execution | If scripts are unavailable, read the lists manually |

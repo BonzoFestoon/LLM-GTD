@@ -215,6 +215,31 @@ It also prints two optional manual wiring steps:
 - merge `snippets/cursor-skill-rules.json` into your Cursor skill rules
 - merge `snippets/AGENTS.routing.md` into your workspace `AGENTS.md`
 
+### Using one canonical GTD folder across every project (optional)
+
+By default, plugin installs write state to **whatever workspace you're currently in** — run
+`/gtd-init` per project if you want separate lists per project. GTD only works with **one**
+trusted inbox per person, though, so if you work across many projects and want every one of them
+to resolve to the same GTD folder (instead of risking a second inbox getting created in some
+other project's `memory/gtd/`), set `LLM_GTD_ROOT` once, in your shell profile, to the vault that
+should hold your lists:
+
+```bash
+# ~/.bashrc or ~/.zshrc
+export LLM_GTD_ROOT="$HOME/vaults/second_brain"
+```
+
+```powershell
+# PowerShell $PROFILE
+$env:LLM_GTD_ROOT = "$HOME\vaults\second_brain"
+```
+
+Every GTD script checks `LLM_GTD_ROOT` first, before falling back to the legacy install layout or
+the current directory — so once it's set, `memory/gtd/` under that folder is the canonical
+location from any project, and `init/SKILL.md`'s "one inbox per human" rule always resolves there
+instead of asking you to bootstrap a new one. `gtd_init.sh --status` prints the resolved folder as
+`Vault:` if you want to confirm it picked up correctly.
+
 ## Requirements
 
 - Bash

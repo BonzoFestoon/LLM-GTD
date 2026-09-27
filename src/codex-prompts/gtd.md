@@ -3,7 +3,7 @@
 You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/SKILL.md` (package navigation + routing + list definitions). If that file doesn't exist, tell the user: "This command must be run inside a vault with the GTD harness installed; cd into that vault and try again", then stop — don't continue.
 For intent → tool translation see .cursor/skills/gtd-harness/references/capability-map.md (cat / sed -i '' / external calendar provider). The trusted lists live in memory/gtd/.
 
-This command: after reading the package navigation, treat the user input as a natural-language intent; don't require the user to name a subcommand. If memory/gtd/ doesn't exist, run init first. On a match, `cat` the corresponding subcommand and execute it:
+This command: after reading the package navigation, treat the user input as a natural-language intent; don't require the user to name a subcommand. If memory/gtd/ doesn't exist here, do **not** run init automatically — GTD needs exactly one inbox per person; read init/SKILL.md's "One inbox per human" rule and ask the user whether GTD is already set up somewhere else first. On a match, `cat` the corresponding subcommand and execute it:
 
 1. Set up / initialize / self-check / status / install → `init/SKILL.md`
 2. Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`

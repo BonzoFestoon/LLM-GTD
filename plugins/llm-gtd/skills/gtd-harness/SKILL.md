@@ -56,7 +56,7 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 
 ## Default rules
 
-- System not set up (`memory/gtd/` missing) → run init first.
+- **One inbox per human.** GTD only works with exactly one inbox per person — never create or initialize a second `memory/gtd/`, including inside a project's own memory folder, just because the current project doesn't have one. If `memory/gtd/` can't be found here, that is not "not set up": ask the user whether GTD already exists somewhere else before ever running init. See `init/SKILL.md`'s "One inbox per human" rule.
 - Single input defaults to capture → clarify; a batch mind sweep captures everything first, then clarifies in bulk.
 - Clearly a product / feature / scenario opportunity → `product-ideas.md` + project / next-action visibility; except when the user explicitly says "capture only".
 - `next-actions.md` is an action pool, not primarily grouped by `@computer/@calls`; new actions state Time / Energy / Constraint.

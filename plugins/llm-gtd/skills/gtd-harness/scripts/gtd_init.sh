@@ -2,10 +2,15 @@
 # gtd_init.sh — idempotently build the GTD trusted system (memory/gtd/ eight core lists + product-ideas extension list) + adapter self-check + read-only automation cadence check
 #
 # Usage:
-#   bash gtd_init.sh                 # idempotently create the eight core lists + product-ideas extension list + self-check + read-only automation check (existing files are never overwritten)
-#   bash gtd_init.sh --import-legacy # also: one-time import from the old memory/open loops.md (old file is not modified)
-#   bash gtd_init.sh --status        # self-check, read-only automation check, and readiness report only; writes no files
-#   bash gtd_init.sh --install-cron  # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
+#   bash gtd_init.sh                  # REFUSES to create anything without --confirm-create (exit 3); prints where it would create the lists so the agent can ask the user first
+#   bash gtd_init.sh --confirm-create # after the user has confirmed: idempotently create the eight core lists + product-ideas extension list + self-check + read-only automation check (existing files are never overwritten)
+#   bash gtd_init.sh --import-legacy  # combine with --confirm-create: also do a one-time import from the old memory/open loops.md (old file is not modified)
+#   bash gtd_init.sh --status         # self-check, read-only automation check, and readiness report only; writes no files, never requires --confirm-create
+#   bash gtd_init.sh --install-cron   # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
+#
+# Safety: exactly ONE GTD inbox per person. Without --confirm-create this script only reports
+# where it would create files and exits 3 — see init/SKILL.md's "One inbox per human" rule for
+# the ask-first workflow the agent must follow before ever passing --confirm-create.
 #
 # Design: David Allen's GTD — a trusted system must be complete (eight core lists kept physically separate) and non-destructive (safe to re-run).
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile).
@@ -27,14 +32,30 @@ CODEX_PROMPT_FILES="gtd.md gtd-init.md gtd-capture.md gtd-clarify.md gtd-update.
 IMPORT_LEGACY=0
 STATUS_ONLY=0
 INSTALL_CRON=0
+CONFIRM_CREATE=0
 for arg in "$@"; do
   case "$arg" in
     --import-legacy) IMPORT_LEGACY=1 ;;
     --status)        STATUS_ONLY=1 ;;
     --install-cron)  INSTALL_CRON=1 ;;
+    --confirm-create) CONFIRM_CREATE=1 ;;
     *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
 done
+
+# Safety: GTD needs exactly ONE inbox per person, so init never bootstraps on its own.
+# Creating files requires --confirm-create, which the agent may pass only after asking the
+# user (1) whether GTD is already set up somewhere and (2) confirming the location below.
+if [ "$STATUS_ONLY" -eq 0 ] && [ "$CONFIRM_CREATE" -eq 0 ]; then
+  echo "GTD Skill · init — REFUSING to create files without confirmation." >&2
+  echo "  Would create the GTD lists in: $GTD_DIR" >&2
+  if [ -d "$GTD_DIR" ]; then
+    echo "  That folder already exists. Use it; do not create another." >&2
+  fi
+  echo "  Ask the user: 'Is GTD already set up somewhere? If not, is this the right location?'" >&2
+  echo "  Only after they confirm, re-run with --confirm-create. Use --status for a read-only check." >&2
+  exit 3
+fi
 
 created=0
 skipped=0

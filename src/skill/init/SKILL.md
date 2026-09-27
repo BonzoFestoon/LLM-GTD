@@ -16,6 +16,15 @@ parent: gtd-harness
 - Questions about the adapter layer or calendar provider: read `references/capability-map.md`.
 - Automation boundary: read-only check by default; create / update automation only when the user explicitly asks.
 
+## One inbox per human (hard rule)
+
+GTD only works with exactly one inbox per person. The canonical GTD folder is whatever `gtd_init.sh --status` prints as `Vault:` — the configured GTD folder (set via the `LLM_GTD_ROOT` environment variable; see the install docs for how to set it once so every project resolves to the same folder). If the user has told you the location directly (for example in a global instructions file), that takes precedence over asking again.
+
+- **Never run init (with or without flags other than `--status`) automatically.** Not because a command's self-check found `memory/gtd/` missing, not because the current project has no GTD folder, and not as a side effect of capture / clarify / update / engage / review.
+- **Always ask the user first**, and say which folder would be created. If the configured/canonical folder above exists, do not create another one: use it, whatever the current project is.
+- Treat a missing project-relative `memory/gtd/` as "resolve to the configured folder", not "not set up".
+- Only bootstrap a new GTD folder after the user explicitly confirms it, and only when the configured folder does not exist.
+
 ## When to run
 - First time enabling the GTD skill (`memory/gtd/` doesn't exist).
 - Any command's self-check reports missing lists.
@@ -25,9 +34,14 @@ parent: gtd-harness
 
 ## Workflow
 
-1. **Run the init script** (idempotent, non-destructive; existing lists are skipped, never overwritten):
+0. **Ask before bootstrapping (mandatory, every time)**:
+   1. Ask: "Is GTD already set up somewhere (an existing inbox / `memory/gtd/`)?" If yes, get the path, use it, and stop — do not run init.
+   2. If not, work out the location the script would create (run `bash <this-skill>/scripts/gtd_init.sh --status`, which prints `Vault:` and writes nothing) and ask the user to confirm that exact folder, or give a different one.
+   3. Only after they confirm, run step 1 with `--confirm-create`. Without that flag the script refuses and exits 3.
+
+1. **Run the init script** (idempotent, non-destructive; existing lists are skipped, never overwritten) — only after step 0:
    ```
-   bash <this-skill>/scripts/gtd_init.sh
+   bash <this-skill>/scripts/gtd_init.sh --confirm-create
    ```
    It creates the full set of `memory/gtd/` eight core lists (including the next-actions action pool compatibility skeleton and the Horizons template) plus the product-ideas extension list, self-checks the adapter layer, and does a read-only check of the automation cadence install status.
 

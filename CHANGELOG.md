@@ -2,6 +2,20 @@
 
 All notable changes.
 
+## v1.14 — Init no longer bootstraps automatically
+GTD needs exactly one inbox per person. `gtd_init.sh` now refuses to create
+files without an explicit `--confirm-create` flag (bare `--status` stays
+read-only and unchanged); the `init` skill's workflow, the `/gtd` router, the
+Codex prompts and orchestrator, and `capability-map.md` all ask the user
+whether GTD is already set up somewhere else before ever bootstrapping a new
+`memory/gtd/`, instead of silently creating one whenever a command's
+self-check found the folder missing in the current project. Scripts also
+support `LLM_GTD_ROOT` as a persistent, cross-project canonical location —
+set it once in your shell profile so every project resolves to the same GTD
+folder instead of risking a second inbox in some other project's own
+`memory/gtd/`; see the README's "Using one canonical GTD folder across every
+project" section.
+
 ## v1.13 — English translation
 All skill prompts, slash commands, Codex prompts, templates, and script output are
 now in English, using David Allen's GTD terminology. Scripts parse the English
