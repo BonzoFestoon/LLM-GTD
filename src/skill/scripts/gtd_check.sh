@@ -19,6 +19,10 @@
 #   done-completed  a _done/ note with no completed: date (organize fills today's date)
 #   done-no-aar     a finished project in _done/ whose After action review section is empty
 #                   (surface once, at the next Weekly Review)
+#   done-link       a _done/ note whose project: still points at projects/<Name>/ after that
+#                   project's folder moved to _done/<Name>/ (organize rewrites it)
+# A finished project is its whole folder moved to _done/<Project name>/ (README.md + support
+# material); a finished action or waiting-for item is a flat _done/<Title>.md.
 # README.md is never an item. _done/ is only checked for its own two findings — its notes never
 # count as open work, and never satisfy a project's "has a next action" check.
 #
@@ -99,7 +103,7 @@ for list in next-actions waiting-for; do
       if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
         LINKED="$LINKED$name"$'\n'
         [ "$form" = "readme" ] || finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
-      elif [ -f "$GTD_DIR/_done/$name.md" ] || [ -f "$GTD_DIR/_done/$name/README.md" ]; then
+      elif [ -f "$GTD_DIR/_done/$name/README.md" ]; then
         finding orphan-closed "$rel" "project '$name' is already in _done/"
       else
         finding orphan "$rel" "project: $project resolves to no project folder"
@@ -195,6 +199,13 @@ if [ -d "$GTD_DIR/_done" ]; then
     rel="${f#"$GTD_DIR"/}"
     [ "$rel" = "_done/README.md" ] && continue
     [ -n "$(fm_get "$f" completed)" ] || finding done-completed "$rel" "no completed: date"
+    project="$(fm_get "$f" project)"
+    if [ -n "$project" ]; then
+      IFS="$SEP" read -r form name < <(project_name "$project")
+      if [ ! -d "$GTD_DIR/projects/$name" ] && [ -f "$GTD_DIR/_done/$name/README.md" ]; then
+        finding done-link "$rel" "project: $project -> [[_done/$name/README|$name]]"
+      fi
+    fi
     if [ "$(fm_get "$f" list)" = "projects" ]; then
       has_aar="$(awk '
         /^---[[:space:]]*$/ && fm < 2 { fm++; next }

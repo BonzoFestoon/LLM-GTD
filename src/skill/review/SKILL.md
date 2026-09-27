@@ -42,6 +42,7 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 - **Per-item layout**: read each list with `scripts/gtd_list.sh <list>` (next-actions, waiting-for, projects, someday-maybe, product-ideas) and take stalled / orphan / field problems and finished projects still missing an after-action review from `scripts/gtd_check.sh`, rather than opening every note. `_done/` is never part of the active lists.
 - Read the external calendar provider (preferred if reachable); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete.
 - Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment).
+- **Done since last review**: `scripts/gtd_list.sh done --since <last review date>` (both layouts). Lead with the wins, then each item marked `problems=yes`; for those, Get Current offers one choice per item: file its how-to to reference now, or leave it for its project's after-action review. Offered, never required.
 - Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision.
 - Compress the review into 3 kinds of output:
   - **Handled automatically**: mechanical cleanup, dedupe, drafts, filing.
@@ -56,10 +57,10 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 
 ### ② Get Current
 (Each list below is the file in the single-file layout, or the folder read via `gtd_list.sh` in the per-item layout.)
-- Go through `next-actions.md`: cross off what's done; delete what's no longer relevant; is each one still a valid next action?
+- Go through `next-actions.md`: move what's done to the done record (`update/SKILL.md`'s "Done record"); delete what's no longer relevant; is each one still a valid next action?
 - Go through the **calendar (hard landscape)**: leftovers from last week / hard appointments coming this week. Read the external calendar provider first (preferred if reachable, see `references/capability-map.md`); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete. **Never copy the external calendar into calendar.md** (single fallback). Next week's 3 things must be checked against available time windows; if focus exceeds capacity, suggest deleting, deferring, delegating, or downgrading.
 - Go through `waiting-for.md`: which ones need a follow-up? Check each delegated date.
-- Go through `projects.md`: first ask **whether the project outcome has already been achieved**; if so, delete the whole project block (no archiving, no "Next actions: none"). For unfinished projects, ask whether each has at least one valid next-actions / waiting-for block link; keep only current actions that can run in parallel; fix stalled ones on the spot. Is the project outcome still wanted?
+- Go through `projects.md`: first ask **whether the project outcome has already been achieved**; if so, close it with `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, then the done record; never "Next actions: none"). For unfinished projects, ask whether each has at least one valid next-actions / waiting-for block link; keep only current actions that can run in parallel; fix stalled ones on the spot. Is the project outcome still wanted?
 - Go through `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? If missing, add a project or next action on the spot; don't let product opportunities sit as a cold-storage backlog.
 - Per-item layout: for each finished project `gtd_check.sh` reports as `done-no-aar`, offer once to draft its after-action review now or mark it skipped (`organize/SKILL.md`'s "Per-item layout").
 
@@ -90,7 +91,8 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 
 ## Quality check
 - [ ] Inbox emptied to zero
-- [ ] Completed projects deleted; every remaining project has at least one valid next-action block link (no stalled leftovers)
+- [ ] "Done since last review" shown; problem-and-fix items offered for filing once
+- [ ] Completed projects closed with an AAR into the done record; every remaining project has at least one valid next-action block link (no stalled leftovers)
 - [ ] Every product idea has `GTD visibility` pointing to a project / next action
 - [ ] Waiting-for items due for a follow-up flagged
 - [ ] Did the Horizons check, not just horizontal clarifying

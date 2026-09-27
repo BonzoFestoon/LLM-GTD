@@ -16,6 +16,9 @@ GTD's **vertical project planning method** — the five steps the mind follows n
 - For any stuck project, go back one step: usually some level (purpose / vision / organizing) hasn't been thought through.
 - Put a complex project's support material in reference.md, not in the body of projects.md.
 
+## Closing the cycle: the after-action review
+Outcome → plan → act → **review**. When the outcome is achieved, the project doesn't just vanish: a short after-action review (`templates/after-action-review.md`) compares the intended outcome with what happened, records the problems and how they were overcome, and pulls out the how-tos worth keeping, which then feed step 3 (brainstorming) of the next similar project. Drafted by the AI from the project's done record, confirmed in one step, never required; see `update/SKILL.md`'s "Project close".
+
 ## Interface with strategic-advisor / knowledge
 - Need a deep strategic trade-off → layer on `strategic-advisor` or the relevant domain perspective skill.
 - Knowledge / methodology insights produced during planning → file them to `reference.md`, not in the project list.

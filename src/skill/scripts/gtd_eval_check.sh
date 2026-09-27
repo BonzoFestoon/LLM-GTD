@@ -160,7 +160,11 @@ printf -- '---\noutcome: Nothing linked\n---\n' > "$G/projects/Idle/README.md"
 printf -- '---\ntime: 10   # minutes\nenergy: low\ncontext: [computer, phone]\nproject: "[[projects/Alpha/README|Alpha]]"\n---\nx\n' > "$G/next-actions/Quick call.md"
 printf -- '---\ntime: 60-90 min\nenergy: deep work\ncontext: [lab]\nproject: "[[projects/Gone/README|Gone]]"\n---\nx\n' > "$G/next-actions/quick call (2).md"
 printf -- '---\ntime: 5\nenergy: low\ncontext: [home]\ncompleted: 2026-01-01\nlist: next-actions\n---\nx\n' > "$G/_done/Finished thing.md"
-printf -- '---\nlist: projects\n---\nx\n\n## After action review\n<!-- draft -->\n' > "$G/_done/Old project.md"
+mkdir -p "$G/_done/Old project"
+printf -- '---\nlist: projects\n---\nx\n\n## After action review\n<!-- draft -->\n' > "$G/_done/Old project/README.md"
+printf -- 'plan doc, not a done record\n' > "$G/_done/Old project/PLAN.md"
+printf -- '---\ncompleted: 2026-02-01\nresult: done\nlist: next-actions\nproject: "[[projects/Old project/README|Old project]]"\n---\nx\n\n## Outcome\n- Done: shipped\n- Problems and fixes: the portal wanted no dashes; entering it without them worked.\n' > "$G/_done/Old step.md"
+printf -- '---\ncompleted: 2025-12-01\nresult: cancelled\nlist: waiting-for\n---\nx\n\n## Outcome\n- Problems and fixes: none noted\n' > "$G/_done/Old wait.md"
 na="$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions --max-time 10 --energy low)"
 [ "$(echo "$na" | grep -c .)" -eq 1 ] && echo "$na" | grep -q 'Quick call$' || fail "gtd_list.sh lenses returned: $na"
 echo "$na" | grep -q 'due=-' || fail "gtd_list.sh next-actions lacks the due= column"
@@ -170,15 +174,41 @@ T=$'\t'
 dup="next-actions/quick call (2).md"
 for want in "orphan${T}$dup" "stalled${T}projects/Idle/README.md" "field${T}$dup${T}time" \
   "field${T}$dup${T}energy" "field${T}$dup${T}context 'lab'" "duplicate${T}next-actions/" \
-  "done-completed${T}_done/Old project.md" "done-no-aar${T}_done/Old project.md"; do
+  "done-completed${T}_done/Old project/README.md" "done-no-aar${T}_done/Old project/README.md" \
+  "done-link${T}_done/Old step.md"; do
   echo "$chk" | grep -qF "$want" || fail "gtd_check.sh missed: $want"
 done
 ! echo "$chk" | grep -qF "${T}next-actions/Quick call.md${T}" || fail "gtd_check.sh flagged a clean note"
 ! echo "$chk" | grep -qF "stalled${T}projects/Alpha/" || fail "gtd_check.sh called a linked project stalled"
-[ -z "$(echo "$chk" | awk -F'\t' '$2 ~ /README\.md$/ && $2 !~ /^projects\/[^\/]+\/README\.md$/')" ] \
+[ -z "$(echo "$chk" | awk -F'\t' '$2 ~ /README\.md$/ && $2 !~ /^(projects|_done)\/[^\/]+\/README\.md$/')" ] \
   || fail "gtd_check.sh treated a list README as an item"
+! echo "$chk" | grep -qF "PLAN.md" || fail "gtd_check.sh treated a finished project's support doc as a done record"
 LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_check.sh" | grep -q '^# layout: files' || fail "gtd_check.sh did not stand down in the single-file layout"
 ok "per-item read path: lenses filter, _done/ never listed, gtd_check.sh finds every kind of problem"
+
+# Done record (both layouts): gtd_list.sh done lists every record once, never a support doc or the
+# folder README, and --since / --project / --problems filter it.
+done_all="$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done)"
+[ "$(echo "$done_all" | grep -c .)" -eq 4 ] || fail "gtd_list.sh done (per-item) listed: $done_all"
+echo "$done_all" | grep -q "list=projects${T}project=Old project${T}.*Old project$" || fail "gtd_list.sh done missed the finished project folder"
+[ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --since 2026-01-15 | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --since did not filter"
+[ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --problems | cut -f1-7 | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --problems did not filter"
+[ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --project "Old project" | grep -c .)" -eq 2 ] || fail "gtd_list.sh done --project did not find the project and its step"
+[ -f "$fixture/files/memory/gtd/done.md" ] || fail "single-file init did not seed done.md"
+cat >> "$fixture/files/memory/gtd/done.md" <<'EOF'
+## 2026-03-01
+- [x] Pay the tax bill · From: next-actions · Result: done · Project: [[projects#Taxes|Taxes]] ^na-tax-20260201
+  - Done: paid online
+  - Problems and fixes: the portal timed out twice; paying before 8 am worked.
+- [x] Project: Taxes — filed and paid · From: projects · Result: done
+  - Done: filed and paid
+  - Problems and fixes: none noted
+EOF
+done_sf="$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" done)"
+[ "$(echo "$done_sf" | grep -c .)" -eq 2 ] || fail "gtd_list.sh done (single-file) listed: $done_sf"
+echo "$done_sf" | grep -q "^na-tax-20260201${T}completed=2026-03-01${T}result=done${T}list=next-actions${T}.*problems=yes" || fail "gtd_list.sh done (single-file) misparsed: $done_sf"
+[ "$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" done --project Taxes | grep -c .)" -eq 2 ] || fail "gtd_list.sh done --project (single-file) did not match the project line"
+ok "done record: gtd_list.sh done reads both layouts and filters by --since / --project / --problems"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then

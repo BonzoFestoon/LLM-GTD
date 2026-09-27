@@ -18,8 +18,13 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 ## ① Get Clear
 - Inbox emptied: yes / no (reason for __ remaining items:)
 
+## Done since last review
+- Wins:
+- Problems solved (filed to reference / left for the project's AAR):
+
 ## ② Get Current
-- Crossed off:
+- Moved to the done record:
+- Projects closed (AAR done / skipped):
 - New next actions:
 - Waiting-for items to follow up on:
 - Stalled projects given a next action:
@@ -36,7 +41,7 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 
 ## Written to file after confirmation
 - Inbox cleared:
-- Crossed off / deleted:
+- Moved to the done record / deleted:
 - Added / moved:
 - Product Ideas visibility filled:
 - Waiting / follow-ups:

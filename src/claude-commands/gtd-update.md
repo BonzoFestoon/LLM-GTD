@@ -27,9 +27,9 @@ $ARGUMENTS
 <process>
 Follow update/SKILL.md:
 1. First read the relevant lists: next-actions.md / projects.md / waiting-for.md; for scheduling, check the external calendar provider first.
-2. A next action that's clearly done → delete that line, and advance or close the related project.
-3. A waiting-for reply → delete the waiting item and clarify the reply into a next action, support material, or project closure.
+2. A next action that's clearly done → move it to the done record (done.md / _done/) with its outcome, and advance the related project, or close it with an after-action review.
+3. A waiting-for reply → move the waiting item to the done record with what arrived, and clarify the reply into a next action, support material, or project closure.
 4. Changed event details → update the external calendar provider when uniquely identifiable; create an event if details are complete but none exists; ask one question if unsure.
-5. Cancellation / correction → minimally delete, move, or replace the corresponding state.
+5. Cancellation / correction → project-linked work goes to the done record as cancelled; a standalone item is deleted; corrections minimally replace the corresponding state.
 6. After changing, always search or read back to verify, then report briefly.
 </process>

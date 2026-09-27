@@ -13,10 +13,11 @@
 - [ ] Empty `inbox.md`: clarify item by item to zero
 
 ## ② Get Current
-- [ ] `next-actions.md`: cross off what's done; delete what's no longer relevant; is each still a valid next action?
+- [ ] `next-actions.md`: move what's done to the done record; delete what's no longer relevant; is each still a valid next action?
 - [ ] `calendar.md`: look back at last week (any loose ends?) + look ahead at this week (are hard appointments prepared?)
 - [ ] `waiting-for.md`: check each delegated date — which ones need a follow-up?
-- [ ] `projects.md`: first delete projects whose outcome is achieved; confirm each remaining project has at least one valid next-action block link; keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
+- [ ] Done since last review (`gtd_list.sh done --since <last review date>`): wins first, then each item whose outcome records a problem: file its how-to to reference now, or leave it for the project's after-action review
+- [ ] `projects.md`: first close projects whose outcome is achieved (AAR, then the done record: update's "Project close"); confirm each remaining project has at least one valid next-action block link; keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
 - [ ] `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? Fill any gaps on the spot.
 
 ## ③ Get Creative

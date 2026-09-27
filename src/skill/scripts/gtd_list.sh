@@ -5,6 +5,7 @@
 #
 # Usage:
 #   bash gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project SUBSTRING]
+#   bash gtd_list.sh done [--since YYYY-MM-DD] [--project SUBSTRING] [--problems]
 #
 # <list> is a bare list name: next-actions, waiting-for, projects, someday-maybe,
 # product-ideas, or reference (the folder-backed lists in per-item mode; reference/ sits at the
@@ -24,7 +25,11 @@
 #   product-ideas  id  evidence=  title
 #   projects       id  project=  name -- outcome
 #   reference      id  title
-# Never reads memory/gtd/_done/ — finished items are not part of any active list.
+#   done           id  completed=  result=  list=  project=  problems=  title
+# Only `done` reads the done record (memory/gtd/_done/, or done.md in the single-file layout);
+# no active list ever includes a finished item. For done: --since keeps completed >= DATE,
+# --project matches the project link (or a finished project's own name), and --problems keeps
+# only items whose "Problems and fixes" records a real problem (problems=yes).
 #
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile) — see gtd_init.sh's note.
 
@@ -46,12 +51,16 @@ MAX_TIME=""
 ENERGY=""
 CONTEXT=""
 PROJECT=""
+SINCE=""
+PROBLEMS=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --max-time) MAX_TIME="$2"; shift 2 ;;
     --energy) ENERGY="$2"; shift 2 ;;
     --context) CONTEXT="$2"; shift 2 ;;
     --project) PROJECT="$2"; shift 2 ;;
+    --since) SINCE="$2"; shift 2 ;;
+    --problems) PROBLEMS=1; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -120,8 +129,97 @@ case "$LIST" in
   someday-maybe) COLUMNS="trigger" ;;
   product-ideas) COLUMNS="evidence" ;;
   projects) COLUMNS="project" ;;
+  done) COLUMNS="completed result list project problems" ;;
   *) COLUMNS="" ;;
 esac
+
+# --- done record (both layouts) ------------------------------------------------
+
+# has_problem TEXT — "yes" unless the Problems and fixes text is empty or says nothing was noted
+has_problem() {
+  case "$(echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/^[[:space:]]+|[[:space:]]*\.?[[:space:]]*$//g')" in
+    ""|none|"none noted"|n/a|-) echo no ;;
+    *) echo yes ;;
+  esac
+}
+
+emit_done() {
+  # emit_done ID TITLE COMPLETED RESULT LIST PROJECT PROBLEMS
+  # YYYY-MM-DD sorts as text; an item with no completed date can't be placed, so --since drops it.
+  if [ -n "$SINCE" ]; then
+    [ -n "$3" ] && [ ! "$3" \< "$SINCE" ] || return 0
+  fi
+  [ -z "$PROJECT" ] || echo "$6" | grep -qi -- "$PROJECT" || return 0
+  [ "$PROBLEMS" -eq 0 ] || [ "$7" = "yes" ] || return 0
+  emit "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+}
+
+list_done_per_item() {
+  local dir="$GTD_DIR/_done" f rel title id completed result from project problems key val
+  # Flat done notes, plus one folder per finished project (_done/<Project name>/README.md).
+  for f in "$dir"/*.md "$dir"/*/README.md; do
+    [ -e "$f" ] || continue
+    rel="${f#"$dir"/}"
+    [ "$rel" = "README.md" ] && continue
+    case "$rel" in */README.md) title="${rel%/README.md}" ;; *) title="${rel%.md}" ;; esac
+    id="" completed="" result="" from="" project=""
+    while IFS="$SEP" read -r key val; do
+      case "$key" in
+        id) id="$val" ;;
+        completed) completed="$val" ;;
+        result) result="$val" ;;
+        list) from="$val" ;;
+        project) project="$val" ;;
+      esac
+    done < <(frontmatter_kv "$f")
+    [ "$from" = "projects" ] && project="$title"
+    problems="$(has_problem "$(awk '
+      /^---[[:space:]]*$/ && fm < 2 { fm++; next }
+      fm >= 2 && /Problems and fixes:/ { sub(/.*Problems and fixes:[[:space:]]*/, ""); print; exit }
+    ' "$f")")"
+    emit_done "$id" "$title" "$completed" "$result" "$from" "$project" "$problems"
+  done
+}
+
+# done.md: "## YYYY-MM-DD" headings, each with "- [x] title · From: list · Result: r · Project: … ^id"
+# lines and indented "  - Problems and fixes: …" sub-bullets.
+list_done_single() {
+  local file="$GTD_DIR/done.md" id title completed result from project probtext
+  [ -f "$file" ] || return 0
+  awk -v SEP="$SEP" '
+    function flush() {
+      if (have) printf "%s%s%s%s%s%s%s%s%s%s%s%s%s\n", id, SEP, title, SEP, date, SEP, result, SEP, from, SEP, project, SEP, prob
+      have = 0
+    }
+    /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { flush(); date = substr($0, 4, 10); next }
+    /^- \[x\] / {
+      flush()
+      line = $0; sub(/^- \[x\] /, "", line)
+      id = ""
+      if (match(line, /[[:space:]]\^[A-Za-z0-9_-]+$/)) { id = substr(line, RSTART+2); line = substr(line, 1, RSTART-1) }
+      n = split(line, parts, " · ")
+      title = parts[1]; result = ""; from = ""; project = ""; prob = ""
+      for (i = 2; i <= n; i++) {
+        p = parts[i]
+        if (p ~ /^From:/)         { sub(/^From:[[:space:]]*/, "", p); from = p }
+        else if (p ~ /^Result:/)  { sub(/^Result:[[:space:]]*/, "", p); result = p }
+        else if (p ~ /^Project:/) { sub(/^Project:[[:space:]]*/, "", p); project = p }
+      }
+      if (from == "projects") { sub(/^Project:[[:space:]]*/, "", title); t = title; sub(/[[:space:]]+—.*$/, "", t); project = t }
+      have = 1
+      next
+    }
+    have && /^[[:space:]]+- Problems and fixes:/ { prob = $0; sub(/^[[:space:]]+- Problems and fixes:[[:space:]]*/, "", prob) }
+    END { flush() }
+  ' "$file" | while IFS="$SEP" read -r id title completed result from project probtext; do
+    emit_done "$id" "$title" "$completed" "$result" "$from" "$project" "$(has_problem "$probtext")"
+  done
+}
+
+if [ "$LIST" = "done" ]; then
+  if [ -d "$GTD_DIR/_done" ]; then list_done_per_item; else list_done_single; fi
+  exit 0
+fi
 
 # --- per-item mode ---------------------------------------------------------
 

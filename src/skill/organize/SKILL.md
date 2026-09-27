@@ -30,7 +30,7 @@ example: "Clean up my GTD lists"
 | Category | Can do automatically | Needs user confirmation |
 |---|---|---|
 | Orphans | Detect next-action / project broken links; add the block link when there's a unique match | Several possible owners or unclear result |
-| Completed projects | Outcome clearly achieved and no next action still needs pushing → delete the project block | Unsure whether the outcome is achieved; whether to cut the project |
+| Completed projects | Outcome clearly achieved and no next action still needs pushing → close it through `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, done record) | Unsure whether the outcome is achieved; whether to cut the project |
 | Stalled projects | Draft one concrete next action and attach it to the project | Can't draft one; the commitment needs to change |
 | Constraint / lens hygiene | Fill clearly missing Time / Energy / Constraint; treat legacy @ groups as compatibility signals | Needs the user to judge setting or priority |
 | Stale checkmarks / duplicates | Clean up completed leftovers and obvious duplicates | Looks duplicated but means something different |
@@ -62,6 +62,7 @@ example: "Clean up my GTD lists"
 | `filename` | Rename to a safe title and update links to it | — |
 | `done-completed` | Add `completed:` with today's date | — |
 | `done-no-aar` | — | List once for the next Weekly Review: draft the AAR, or write `Skipped (YYYY-MM-DD).` under the heading so it isn't listed again |
+| `done-link` | Rewrite `project:` to `"[[_done/<Name>/README\|<Name>]]"` | — |
 
 Never move a note into `_done/` from organize (that's `update/SKILL.md`), and never count `_done/` notes as open work. The single-file checks above still apply to `inbox.md` and `calendar.md`, which stay files in both layouts.
 
@@ -69,7 +70,7 @@ Never move a note into `_done/` from organize (that's `update/SKILL.md`), and ne
 
 - [ ] Read `references/list-definitions.md` first and did not duplicate another set of list definitions in this file
 - [ ] Mechanical issues (orphans, missing light fields, stale checkmarks, obvious duplicates) fixed automatically and summarized
-- [ ] Completed projects deleted; unfinished projects have a valid next-action / waiting-for block link or are listed for confirmation
+- [ ] Completed projects closed through update's Project close (AAR + done record); unfinished projects have a valid next-action / waiting-for block link or are listed for confirmation
 - [ ] `calendar.md` reconciled: synced items removed, ordinary to-dos re-filed, unconfirmed hard appointments kept and surfaced
 - [ ] Per-item layout: every `gtd_check.sh` finding either fixed or in the confirmation batch; `README.md` never treated as an item
 - [ ] Judgment calls asked in a batch; no commitment decisions made for the user

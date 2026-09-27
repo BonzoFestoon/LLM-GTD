@@ -13,7 +13,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | `product-ideas.md` | Raw opportunities and assumptions in product, feature, scenario, and opportunity spaces; each should also have project / next-action visibility | Not ordinary life wishes, and not a cold-storage backlog with no next action | Opportunity / user scenario / assumptions / evidence status / promotion criteria / GTD visibility |
 | `reference.md` | Non-actionable reference + project support material + knowledge / insight notes | Not actionable items (those go through clarify to next-actions / projects / waiting-for) | Two sections: general reference / project support (per-item layout: workspace-root `reference/` notes + each project's own folder) |
 | `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
-| `_done/` (per-item) / `done.md` (single-file) | A record of finished commitments: completed next actions, received waiting-for items, finished projects, and cancelled project steps, each with an outcome | Not a list you act from — never read by Engage, never counted as open in the dashboard, never given a stalled/orphan check | One flat folder of done notes (per-item layout) or one dated file (single-file layout), newest completion last; see "Done record" below |
+| `_done/` (per-item) / `done.md` (single-file) | A record of finished commitments: completed next actions, received waiting-for items, finished projects, and cancelled project steps, each with an outcome | Not a list you act from — never read by Engage, never counted as open in the dashboard, never given a stalled/orphan check | Per-item: flat done notes plus one `_done/<Project name>/` folder per finished project; single-file: `done.md`, one `## YYYY-MM-DD` heading per completion date, newest last. See "Done record" below |
 
 ## The boundaries most often violated
 1. **Multi-step outcomes stuffed into next-actions** → split: the outcome goes to projects, the first step stays in next-actions.
@@ -118,7 +118,11 @@ clock was a weekend or outside trading hours...
 
 Completed next actions, received waiting-for items, finished projects, and cancelled project steps move to `_done/` (per-item) or `done.md` (single-file, one line per item under its completion date) with an outcome: what was done, what problems came up and how they were solved. This replaces deleting the item outright — the active lists still hold only open commitments, and the done record is the raw material for the Weekly Review's "done since last review" section and each project's after-action review (AAR). A cancelled *standalone* action, or a someday item you drop, is still simply deleted — only project-linked work is worth keeping a record of. `_done/` and `done.md` are never read by Engage, never counted as open, and never checked for orphans/stalled status.
 
-The five-heading AAR shape (intended outcome · what happened · problems and how they were overcome · what to do the same or differently next time · reusable how-tos) is in `templates/after-action-review.md`.
+- **Per-item shape**: a finished action or waiting-for item is a flat `_done/<Title>.md` that keeps its filename, properties and body, and gains `completed`, `result` (done | cancelled), `list` and a `## Outcome` section (`Done:` / `Problems and fixes:` / `Links:`). A finished project moves as its whole folder to `_done/<Project name>/`: the README gains the same three properties plus its after-action review, the support material you chose to keep stays beside it, and every link to `projects/<Project name>/…` is rewritten to `_done/<Project name>/…`.
+- **Single-file shape**: `done.md` (header and line format in `templates/done-log.md`), one `- [x] … · From: <list> · Result: … ^id` line per item under its completion date, with `Done:` / `Problems and fixes:` sub-bullets; a finished project is a `- [x] Project: <Name> — <outcome>` line with its AAR as sub-bullets.
+- **Reading it**: only `gtd_list.sh done [--since DATE] [--project P] [--problems]`, the Weekly Review, and the AAR read the done record.
+
+The five-heading AAR shape (intended outcome · what happened · problems and how they were overcome · what to do the same or differently next time · reusable how-tos) is in `templates/after-action-review.md`; the close steps are `update/SKILL.md`'s "Project close".
 
 ## Action permissions
 
@@ -130,10 +134,10 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 | Delete a clarified original item from `inbox.md` | Auto | Must already be written to the target list |
 | Move clearly misfiled items | Auto | Append to the target list first, then delete from the original spot |
 | Fill in Time / Energy / Constraint | Auto | List as pending confirmation when clearly uncertain |
-| Delete a completed next action | Auto | The user explicitly declared it done or there is strong evidence |
-| Delete a completed project block | Auto | Desired outcome achieved and no next action still needs pushing |
+| Delete a cancelled standalone action or a dropped someday item | Auto | The user explicitly cancelled it; project-linked work goes to the done record as `cancelled` instead |
 | Draft a next action for a stalled project | Auto | Act-then-surface; the user can change it in one sentence |
-| Move a completed item to `_done/` / `done.md` with its outcome | Auto | Act-then-surface, same as any other completion; never blocks on the outcome text, never re-asked later |
+| Move a completed item to `_done/` / `done.md` with its outcome | Auto | The user explicitly declared it done or there is strong evidence; act-then-surface; never blocks on the outcome text, never re-asked later |
+| Close a finished project into the done record | Auto after the AAR confirmation | Desired outcome achieved and no open action still linked; the AAR confirm / edit / skip is the one confirmation |
 | Draft a project after-action review | Auto | Act-then-surface when the project's outcome is achieved; the user confirms, edits, or skips in one step |
 | File AAR how-tos and insights to reference (project folder or `reference/`) | Needs confirmation, once | Offered together with the AAR draft, not as a separate interruption |
 | Trim `_done/` / `done.md` | Needs confirmation | Off by default; only runs if enabled in `personalized.md` |

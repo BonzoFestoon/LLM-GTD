@@ -10,7 +10,7 @@
 
 <!--
 At least 1 next action, or the project is stalled. Several are fine, but only list physical actions that can move forward in parallel right now — not a full task tree.
-Close-the-loop rule: once the desired outcome is achieved, delete the whole project block; do not leave "Next actions: none".
+Close-the-loop rule: once the desired outcome is achieved, draft a short after-action review (templates/after-action-review.md), then move the project to done.md as a "- [x] Project: …" line with the AAR as sub-bullets and delete this block; do not leave "Next actions: none". (No "## After action review" heading here: every ## line in projects.md is a project.)
 
 Complex projects can be expanded with the Natural Planning Model (see references/natural-planning-model.md):
 Purpose & principles → Outcome visioning → Brainstorming → Organizing → Identifying next actions

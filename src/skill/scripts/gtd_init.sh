@@ -77,7 +77,7 @@ fi
 # reverse) is a half-done migration: init refuses rather than leave items where no skill looks.
 single_file_lists_present() {
   local l found=""
-  for l in $GTD_NOTE_LISTS reference; do
+  for l in $GTD_NOTE_LISTS reference done; do
     [ -f "$GTD_DIR/$l.md" ] && found="$found $l.md"
   done
   echo "${found# }"
@@ -377,7 +377,7 @@ header_projects() {
 > ```
 > At least 1 next action, or the project is stalled. Several are fine, but only list physical actions that can move forward in parallel right now — not a full task tree.
 >
-> Close-the-loop rule: once the desired outcome is achieved, delete the whole project block; do not leave "Next actions: none".
+> Close-the-loop rule: once the desired outcome is achieved, draft a short after-action review and move the project to the done record; do not leave "Next actions: none".
 EOF
 }
 
@@ -418,6 +418,8 @@ file_projects()     { header_projects; echo ""; }
 file_waiting_for()  { header_waiting_for; printf '\n## Waiting\n\n'; }
 file_someday_maybe() { header_someday_maybe; printf '\n## Incubating\n\n'; }
 file_product_ideas() { header_product_ideas; printf '\n## Opportunity pool\n\n'; }
+# The single-file done record; update also creates it from this same template when it's missing.
+file_done()         { cat "$SKILL_DIR/templates/done-log.md"; echo ""; }
 
 file_calendar() {
   cat <<'EOF'
@@ -542,7 +544,7 @@ readme_waiting_for() {
 
 readme_projects() {
   header_projects | annotate_format
-  note_format_section project-note.md 'Each project is a folder, `projects/<Project name>/README.md`, not a single note: the README holds the outcome, decisions and an embedded next-actions view; plan docs, design notes and research for the project live as ordinary files beside it, linked with a bare `[[filename]]`. Actions point at the project with `project: "[[projects/<Project name>/README|<Project name>]]"` — the README never lists them by hand. When the outcome is achieved: after-action review, then the README moves to `_done/`.'
+  note_format_section project-note.md 'Each project is a folder, `projects/<Project name>/README.md`, not a single note: the README holds the outcome, decisions and an embedded next-actions view; plan docs, design notes and research for the project live as ordinary files beside it, linked with a bare `[[filename]]`. Actions point at the project with `project: "[[projects/<Project name>/README|<Project name>]]"` — the README never lists them by hand. When the outcome is achieved: after-action review, then the whole folder moves to `_done/<Project name>/`.'
 }
 
 readme_someday_maybe() {
@@ -561,7 +563,7 @@ readme_done() {
 
 > A record of finished commitments — completed next actions, received waiting-for items, finished projects, and cancelled project steps — each with its outcome: what was done, what problems came up and how they were solved.
 > **Not a list you act from.** Engage never reads it, the dashboard never counts it as open, and organize never checks it for stalled or orphaned items. It feeds the Weekly Review's "Done since last review" and each project's after-action review.
-> One flat folder: a note keeps its original filename and properties and gains `completed`, `result` (done | cancelled) and `list` (the list it came from). A cancelled *standalone* action, or a dropped someday item, is simply deleted — only project-linked work is worth a record.
+> A finished action or waiting-for item is a flat note here, keeping its original filename and properties and gaining `completed`, `result` (done | cancelled) and `list` (the list it came from). A finished project moves here as its whole folder, `_done/<Project name>/`: its README gains the same three properties plus the after-action review, and whatever support material you chose to keep stays beside it. A cancelled *standalone* action, or a dropped someday item, is simply deleted — only project-linked work is worth a record.
 > Kept indefinitely by default; trimming is off unless enabled in `memory/gtd/personalized.md`.
 
 ## Note format
@@ -657,10 +659,12 @@ EOF
 base_done() {
   cat <<'EOF'
 # LLM-GTD done record. Optional Obsidian extra: every GTD command works without it.
+# A done record is any note in _done/ with a completed date: flat done notes, and each finished
+# project's README in _done/<Project name>/ (its support docs have no completed, so they stay out).
 filters:
   and:
     - file.inFolder("memory/gtd/_done")
-    - file.basename != "README"
+    - file.hasProperty("completed")
 views:
   - type: table
     name: Done this week
@@ -689,6 +693,7 @@ build_files_layout() {
   seed "$GTD_DIR/calendar.md" < <(file_calendar)
   seed "$GTD_DIR/reference.md" < <(file_reference)
   seed "$GTD_DIR/horizons.md" < <(file_horizons)
+  seed "$GTD_DIR/done.md" < <(file_done)
 }
 
 build_notes_layout() {
