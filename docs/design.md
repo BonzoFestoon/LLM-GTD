@@ -27,11 +27,13 @@ layouts hold the same lists and the same rules — only the storage shape differ
 | `horizons.md` | Horizons | the six Horizons of Focus (purpose → runway) |
 
 **Single-file (default)** is the table above: one list, one file. **Per-item (opt-in)** turns
-`next-actions`, `waiting-for`, `projects`, `someday-maybe`, `product-ideas`, and `reference` into
-folders of one-commitment-per-note files with the same fields as YAML frontmatter, plus a `_done/`
-record folder for finished work with its outcome — nothing here is deleted outright anymore, so an
-after-action review has raw material to draw on. `inbox.md`, `calendar.md`, `horizons.md`, and
-`personalized.md` always stay single files. Layout is auto-detected from whether `next-actions/`
+`next-actions`, `waiting-for`, `projects`, `someday-maybe`, and `product-ideas` into folders of
+one-commitment-per-note files with the same fields as YAML frontmatter (a project is itself a folder,
+holding its README and its support material), plus a `_done/` record folder for finished work with
+its outcome — nothing here is deleted outright anymore, so an after-action review has raw material to
+draw on. `reference.md` becomes a `reference/` folder at the workspace root, outside `memory/gtd/`:
+general knowledge that GTD files into but that isn't GTD state. `inbox.md`, `calendar.md`,
+`horizons.md`, and `personalized.md` always stay single files. `gtd_init.sh --layout notes` sets it up. Layout is auto-detected from whether `next-actions/`
 exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of the harness one
 compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
 storage shape. Full folder structure, note formats, and the done/AAR record are in

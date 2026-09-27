@@ -24,3 +24,23 @@ else
     GTD_WORKSPACE_ROOT="$(pwd)"
   fi
 fi
+
+# Layout (see references/list-definitions.md "Layouts"):
+#   notes — per-item: one folder of notes per list (memory/gtd/next-actions/ exists)
+#   files — single-file: one .md file per list (the default)
+# GTD_LAYOUT=notes|files overrides detection, for testing or forcing a mode.
+case "${GTD_LAYOUT:-}" in
+  notes|files) ;;
+  "")
+    if [ -d "$GTD_WORKSPACE_ROOT/memory/gtd/next-actions" ]; then
+      GTD_LAYOUT=notes
+    else
+      GTD_LAYOUT=files
+    fi
+    ;;
+  *) echo "GTD_LAYOUT must be 'notes' or 'files' (got: $GTD_LAYOUT)" >&2; exit 2 ;;
+esac
+
+# Per-item lists: one folder each under memory/gtd/. General reference is not one of them —
+# in the per-item layout it lives at the workspace root (reference/), outside memory/gtd/.
+GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe product-ideas"

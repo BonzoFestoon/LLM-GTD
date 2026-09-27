@@ -7,7 +7,8 @@
 #   bash gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project SUBSTRING]
 #
 # <list> is a bare list name: next-actions, waiting-for, projects, someday-maybe,
-# product-ideas, or reference (the folder-backed lists in per-item mode).
+# product-ideas, or reference (the folder-backed lists in per-item mode; reference/ sits at the
+# workspace root, not under memory/gtd/).
 #
 # Per-item mode (memory/gtd/<list>/ is a directory): reads each note's YAML frontmatter,
 # skipping README.md. Single-file mode (memory/gtd/<list>.md): falls back to parsing the
@@ -127,12 +128,21 @@ frontmatter_kv() {
 }
 
 list_per_item() {
-  local dir="$GTD_DIR/$LIST" f base id time energy context project title kv key val
-  for f in "$dir"/*.md; do
+  local dir="$LIST_DIR" f base id time energy context project outcome title kv key val
+  local -a notes
+  # A project is a folder (projects/<Project name>/README.md); every other list is flat notes.
+  # The list's own README.md is never an item in either shape. An unmatched glob stays literal
+  # (one element), so the array is never empty under set -u on bash 3.2.
+  if [ "$LIST" = "projects" ]; then notes=("$dir"/*/README.md); else notes=("$dir"/*.md); fi
+  for f in "${notes[@]}"; do
     [ -e "$f" ] || continue
-    base="$(basename "$f" .md)"
-    [ "$base" = "README" ] && continue
-    id="" time="" energy="" context="" project=""
+    if [ "$LIST" = "projects" ]; then
+      base="$(basename "$(dirname "$f")")"
+    else
+      base="$(basename "$f" .md)"
+      [ "$base" = "README" ] && continue
+    fi
+    id="" time="" energy="" context="" project="" outcome=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
@@ -140,9 +150,15 @@ list_per_item() {
         energy) energy="$val" ;;
         context) context="$val" ;;
         project) project="$val" ;;
+        outcome) outcome="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
     title="$base"
+    # Match single-file projects output ("name -- outcome"); --project filters on the project's own name.
+    if [ "$LIST" = "projects" ]; then
+      project="$base"
+      [ -n "$outcome" ] && title="$base -- $outcome"
+    fi
     if passes_lenses "$time" "$energy" "$context" "$project"; then
       emit "$id" "$time" "$energy" "$context" "$project" "$title"
     fi
@@ -242,7 +258,11 @@ list_product_ideas_single() {
   done
 }
 
-if [ -d "$GTD_DIR/$LIST" ]; then
+LIST_DIR="$GTD_DIR/$LIST"
+if [ "$LIST" = "reference" ] && [ "$GTD_LAYOUT" = "notes" ]; then
+  LIST_DIR="$GTD_WORKSPACE_ROOT/reference"
+fi
+if [ -d "$LIST_DIR" ]; then
   list_per_item
   exit 0
 fi

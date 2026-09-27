@@ -111,6 +111,34 @@ bash -n "$ROOT/scripts/gtd_help.sh"
 bash -n "$ROOT/scripts/gtd_list.sh"
 ok "shell scripts pass bash -n"
 
+# Per-item init fixture: builds the layout in a throwaway root, checks every list folder has its
+# README, README is never listed as an item, and init refuses to switch an existing layout.
+fixture="$(mktemp -d)"
+trap 'rm -rf "$fixture"' EXIT
+mkdir -p "$fixture/notes" "$fixture/files"
+LLM_GTD_ROOT="$fixture/notes" CODEX_HOME="$fixture/codex" \
+  bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes --with-bases >/dev/null \
+  || fail "gtd_init.sh --layout notes failed"
+for f in memory/gtd/inbox.md memory/gtd/calendar.md memory/gtd/horizons.md reference/README.md \
+  memory/gtd/next-actions/README.md memory/gtd/waiting-for/README.md memory/gtd/projects/README.md \
+  memory/gtd/someday-maybe/README.md memory/gtd/product-ideas/README.md memory/gtd/_done/README.md \
+  memory/gtd/next-actions.base memory/gtd/done.base; do
+  [ -f "$fixture/notes/$f" ] || fail "per-item init did not create $f"
+done
+for f in next-actions waiting-for projects someday-maybe product-ideas reference; do
+  [ ! -e "$fixture/notes/memory/gtd/$f.md" ] || fail "per-item init also wrote single-file $f.md"
+done
+grep -q '^## Note format' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Note format section"
+grep -q '^## Legacy groups' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Legacy groups section"
+[ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions)" ] || fail "gtd_list.sh counted README.md as an item"
+[ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" projects)" ] || fail "gtd_list.sh counted projects/README.md as a project"
+LLM_GTD_ROOT="$fixture/files" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
+  || fail "gtd_init.sh single-file init failed"
+rc=0; LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null 2>&1 || rc=$?
+[ "$rc" -eq 4 ] || fail "init did not refuse to turn a single-file system into per-item (exit $rc, want 4)"
+[ ! -d "$fixture/files/memory/gtd/next-actions" ] || fail "refused per-item init still created next-actions/"
+ok "per-item init: folders + READMEs + bases created, README never an item, layout switch refused"
+
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then
     fail "privacy denylist matched under skill root"

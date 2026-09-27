@@ -32,7 +32,8 @@ The intent verbs above stay the same in both layouts; only the capability behind
 | GTD intent verb | Single-file capability | Per-item capability |
 |---|---|---|
 | Read a list | Read `memory/gtd/<list>.md` | Run `scripts/gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project P]`; falls back to opening every note only if the script is unavailable |
-| Append an item | Append a line to `memory/gtd/<list>.md` | Create `memory/gtd/<list>/<Title>.md` with frontmatter, skipping `README.md` as a reserved filename |
+| Append an item | Append a line to `memory/gtd/<list>.md` | Create `memory/gtd/<list>/<Title>.md` from that list's `templates/*-note.md` with frontmatter, skipping `README.md` as a reserved filename; a project is a folder, `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md`; general reference is `reference/<Title>.md` at the workspace root |
+| Link an item to its project | `Project: [[projects#Name\|Name]]` on the line, plus a block link back from the project | `project: "[[projects/<Project name>/README\|<Project name>]]"` in the note's frontmatter only — the project README's embedded view finds it, nothing is written back |
 | Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
 | Complete an item | Delete the line (or, once the lifecycle phase ships, move it under `done.md`'s completion date with its outcome) | Move the note into `memory/gtd/_done/` with `completed`, `result`, and its outcome added to the frontmatter/body |
 | Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `gtd_list.sh <list>` plus a frontmatter scan for missing/invalid fields; never scans `_done/` |

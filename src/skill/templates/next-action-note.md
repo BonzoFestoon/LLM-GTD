@@ -3,7 +3,7 @@ id: na-short-id-YYYYMMDD
 time: 10            # minutes, number
 energy: low         # low | medium | deep | low-emotional
 context: [computer] # real constraints: computer, phone, errands, home, person-present, prep-chain, payment, documents…
-project: "[[projects/Project name]]"   # optional — omit for a standalone action
+project: "[[projects/Project name/README|Project name]]"   # optional — omit for a standalone action
 due: YYYY-MM-DD     # optional, only for a real deadline
 source: inbox capture
 created: YYYY-MM-DD

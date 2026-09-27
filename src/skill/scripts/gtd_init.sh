@@ -7,6 +7,12 @@
 #   bash gtd_init.sh --import-legacy  # combine with --confirm-create: also do a one-time import from the old memory/open loops.md (old file is not modified)
 #   bash gtd_init.sh --status         # self-check, read-only automation check, and readiness report only; writes no files, never requires --confirm-create
 #   bash gtd_init.sh --install-cron   # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
+#   bash gtd_init.sh --confirm-create --layout notes [--with-bases]
+#                                     # opt-in per-item layout: inbox/calendar/horizons stay files; next-actions, waiting-for,
+#                                     # projects, someday-maybe, product-ideas become folders, plus _done/, each with a README.md;
+#                                     # general reference is a workspace-root reference/ folder. --with-bases also writes starter
+#                                     # Obsidian .base lens views. Without --layout, init keeps whatever layout is already there
+#                                     # (single-file for a fresh folder). It never switches an existing layout — that is migration.
 #
 # Safety: exactly ONE GTD inbox per person. Without --confirm-create this script only reports
 # where it would create files and exits 3 — see init/SKILL.md's "One inbox per human" rule for
@@ -33,15 +39,56 @@ IMPORT_LEGACY=0
 STATUS_ONLY=0
 INSTALL_CRON=0
 CONFIRM_CREATE=0
-for arg in "$@"; do
-  case "$arg" in
+WITH_BASES=0
+LAYOUT_ARG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
     --import-legacy) IMPORT_LEGACY=1 ;;
     --status)        STATUS_ONLY=1 ;;
     --install-cron)  INSTALL_CRON=1 ;;
     --confirm-create) CONFIRM_CREATE=1 ;;
-    *) echo "Unknown argument: $arg" >&2; exit 2 ;;
+    --with-bases)    WITH_BASES=1 ;;
+    --layout)
+      [ $# -ge 2 ] || { echo "--layout needs a value: notes or files" >&2; exit 2; }
+      LAYOUT_ARG="$2"; shift ;;
+    --layout=*)      LAYOUT_ARG="${1#--layout=}" ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
+  shift
 done
+
+# The layout that is live now (gtd_env.sh: GTD_LAYOUT override, else detection), and the one requested.
+DETECTED_LAYOUT="$GTD_LAYOUT"
+case "$LAYOUT_ARG" in
+  "") LAYOUT="$DETECTED_LAYOUT" ;;
+  notes|files) LAYOUT="$LAYOUT_ARG" ;;
+  *) echo "--layout must be 'notes' or 'files' (got: $LAYOUT_ARG)" >&2; exit 2 ;;
+esac
+if [ "$WITH_BASES" -eq 1 ] && [ "$LAYOUT" != "notes" ]; then
+  echo "--with-bases only applies to the per-item layout (--layout notes)." >&2
+  exit 2
+fi
+if [ "$IMPORT_LEGACY" -eq 1 ] && [ "$LAYOUT" = "notes" ]; then
+  echo "--import-legacy only works with the single-file layout; import first, then migrate to per-item notes." >&2
+  exit 2
+fi
+
+# Items that the other layout would hide. A folder GTD vault with a leftover <list>.md (or the
+# reverse) is a half-done migration: init refuses rather than leave items where no skill looks.
+single_file_lists_present() {
+  local l found=""
+  for l in $GTD_NOTE_LISTS reference; do
+    [ -f "$GTD_DIR/$l.md" ] && found="$found $l.md"
+  done
+  echo "${found# }"
+}
+note_folders_present() {
+  local l found=""
+  for l in $GTD_NOTE_LISTS _done; do
+    [ -d "$GTD_DIR/$l" ] && found="$found $l/"
+  done
+  echo "${found# }"
+}
 
 # Safety: GTD needs exactly ONE inbox per person, so init never bootstraps on its own.
 # Creating files requires --confirm-create, which the agent may pass only after asking the
@@ -55,6 +102,20 @@ if [ "$STATUS_ONLY" -eq 0 ] && [ "$CONFIRM_CREATE" -eq 0 ]; then
   echo "  Ask the user: 'Is GTD already set up somewhere? If not, is this the right location?'" >&2
   echo "  Only after they confirm, re-run with --confirm-create. Use --status for a read-only check." >&2
   exit 3
+fi
+
+if [ "$STATUS_ONLY" -eq 0 ]; then
+  if [ "$LAYOUT" = "notes" ] && [ -n "$(single_file_lists_present)" ]; then
+    echo "GTD Skill · init — REFUSING: $GTD_DIR uses the single-file layout ($(single_file_lists_present))." >&2
+    echo "  Creating per-item folders now would hide those items from every command. Switching layouts is a" >&2
+    echo "  migration, not init: run scripts/gtd_migrate_to_notes.sh (dry run first)." >&2
+    exit 4
+  fi
+  if [ "$LAYOUT" = "files" ] && [ -n "$(note_folders_present)" ]; then
+    echo "GTD Skill · init — REFUSING: $GTD_DIR uses the per-item layout ($(note_folders_present))." >&2
+    echo "  Creating single-file lists next to them would split the items across two layouts." >&2
+    exit 4
+  fi
 fi
 
 created=0
@@ -252,26 +313,13 @@ import_legacy() {
   echo "  ✅ Import complete: self $n_na → next-actions / waiting $n_wf → waiting-for / projects $n_pj → projects"
 }
 
-# ════════════════════════════════════════════════════════
-echo "GTD Skill · init"
-echo "Vault: $VAULT_ROOT"
+# ── List contents ──
+# Each folder-backed list's header (title + rules, up to its first section) is its own function, so the
+# single-file list and the per-item README.md carry the same text — see references/list-definitions.md
+# "List README files". Change a header here and both layouts get it.
 
-if [ "$STATUS_ONLY" -eq 1 ]; then
-  selfcheck
-  automation_selfcheck
-  if [ "$INSTALL_CRON" -eq 1 ]; then
-    cron_install_handoff
-  fi
-  echo ""
-  echo "(--status mode, no files written)"
-  exit 0
-fi
-
-mkdir -p "$GTD_DIR"
-echo ""
-echo "── Building memory/gtd/ eight core lists + product-ideas extension list (existing files skipped) ──"
-
-seed "$GTD_DIR/inbox.md" <<'EOF'
+file_inbox() {
+  cat <<'EOF'
 # 📥 Inbox
 
 > The single landing spot for GTD step one, Capture. **No judgment**: drop it in first; clarifying is left to /gtd-clarify.
@@ -280,15 +328,21 @@ seed "$GTD_DIR/inbox.md" <<'EOF'
 ## To clarify
 
 EOF
+}
 
-seed "$GTD_DIR/next-actions.md" <<'EOF'
+header_next_actions() {
+  cat <<'EOF'
 # ✅ Next Actions
 
 > The action pool of clarified, single-step actions you can do right away. Engage filters a 3-5 item menu on the spot by context / time / energy / priority; you never face the whole list.
 > Verbs must be concrete (confirm / send / call / write) — no vague verbs like "follow up / handle / research".
 > Format: `- [ ] Concrete action · Time: 10 min · Energy: low energy · Constraint: needs computer / shopping / prep chain / person present · Project: [[projects#Project name|Project name]] (if part of a project) · Source: [[note]] · Date: YYYYMMDD`
 > Legacy `@computer/@calls/@errands/@home/@agenda` groups are still supported; they are tool/setting constraints, no longer the main structure.
+EOF
+}
 
+legacy_groups_next_actions() {
+  cat <<'EOF'
 ## @computer
 > Legacy compatibility group: needing a computer / internet is a tool constraint, not a reason for Engage to recommend it first.
 
@@ -303,10 +357,11 @@ seed "$GTD_DIR/next-actions.md" <<'EOF'
 
 ## @agenda-[name]
 > Legacy compatibility group: things to raise the next time you see or talk to someone (one subgroup per person, e.g. `### @agenda-Teacher-A`).
-
 EOF
+}
 
-seed "$GTD_DIR/projects.md" <<'EOF'
+header_projects() {
+  cat <<'EOF'
 # 🎯 Projects
 
 > Any outcome that takes **more than one step** to complete. GTD hard rule: every project must have **at least one clear next action**, or it stalls.
@@ -323,32 +378,31 @@ seed "$GTD_DIR/projects.md" <<'EOF'
 > At least 1 next action, or the project is stalled. Several are fine, but only list physical actions that can move forward in parallel right now — not a full task tree.
 >
 > Close-the-loop rule: once the desired outcome is achieved, delete the whole project block; do not leave "Next actions: none".
-
 EOF
+}
 
-seed "$GTD_DIR/waiting-for.md" <<'EOF'
+header_waiting_for() {
+  cat <<'EOF'
 # ⏳ Waiting For
 
 > Things you delegated or are waiting on someone else for — not your next action, but they must be tracked so they don't vanish on your side.
 > Scan this before any 1:1 or project meeting so nothing slips.
 > Format: `- [ ] [Person] · what you're waiting for · Agreed: [content or deadline] · Source: [[note]] · Delegated: YYYYMMDD`
-
-## Waiting
-
 EOF
+}
 
-seed "$GTD_DIR/someday-maybe.md" <<'EOF'
+header_someday_maybe() {
+  cat <<'EOF'
 # 💭 Someday / Maybe
 
 > Not committed to yet, but you don't want to forget — projects you'd like to do, possible directions, interesting thoughts.
 > **Not** an active list: nothing here is acted on now. Scan it at the monthly review and pull whatever has ripened into projects/next-actions.
 > Format: `- [ ] Idea / possible project · trigger condition (when it becomes worth starting) · Source: [[note]] · Date: YYYYMMDD`
-
-## Incubating
-
 EOF
+}
 
-seed "$GTD_DIR/product-ideas.md" <<'EOF'
+header_product_ideas() {
+  cat <<'EOF'
 # Product Ideas / Product Work Intake
 
 > Inputs that clearly belong to a product, feature, scenario, or opportunity space go here, keeping the original opportunity, assumptions, and evidence status.
@@ -356,12 +410,17 @@ seed "$GTD_DIR/product-ideas.md" <<'EOF'
 > Only when the user explicitly says "store it, don't process it / capture only" is it left un-promoted.
 > Teresa Torres' framing: keep the opportunity first and don't rush to a solution — but the GTD layer must still give a next validation action.
 > Format: one subsection per idea; use `- [ ] Opportunity: ...` as the counted line, and include `GTD visibility`.
-
-## Opportunity pool
-
 EOF
+}
 
-seed "$GTD_DIR/calendar.md" <<'EOF'
+file_next_actions() { header_next_actions; echo ""; legacy_groups_next_actions; echo ""; }
+file_projects()     { header_projects; echo ""; }
+file_waiting_for()  { header_waiting_for; printf '\n## Waiting\n\n'; }
+file_someday_maybe() { header_someday_maybe; printf '\n## Incubating\n\n'; }
+file_product_ideas() { header_product_ideas; printf '\n## Opportunity pool\n\n'; }
+
+file_calendar() {
+  cat <<'EOF'
 # 📅 Calendar (hard landscape)
 
 > **Only** things that matter on a specific day / at a specific time — meetings, appointments, deadlines, day-specific actions.
@@ -373,8 +432,10 @@ seed "$GTD_DIR/calendar.md" <<'EOF'
 ## Time-specific items (fallback · when the external calendar provider is unreachable)
 
 EOF
+}
 
-seed "$GTD_DIR/reference.md" <<'EOF'
+file_reference() {
+  cat <<'EOF'
 # 📚 Reference
 
 > Non-actionable information you'll want to look up later — plus pointers to each project's support material.
@@ -388,8 +449,10 @@ seed "$GTD_DIR/reference.md" <<'EOF'
 ## Project support material
 
 EOF
+}
 
-seed "$GTD_DIR/horizons.md" <<'EOF'
+file_horizons() {
+  cat <<'EOF'
 # 🔭 Horizons of Focus
 
 > GTD's vertical focus: the horizontal five steps ensure "nothing slips"; the vertical horizons ensure "you're doing the right things".
@@ -421,9 +484,272 @@ seed "$GTD_DIR/horizons.md" <<'EOF'
 > → see [[next-actions]]
 
 EOF
+}
 
 # The [[projects]]/[[next-actions]] links in horizons are same-directory file wikilinks that Obsidian can resolve;
 # to point at a heading inside a file use [[filename#Heading|Heading]] to avoid creating a standalone file by mistake.
+# In the per-item layout they become [[projects/README|projects]] — a bare [[projects]] would resolve to nothing.
+
+# ── Per-item layout: README.md for each list folder ──
+# Order (list-definitions.md "List README files"): original header verbatim (its single-file Format line
+# annotated) → Legacy groups (next-actions only) → Note format → Views (only when .base files exist).
+
+annotate_format() {
+  sed '/^> Format:/ s/$/ (single-file format; see Note format below)/'
+}
+
+# note_format_section TEMPLATE INTRO — the per-item note shape, straight from templates/<TEMPLATE>
+note_format_section() {
+  local tpl="$SKILL_DIR/templates/$1"
+  echo ""
+  echo "## Note format"
+  echo ""
+  echo "$2"
+  echo ""
+  if [ -f "$tpl" ]; then
+    echo '```markdown'
+    cat "$tpl"
+    echo '```'
+  else
+    echo "(See the skill's templates/$1.)"
+  fi
+}
+
+views_section() {
+  [ "$WITH_BASES" -eq 1 ] || [ -f "$GTD_DIR/$1.base" ] || return 0
+  printf '\n## Views\n\n%s\n' "$2"
+}
+
+NOTE_RULES='One note per item: `<list>/<Short verb-first title>.md`, filesystem-safe (no `: / \ ? * " < > |`), with `(2)`, `(3)`, … added on a collision. `README.md` is reserved and is never an item. The properties below are filled by clarify and repaired by organize — you never have to tag anything, and a note with no properties is still valid.'
+
+readme_next_actions() {
+  header_next_actions | annotate_format
+  printf '\n## Legacy groups\n\nThe single-file list grouped actions under these headings. In per-item notes a group is a `context` value instead:\n\n'
+  legacy_groups_next_actions | sed \
+    -e 's/^## @computer$/### @computer → `context: [computer]`/' \
+    -e 's/^## @calls$/### @calls → `context: [phone]`/' \
+    -e 's/^## @errands$/### @errands → `context: [errands]`/' \
+    -e 's/^## @home$/### @home → `context: [home]`/' \
+    -e 's/^## @agenda-\[name\]$/### @agenda-[name] → `context: [person-present]` (the person goes in the body)/'
+  note_format_section next-action-note.md "${NOTE_RULES//<list>/next-actions}"
+  views_section next-actions '- [[next-actions.base]] — lens views: 15 min or less · Low energy · Errands. Each project README embeds its "For this project" view.'
+}
+
+readme_waiting_for() {
+  header_waiting_for | annotate_format
+  note_format_section waiting-for-note.md "${NOTE_RULES//<list>/waiting-for}"
+}
+
+readme_projects() {
+  header_projects | annotate_format
+  note_format_section project-note.md 'Each project is a folder, `projects/<Project name>/README.md`, not a single note: the README holds the outcome, decisions and an embedded next-actions view; plan docs, design notes and research for the project live as ordinary files beside it, linked with a bare `[[filename]]`. Actions point at the project with `project: "[[projects/<Project name>/README|<Project name>]]"` — the README never lists them by hand. When the outcome is achieved: after-action review, then the README moves to `_done/`.'
+}
+
+readme_someday_maybe() {
+  header_someday_maybe | annotate_format
+  note_format_section someday-maybe-note.md "${NOTE_RULES//<list>/someday-maybe}"
+}
+
+readme_product_ideas() {
+  header_product_ideas | annotate_format
+  note_format_section product-idea-note.md "${NOTE_RULES//<list>/product-ideas} The \"GTD visibility\" rule is unchanged: by default each idea also gets a project folder and a next validation action."
+}
+
+readme_done() {
+  cat <<'EOF'
+# 🏁 Done
+
+> A record of finished commitments — completed next actions, received waiting-for items, finished projects, and cancelled project steps — each with its outcome: what was done, what problems came up and how they were solved.
+> **Not a list you act from.** Engage never reads it, the dashboard never counts it as open, and organize never checks it for stalled or orphaned items. It feeds the Weekly Review's "Done since last review" and each project's after-action review.
+> One flat folder: a note keeps its original filename and properties and gains `completed`, `result` (done | cancelled) and `list` (the list it came from). A cancelled *standalone* action, or a dropped someday item, is simply deleted — only project-linked work is worth a record.
+> Kept indefinitely by default; trimming is off unless enabled in `memory/gtd/personalized.md`.
+
+## Note format
+
+```markdown
+---
+# …the note's original properties (id, time, energy, context, project, source, created)…
+completed: YYYY-MM-DD
+result: done          # done | cancelled
+list: next-actions    # the list it came from
+---
+The original body, unchanged.
+
+## Outcome
+- Done: what was actually done.
+- Problems and fixes: what got in the way and how it was solved (or "none noted").
+- Links: [[…]] or file paths, commits, emails
+```
+EOF
+  views_section done '- [[done.base]] — Done this week.'
+}
+
+readme_reference() {
+  cat <<'EOF'
+# 📚 Reference
+
+> Non-actionable information you'll want to look up later: checklists, specs, contact details, how-tos and insights worth keeping.
+> One plain note per topic, `reference/<Title>.md`, found by title or full-text search. This folder sits outside `memory/gtd/` on purpose: GTD files knowledge here, but it is not GTD state.
+> Project-specific support material lives in that project's own folder (`memory/gtd/projects/<Project name>/`) instead; when a project closes, you decide whether it's worth keeping.
+> `memory/gtd/personalized.md` can point this hand-off somewhere else instead (a separate knowledge system) if you run one.
+EOF
+  note_format_section reference-note.md 'No id, type or pipeline scaffolding — just where it came from and when.'
+}
+
+# ── Per-item layout: optional Obsidian Bases (lens views only — never an "all actions" view) ──
+# Bases syntax learned in Phase 0: negation is `!`, `order:` is the full visible-column list (file.name must be
+# listed), and file.inFolder() is recursive. _done/ is a sibling of the list folders, so the lists need no exclusion.
+
+base_next_actions() {
+  cat <<'EOF'
+# LLM-GTD lens views over the next-actions pool. Optional Obsidian extra: every GTD command works without it.
+# Lens views only — there is deliberately no unfiltered "all actions" view (never face the whole list).
+# "For this project" is meant to be embedded in a project README: ![[next-actions.base#For this project]]
+filters:
+  and:
+    - file.inFolder("memory/gtd/next-actions")
+    - file.basename != "README"
+views:
+  - type: table
+    name: 15 min or less
+    filters:
+      and:
+        - time <= 15
+    order:
+      - file.name
+      - time
+      - energy
+      - context
+      - project
+  - type: table
+    name: Low energy
+    filters:
+      and:
+        - energy == "low"
+    order:
+      - file.name
+      - time
+      - context
+      - project
+  - type: table
+    name: Errands
+    filters:
+      and:
+        - context.contains("errands")
+    order:
+      - file.name
+      - time
+      - energy
+      - project
+  - type: table
+    name: For this project
+    filters:
+      and:
+        - file.hasLink(this.file)
+    order:
+      - file.name
+      - time
+      - energy
+      - context
+EOF
+}
+
+base_done() {
+  cat <<'EOF'
+# LLM-GTD done record. Optional Obsidian extra: every GTD command works without it.
+filters:
+  and:
+    - file.inFolder("memory/gtd/_done")
+    - file.basename != "README"
+views:
+  - type: table
+    name: Done this week
+    filters:
+      and:
+        - completed >= today() - "7d"
+    order:
+      - file.name
+      - completed
+      - result
+      - list
+      - project
+    sort:
+      - property: completed
+        direction: DESC
+EOF
+}
+
+build_files_layout() {
+  seed "$GTD_DIR/inbox.md" < <(file_inbox)
+  seed "$GTD_DIR/next-actions.md" < <(file_next_actions)
+  seed "$GTD_DIR/projects.md" < <(file_projects)
+  seed "$GTD_DIR/waiting-for.md" < <(file_waiting_for)
+  seed "$GTD_DIR/someday-maybe.md" < <(file_someday_maybe)
+  seed "$GTD_DIR/product-ideas.md" < <(file_product_ideas)
+  seed "$GTD_DIR/calendar.md" < <(file_calendar)
+  seed "$GTD_DIR/reference.md" < <(file_reference)
+  seed "$GTD_DIR/horizons.md" < <(file_horizons)
+}
+
+build_notes_layout() {
+  local l
+  for l in $GTD_NOTE_LISTS _done; do
+    mkdir -p "$GTD_DIR/$l"
+  done
+  mkdir -p "$VAULT_ROOT/reference"
+  seed "$GTD_DIR/inbox.md" < <(file_inbox)
+  seed "$GTD_DIR/next-actions/README.md" < <(readme_next_actions)
+  seed "$GTD_DIR/projects/README.md" < <(readme_projects)
+  seed "$GTD_DIR/waiting-for/README.md" < <(readme_waiting_for)
+  seed "$GTD_DIR/someday-maybe/README.md" < <(readme_someday_maybe)
+  seed "$GTD_DIR/product-ideas/README.md" < <(readme_product_ideas)
+  seed "$GTD_DIR/_done/README.md" < <(readme_done)
+  seed "$GTD_DIR/calendar.md" < <(file_calendar)
+  seed "$VAULT_ROOT/reference/README.md" < <(readme_reference)
+  seed "$GTD_DIR/horizons.md" < <(file_horizons | sed \
+    -e 's/\[\[projects\]\]/[[projects\/README|projects]]/' \
+    -e 's/\[\[next-actions\]\]/[[next-actions\/README|next-actions]]/' \
+    -e 's/mirror of projects\.md/mirror of the projects\/ folder/')
+  if [ "$WITH_BASES" -eq 1 ]; then
+    seed "$GTD_DIR/next-actions.base" < <(base_next_actions)
+    seed "$GTD_DIR/done.base" < <(base_done)
+  fi
+}
+
+# ════════════════════════════════════════════════════════
+echo "GTD Skill · init"
+echo "Vault: $VAULT_ROOT"
+if [ "$LAYOUT" = "notes" ]; then
+  echo "Layout: notes (per-item: one folder of notes per list)"
+else
+  echo "Layout: files (single-file: one .md per list)"
+fi
+if [ "$STATUS_ONLY" -eq 1 ]; then
+  if [ -n "$(single_file_lists_present)" ] && [ -n "$(note_folders_present)" ]; then
+    echo "  ⚠️  Both layouts present ($(single_file_lists_present) and $(note_folders_present)) — a half-done migration; items in one of them are invisible to every command."
+  fi
+fi
+
+if [ "$STATUS_ONLY" -eq 1 ]; then
+  selfcheck
+  automation_selfcheck
+  if [ "$INSTALL_CRON" -eq 1 ]; then
+    cron_install_handoff
+  fi
+  echo ""
+  echo "(--status mode, no files written)"
+  exit 0
+fi
+
+mkdir -p "$GTD_DIR"
+echo ""
+if [ "$LAYOUT" = "notes" ]; then
+  echo "── Building memory/gtd/ per-item layout: inbox, calendar, horizons + 5 list folders + _done/, and reference/ (existing files skipped) ──"
+  build_notes_layout
+else
+  echo "── Building memory/gtd/ eight core lists + product-ideas extension list (existing files skipped) ──"
+  build_files_layout
+fi
 
 if [ "$IMPORT_LEGACY" -eq 1 ]; then
   echo ""
@@ -450,8 +776,15 @@ fi
 echo ""
 echo "── Readiness report ──"
 echo "  Created $created file(s), skipped $skipped (already exist)."
-echo "  Trusted system location: memory/gtd/"
-if [ "$IMPORT_LEGACY" -eq 0 ]; then
+if [ "$LAYOUT" = "notes" ]; then
+  echo "  Trusted system location: memory/gtd/ (per-item layout); general reference: reference/"
+  if [ "$WITH_BASES" -eq 0 ]; then
+    echo "  (No Obsidian lens views written. Optional: bash gtd_init.sh --confirm-create --layout notes --with-bases)"
+  fi
+else
+  echo "  Trusted system location: memory/gtd/"
+fi
+if [ "$IMPORT_LEGACY" -eq 0 ] && [ "$LAYOUT" = "files" ]; then
   echo "  (Legacy data not imported. For a one-time import: bash gtd_init.sh --import-legacy)"
 fi
 echo ""

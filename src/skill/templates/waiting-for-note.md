@@ -3,7 +3,7 @@ id: wf-short-id-YYYYMMDD
 person: Person's name
 delegated: YYYY-MM-DD
 follow-up: YYYY-MM-DD   # optional — when to check back, if there's a real date
-project: "[[projects/Project name]]"   # optional — omit if this isn't tied to a project
+project: "[[projects/Project name/README|Project name]]"   # optional — omit if this isn't tied to a project
 source: inbox capture
 created: YYYY-MM-DD
 ---

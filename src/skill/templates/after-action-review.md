@@ -18,5 +18,5 @@ General insights or how-tos worth keeping past this one project — offered for 
 <!--
 Gathered from the project note plus every done note (including cancelled steps) linked to it by `project:`.
 Draft this automatically once the project's outcome is achieved (act-then-surface); the user confirms, edits, or skips it in one step — the project still closes into _done/ if the AAR is skipped, with the draft kept in the project note.
-Filing (ZK retired): project-specific facts/how-tos go inside the project's own folder or straight into its README if short; reusable how-tos and general insights with no single project go to a new note in memory/gtd/reference/. Never offered to a separate knowledge pipeline.
+Filing (ZK retired): project-specific facts/how-tos go inside the project's own folder or straight into its README if short; reusable how-tos and general insights with no single project go to a new note in the workspace-root reference/ folder. Never offered to a separate knowledge pipeline.
 -->
