@@ -38,7 +38,7 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 
 - Run `scripts/gtd_review_prep.sh` to generate a read-only review prep pack: overall counts, inbox summary, stalled projects, waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue.
 - Read the external calendar provider (preferred if reachable); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete.
-- Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar.
+- Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment).
 - Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision.
 - Compress the review into 3 kinds of output:
   - **Handled automatically**: mechanical cleanup, dedupe, drafts, filing.

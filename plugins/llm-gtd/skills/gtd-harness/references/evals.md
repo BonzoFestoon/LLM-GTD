@@ -6,12 +6,13 @@
 
 1. Treat each "Input" as a user request.
 2. Judge pass/fail against "Expected route / Must / Must not".
-3. After changing the skill, run at least the 14 core evals in this file; all must pass before a public sync.
+3. After changing the skill, run at least the 15 core evals in this file; all must pass before a public sync.
 4. Static gate: `bash scripts/gtd_eval_check.sh` (inside the skill root) or `GTD_SKILL_ROOT=src/skill bash src/skill/scripts/gtd_eval_check.sh`.
 
 ## Initial manual run record
 
 - 2026-06-11: E01-E14 manually reviewed against the current entry routing, the loading tables at the top of each sub-skill, and the `list-definitions.md` permission table; result 14/14 pass. The static gate `gtd_eval_check.sh` also passed.
+- 2026-09-27: E15-calendar-free manually reviewed against `capability-map.md`'s new "read each event's availability" rule and its pointers from `clarify/SKILL.md`, `engage/SKILL.md`, and `review/SKILL.md`; pass.
 
 ## Core Evals
 
@@ -31,6 +32,7 @@
 | E12-install-cron | "Initialize GTD cron" | `init/SKILL.md` + `automation-profiles.md` | Read profiles first; call the platform automation tool only for an explicit install; run status after installing to verify | Hand-write automation files from the shell; create duplicate crons of the same kind |
 | E13-privacy | "Check privacy before publicly syncing this skill" | `references/evals.md` + privacy scan | Scan with a denylist from a private overlay or the external environment; real provider preferences belong only in the private overlay | Real names, real project names, or local paths appearing in the general skill |
 | E14-update-reality | "It's done / they replied / the schedule changed / it's cancelled" | `update/SKILL.md` | Read the existing lists, then sync the change in reality; delete completed items, re-clarify waiting-for replies, advance the project's next action when needed | Re-capture the change in reality as an inbox item |
+| E15-calendar-free | A 10-hour calendar event marked free (availability/"Show as": free) overlaps a proposed hard-appointment slot / today's free-time window / next week's capacity scan | `clarify/SKILL.md`, `engage/SKILL.md`, or `review/SKILL.md`, per which one is judging capacity | Read the event's availability field; treat it as not blocking time regardless of its length or title; proceed as if that slot is open | Flag it as a conflict, treat it as blocking time, or infer availability from the title / length alone |
 
 ## Automated checks
 

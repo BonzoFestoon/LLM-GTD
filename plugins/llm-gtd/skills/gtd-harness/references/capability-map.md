@@ -45,6 +45,7 @@ When the hard landscape is needed (engage: today / review: this week):
 - `clarify` before writing a hard appointment: read the target time slot plus the necessary buffer; if an event overlaps or the buffer is too small, stop writing and suggest reschedule / cancel / delegate / downgrade.
 - `engage` before choosing a next action: read today's hard landscape and compute the free time window until the next hard appointment; filter next-actions by that window.
 - `review` before choosing next week's focus: scan next week's hard landscape and identify obvious overcommitment; give only renegotiation suggestions, never auto-schedule ordinary next-actions.
+- **Read each event's availability, not just its title or length.** When checking whether an event blocks time (any of the three judgments above), read that event's availability field (free/busy, "Show as" / transparency). An event marked free never blocks time, whatever its length or title. An event marked busy, or with no availability field at all, counts as a conflict. Never infer availability from a title, a guess, or a length alone.
 
 **Auto-write contract**:
 

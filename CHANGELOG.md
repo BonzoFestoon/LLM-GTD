@@ -2,6 +2,17 @@
 
 All notable changes.
 
+## v1.14.1 — Calendar checks read event availability, not just title/length
+`clarify`, `engage`, and `review` now read each calendar event's availability
+field (free/busy, "Show as" / transparency) before treating it as blocking
+time. An event marked free never blocks time, whatever its length or title;
+an event marked busy, or with no availability field, counts as a conflict.
+The rule lives once in `capability-map.md`'s conflict and capacity judgment
+and is pointed to from all three call sites, instead of being a local,
+per-vault rule. New eval E15-calendar-free. This was previously a local
+override in `personalized.md`; that override is removed now that the general
+skill covers it.
+
 ## v1.14 — Init no longer bootstraps automatically
 GTD needs exactly one inbox per person. `gtd_init.sh` now refuses to create
 files without an explicit `--confirm-create` flag (bare `--status` stays
