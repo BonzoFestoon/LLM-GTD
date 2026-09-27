@@ -45,6 +45,11 @@ esac
 # in the per-item layout it lives at the workspace root (reference/), outside memory/gtd/.
 GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe product-ideas"
 
+# gtd_days_ago N — the date N days before today as YYYY-MM-DD (GNU date, then BSD/macOS date).
+gtd_days_ago() {
+  date -d "$1 days ago" +%Y-%m-%d 2>/dev/null || date -v-"$1"d +%Y-%m-%d
+}
+
 # SEP is a unit separator (0x1f), not tab: bash's `read` treats IFS whitespace
 # characters (including tab) as collapsing, which silently swallows empty fields
 # between two consecutive delimiters. 0x1f is not IFS whitespace, so empty fields
@@ -64,8 +69,12 @@ frontmatter_kv() {
       val = substr(line, RLENGTH+1)
       sub(/^[[:space:]]+/, "", val)
       sub(/[[:space:]]+$/, "", val)
-      gsub(/^"|"$/, "", val)
-      if (substr(val, 1, 2) != "[[") {
+      if (val ~ /^".*"$/) {
+        # a quoted string: drop the quotes and unescape \" — commas inside are text, not a list
+        val = substr(val, 2, length(val) - 2)
+        gsub(/\\"/, "\"", val)
+      } else if (substr(val, 1, 1) == "[" && substr(val, 1, 2) != "[[") {
+        # a [a, b] list -> a,b
         gsub(/^\[|\]$/, "", val)
         gsub(/[[:space:]]*,[[:space:]]*/, ",", val)
       }

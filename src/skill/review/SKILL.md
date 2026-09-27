@@ -38,11 +38,10 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 
 ## 0. AI review prep pack (always first)
 
-- Run `scripts/gtd_review_prep.sh` to generate a read-only review prep pack: overall counts, inbox summary, stalled projects, waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue.
-- **Per-item layout**: read each list with `scripts/gtd_list.sh <list>` (next-actions, waiting-for, projects, someday-maybe, product-ideas) and take stalled / orphan / field problems and finished projects still missing an after-action review from `scripts/gtd_check.sh`, rather than opening every note. `_done/` is never part of the active lists.
+- Run `scripts/gtd_review_prep.sh --since <last review date>` to generate a read-only review prep pack in either layout: overall counts, done since last review, inbox summary, hygiene findings (per-item: from `gtd_check.sh`, including finished projects still missing an after-action review), stalled projects, waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue. Open individual notes only for items that need a decision; `_done/` is never part of the active lists.
 - Read the external calendar provider (preferred if reachable); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete.
 - Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment).
-- **Done since last review**: `scripts/gtd_list.sh done --since <last review date>` (both layouts). Lead with the wins, then each item marked `problems=yes`; for those, Get Current offers one choice per item: file its how-to to reference now, or leave it for its project's after-action review. Offered, never required.
+- **Done since last review** (in the prep pack; `gtd_list.sh done --since <date>` for more detail): lead with the wins, then each problem solved; for those, Get Current offers one choice per item: file its how-to to reference now, or leave it for its project's after-action review. Offered, never required.
 - Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision.
 - Compress the review into 3 kinds of output:
   - **Handled automatically**: mechanical cleanup, dedupe, drafts, filing.
@@ -82,7 +81,7 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 - **Calm red line (this skill's style)**: the three rings are only a balance prompt — no scoring, no judgment, no nagging if the user skips it.
 
 ## Workflow
-1. Run this skill's `scripts/gtd_review_prep.sh` to get the review prep pack (plus `gtd_list.sh` / `gtd_check.sh` in the per-item layout); if the script is missing, fall back to `gtd_status.sh` + a manual scan of all lists.
+1. Run this skill's `scripts/gtd_review_prep.sh --since <last review date>` to get the review prep pack (both layouts); if the script is missing, fall back to `gtd_status.sh` + a manual scan of all lists (`gtd_list.sh` / `gtd_check.sh` in the per-item layout).
 2. Do organize's mechanical hygiene first: handle what can safely be handled automatically; gather decisions into one batch of questions.
 3. Proceed through ①②③④ in order; in each stage give the user only the points needing judgment, and let the AI organize, draft, and file the rest.
 4. Write to file only after the user confirms: clear the inbox, cross off, add next actions, move someday items, fill product ideas visibility, advance / downgrade / delete product ideas, update projects / waiting-for.

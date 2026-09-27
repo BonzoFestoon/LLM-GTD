@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # gtd_review_prep.sh — build a read-only weekly review prep pack; never modifies any list.
-# Usage: bash gtd_review_prep.sh
+# Usage: bash gtd_review_prep.sh [--since YYYY-MM-DD]
+#   --since: start of "Done since last review" (default: 7 days ago — pass the last review's date)
+# Works in both layouts: the per-item layout is read through gtd_list.sh / gtd_check.sh, never
+# by counting _done/ or README.md as open work.
 
 set -euo pipefail
 
@@ -9,10 +12,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_ROOT="$GTD_WORKSPACE_ROOT"
 GTD_DIR="$VAULT_ROOT/memory/gtd"
 
+SINCE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --since) SINCE="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$SINCE" ] || SINCE="$(gtd_days_ago 7)"
+
 if [ ! -d "$GTD_DIR" ]; then
   echo "memory/gtd/ does not exist. Run this skill's scripts/gtd_init.sh first"
   exit 1
 fi
+
+list() {
+  bash "$SCRIPT_DIR/gtd_list.sh" "$@"
+}
+
+NOTES=0
+[ "$GTD_LAYOUT" = "notes" ] && NOTES=1
+CHECK=""
+[ "$NOTES" -eq 1 ] && CHECK="$(bash "$SCRIPT_DIR/gtd_check.sh")"
 
 file() {
   printf "%s/%s" "$GTD_DIR" "$1"
@@ -32,6 +53,10 @@ open_items() {
 
 stalled_projects() {
   local f
+  if [ "$NOTES" -eq 1 ]; then
+    printf '%s\n' "$CHECK" | awk -F'\t' '$1 == "stalled" { p = $2; sub(/^projects\//, "", p); sub(/\/README\.md$/, "", p); print p }'
+    return 0
+  fi
   f="$(file projects.md)"
   [ -f "$f" ] || return 0
   awk '
@@ -72,15 +97,30 @@ stalled_projects() {
   ' "$f"
 }
 
+VAGUE_VERBS='(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)'
+
 vague_next_actions() {
   local f
+  if [ "$NOTES" -eq 1 ]; then
+    list next-actions | awk -F'\t' '{ print $NF }' | grep -iE "$VAGUE_VERBS" | sed 's/^/- /' || true
+    return 0
+  fi
   f="$(file next-actions.md)"
   [ -f "$f" ] || return 0
-  grep -inE '^- \[ \] .*(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)' "$f" 2>/dev/null || true
+  grep -inE "^- \[ \] .*$VAGUE_VERBS" "$f" 2>/dev/null || true
+}
+
+# Per-item: open items of a folder list as "- title" lines (plus its key=value columns).
+list_items() {
+  list "$1" | awk -F'\t' '{ line = "- " $NF; for (i = 2; i < NF; i++) if ($i !~ /=-$/) line = line " · " $i; print line }'
 }
 
 product_ideas_summary() {
   local f
+  if [ "$NOTES" -eq 1 ]; then
+    list_items product-ideas
+    return 0
+  fi
   f="$(file product-ideas.md)"
   [ -f "$f" ] || return 0
   awk '
@@ -107,7 +147,20 @@ product_ideas_summary() {
 }
 
 product_visibility_gaps() {
-  local f
+  local f vis
+  if [ "$NOTES" -eq 1 ]; then
+    for f in "$GTD_DIR"/product-ideas/*.md; do
+      [ -e "$f" ] || continue
+      [ "$(basename "$f")" = "README.md" ] && continue
+      vis="$(grep -m1 'GTD visibility:' "$f" || true)"
+      if ! echo "$vis" | grep -q '\[\[projects/'; then
+        echo "$(basename "$f" .md): missing project visibility"
+      elif ! echo "$vis" | grep -q '\[\[next-actions/'; then
+        echo "$(basename "$f" .md): missing next-actions visibility"
+      fi
+    done
+    return 0
+  fi
   f="$(file product-ideas.md)"
   [ -f "$f" ] || return 0
   awk '
@@ -153,6 +206,30 @@ else
   echo "None."
 fi
 
+section "Done since last review ($SINCE)"
+done_items="$(list done --since "$SINCE")"
+if [ -n "$done_items" ]; then
+  echo "Wins:"
+  printf '%s\n' "$done_items" | awk -F'\t' '{ r = $3; sub(/^result=/, "", r); f = $4; sub(/^list=/, "", f); print "- " $NF " (" f ", " r ")" }'
+  problems="$(printf '%s\n' "$done_items" | awk -F'\t' '$6 == "problems=yes" { print "- " $NF }')"
+  if [ -n "$problems" ]; then
+    echo "Problems solved (offer: file the how-to to reference now, or leave it for the project's after-action review):"
+    echo "$problems"
+  fi
+else
+  echo "None."
+fi
+
+if [ "$NOTES" -eq 1 ]; then
+  section "Hygiene findings (gtd_check.sh)"
+  findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' || true)"
+  if [ -n "$findings" ]; then
+    echo "$findings" | awk -F'\t' '{ print "- " $1 ": " $2 " — " $3 }'
+  else
+    echo "None."
+  fi
+fi
+
 section "Stalled Projects"
 stalled="$(stalled_projects)"
 if [ -n "$stalled" ]; then
@@ -162,7 +239,7 @@ else
 fi
 
 section "Waiting For"
-waiting_items="$(open_items "$(file waiting-for.md)")"
+if [ "$NOTES" -eq 1 ]; then waiting_items="$(list_items waiting-for)"; else waiting_items="$(open_items "$(file waiting-for.md)")"; fi
 if [ -n "$waiting_items" ]; then
   echo "$waiting_items"
 else
@@ -179,7 +256,7 @@ else
 fi
 
 section "Someday/Maybe candidates"
-someday_items="$(open_items "$(file someday-maybe.md)")"
+if [ "$NOTES" -eq 1 ]; then someday_items="$(list_items someday-maybe)"; else someday_items="$(open_items "$(file someday-maybe.md)")"; fi
 if [ -n "$someday_items" ]; then
   echo "$someday_items"
 else
@@ -204,6 +281,7 @@ fi
 
 section "Confirmation queue"
 echo "- Empty the inbox: clarify item by item to zero."
+echo "- Done since last review: for each problem solved, file its how-to to reference now or leave it for the project's after-action review."
 echo "- Stalled projects: add at least one concrete next action per project; attach several parallel actions if needed, or confirm cutting it."
 echo "- Waiting for: confirm which items to follow up on; AI can draft a neutral message first."
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
