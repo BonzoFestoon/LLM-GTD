@@ -12,9 +12,19 @@
 #
 # Per-item mode (memory/gtd/<list>/ is a directory): reads each note's YAML frontmatter,
 # skipping README.md. Single-file mode (memory/gtd/<list>.md): falls back to parsing the
-# list's own bullet/heading format. --max-time/--energy/--context are next-actions' lenses;
-# other lists ignore filters they have no matching field for. --project matches by substring
+# list's own bullet/heading format. --max-time/--energy/--context are next-actions' lenses; on a
+# list with no such field they match nothing. --project matches by substring
 # against whatever the item's project link/field contains.
+#
+# Output: one tab-separated line per item — id, then key=value columns for that list, then the
+# title last ("-" for a field the item doesn't carry):
+#   next-actions   id  time=  energy=  context=  project=  due=  title
+#   waiting-for    id  person=  delegated=  follow-up=  project=  title
+#   someday-maybe  id  trigger=  title
+#   product-ideas  id  evidence=  title
+#   projects       id  project=  name -- outcome
+#   reference      id  title
+# Never reads memory/gtd/_done/ — finished items are not part of any active list.
 #
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile) — see gtd_init.sh's note.
 
@@ -90,45 +100,36 @@ passes_lenses() {
   return 0
 }
 
+# emit ID TITLE [VALUE ...] — the values follow this list's COLUMNS order (set below), so
+# every list prints a fixed, self-describing shape.
 emit() {
-  # emit ID TIME ENERGY CONTEXT PROJECT TITLE
-  printf '%s\ttime=%s\tenergy=%s\tcontext=%s\tproject=%s\t%s\n' \
-    "${1:--}" "${2:--}" "${3:--}" "${4:--}" "${5:--}" "$6"
+  local id="${1:--}" title="$2" out col v
+  shift 2
+  out="$id"
+  for col in $COLUMNS; do
+    v="${1:-}"
+    [ $# -gt 0 ] && shift
+    out="$out"$'\t'"$col=${v:--}"
+  done
+  printf '%s\t%s\n' "$out" "$title"
 }
+
+case "$LIST" in
+  next-actions) COLUMNS="time energy context project due" ;;
+  waiting-for) COLUMNS="person delegated follow-up project" ;;
+  someday-maybe) COLUMNS="trigger" ;;
+  product-ideas) COLUMNS="evidence" ;;
+  projects) COLUMNS="project" ;;
+  *) COLUMNS="" ;;
+esac
 
 # --- per-item mode ---------------------------------------------------------
 
-# SEP is a unit separator (0x1f), not tab: bash's `read` treats IFS whitespace
-# characters (including tab) as collapsing, which silently swallows empty fields
-# between two consecutive delimiters. 0x1f is not IFS whitespace, so empty fields
-# (a missing Project:, an empty context) survive the round trip.
-SEP=$'\x1f'
-
-# frontmatter_kv FILE — "key<SEP>value" per simple frontmatter line; strips trailing
-# " # comment", surrounding quotes, and [bracket] array syntax down to a comma list.
-frontmatter_kv() {
-  awk -v SEP="$SEP" '
-    /^---[[:space:]]*$/ { infm++; if (infm==2) exit; next }
-    infm==1 {
-      line = $0
-      sub(/[[:space:]]+#.*$/, "", line)
-      if (!match(line, /^[A-Za-z_][A-Za-z0-9_]*:/)) next
-      key = substr(line, 1, RLENGTH-1)
-      val = substr(line, RLENGTH+1)
-      sub(/^[[:space:]]+/, "", val)
-      sub(/[[:space:]]+$/, "", val)
-      gsub(/^"|"$/, "", val)
-      if (substr(val, 1, 2) != "[[") {
-        gsub(/^\[|\]$/, "", val)
-        gsub(/[[:space:]]*,[[:space:]]*/, ",", val)
-      }
-      printf "%s%s%s\n", key, SEP, val
-    }
-  ' "$1"
-}
+# SEP and frontmatter_kv come from gtd_env.sh.
 
 list_per_item() {
-  local dir="$LIST_DIR" f base id time energy context project outcome title kv key val
+  local dir="$LIST_DIR" f base id time energy context project outcome title key val
+  local due person delegated followup trigger evidence
   local -a notes
   # A project is a folder (projects/<Project name>/README.md); every other list is flat notes.
   # The list's own README.md is never an item in either shape. An unmatched glob stays literal
@@ -142,7 +143,8 @@ list_per_item() {
       base="$(basename "$f" .md)"
       [ "$base" = "README" ] && continue
     fi
-    id="" time="" energy="" context="" project="" outcome=""
+    id="" time="" energy="" context="" project="" outcome="" due="" person="" delegated=""
+    followup="" trigger="" evidence=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
@@ -151,6 +153,12 @@ list_per_item() {
         context) context="$val" ;;
         project) project="$val" ;;
         outcome) outcome="$val" ;;
+        due) due="$val" ;;
+        person) person="$val" ;;
+        delegated) delegated="$val" ;;
+        follow-up) followup="$val" ;;
+        trigger) trigger="$val" ;;
+        evidence) evidence="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
     title="$base"
@@ -159,9 +167,15 @@ list_per_item() {
       project="$base"
       [ -n "$outcome" ] && title="$base -- $outcome"
     fi
-    if passes_lenses "$time" "$energy" "$context" "$project"; then
-      emit "$id" "$time" "$energy" "$context" "$project" "$title"
-    fi
+    passes_lenses "$time" "$energy" "$context" "$project" || continue
+    case "$LIST" in
+      next-actions) emit "$id" "$title" "$time" "$energy" "$context" "$project" "$due" ;;
+      waiting-for) emit "$id" "$title" "$person" "$delegated" "$followup" "$project" ;;
+      someday-maybe) emit "$id" "$title" "$trigger" ;;
+      product-ideas) emit "$id" "$title" "$evidence" ;;
+      projects) emit "$id" "$title" "$project" ;;
+      *) emit "$id" "$title" ;;
+    esac
   done
 }
 
@@ -183,19 +197,20 @@ list_single_bullets_with_lenses() {
         sub(/[[:space:]]+$/, "", parts[n])
       }
       title = parts[1]
-      time = ""; energy = ""; constraint = ""; project = ""
+      time = ""; energy = ""; constraint = ""; project = ""; due = ""
       for (i = 2; i <= n; i++) {
         p = parts[i]
         if (p ~ /^Time:/)       { sub(/^Time:[[:space:]]*/, "", p); time = p }
         else if (p ~ /^Energy:/)     { sub(/^Energy:[[:space:]]*/, "", p); energy = p }
         else if (p ~ /^Constraint:/) { sub(/^Constraint:[[:space:]]*/, "", p); constraint = p }
         else if (p ~ /^Project:/)    { sub(/^Project:[[:space:]]*/, "", p); project = p }
+        else if (p ~ /^Due:/)        { sub(/^Due:[[:space:]]*/, "", p); due = p }
       }
-      printf "%s%s%s%s%s%s%s%s%s%s%s\n", id, SEP, time, SEP, energy, SEP, constraint, SEP, project, SEP, title
+      printf "%s%s%s%s%s%s%s%s%s%s%s%s%s\n", id, SEP, time, SEP, energy, SEP, constraint, SEP, project, SEP, due, SEP, title
     }
-  ' "$file" | while IFS="$SEP" read -r id time energy constraint project title; do
+  ' "$file" | while IFS="$SEP" read -r id time energy constraint project due title; do
     if passes_lenses "$time" "$energy" "$constraint" "$project"; then
-      emit "$id" "$time" "$energy" "$constraint" "$project" "$title"
+      emit "$id" "$title" "$time" "$energy" "$constraint" "$project" "$due"
     fi
   done
 }
@@ -213,7 +228,7 @@ list_single_bullets_plain() {
     }
   ' "$file" | while IFS= read -r line; do
     if [ -z "$PROJECT" ] || echo "$line" | grep -qi "$PROJECT"; then
-      emit "-" "-" "-" "-" "-" "$line"
+      emit "-" "$line"
     fi
   done
 }
@@ -233,7 +248,7 @@ list_projects_single() {
     }
   ' "$file" | while IFS="$SEP" read -r title outcome; do
     if [ -z "$PROJECT" ] || echo "$title" | grep -qi "$PROJECT"; then
-      emit "-" "-" "-" "-" "-" "$title -- $outcome"
+      emit "-" "$title -- $outcome" "$title"
     fi
   done
 }
@@ -253,7 +268,7 @@ list_product_ideas_single() {
     }
   ' "$file" | while IFS="$SEP" read -r title opp; do
     if [ -z "$PROJECT" ] || echo "$title" | grep -qi "$PROJECT"; then
-      emit "-" "-" "-" "-" "-" "$title -- $opp"
+      emit "-" "$title -- $opp"
     fi
   done
 }

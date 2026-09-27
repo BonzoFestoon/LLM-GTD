@@ -36,7 +36,8 @@ general knowledge that GTD files into but that isn't GTD state. `inbox.md`, `cal
 `horizons.md`, and `personalized.md` always stay single files. `gtd_init.sh --layout notes` sets it up. Layout is auto-detected from whether `next-actions/`
 exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of the harness one
 compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
-storage shape. Full folder structure, note formats, and the done/AAR record are in
+storage shape; its sibling `gtd_check.sh` reports organize's mechanical findings (orphans, stalled
+projects, bad properties, duplicates, unsafe filenames, `_done/` gaps) without fixing anything. Full folder structure, note formats, and the done/AAR record are in
 `references/list-definitions.md`.
 
 ### Layer 1 — Logic (the workflow)

@@ -39,6 +39,7 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 ## 0. AI review prep pack (always first)
 
 - Run `scripts/gtd_review_prep.sh` to generate a read-only review prep pack: overall counts, inbox summary, stalled projects, waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue.
+- **Per-item layout**: read each list with `scripts/gtd_list.sh <list>` (next-actions, waiting-for, projects, someday-maybe, product-ideas) and take stalled / orphan / field problems and finished projects still missing an after-action review from `scripts/gtd_check.sh`, rather than opening every note. `_done/` is never part of the active lists.
 - Read the external calendar provider (preferred if reachable); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete.
 - Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment).
 - Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision.
@@ -54,11 +55,13 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 - Gather loose "stuff" from everywhere (notes, open loops in your head) and capture it all into the system.
 
 ### ② Get Current
+(Each list below is the file in the single-file layout, or the folder read via `gtd_list.sh` in the per-item layout.)
 - Go through `next-actions.md`: cross off what's done; delete what's no longer relevant; is each one still a valid next action?
 - Go through the **calendar (hard landscape)**: leftovers from last week / hard appointments coming this week. Read the external calendar provider first (preferred if reachable, see `references/capability-map.md`); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete. **Never copy the external calendar into calendar.md** (single fallback). Next week's 3 things must be checked against available time windows; if focus exceeds capacity, suggest deleting, deferring, delegating, or downgrading.
 - Go through `waiting-for.md`: which ones need a follow-up? Check each delegated date.
 - Go through `projects.md`: first ask **whether the project outcome has already been achieved**; if so, delete the whole project block (no archiving, no "Next actions: none"). For unfinished projects, ask whether each has at least one valid next-actions / waiting-for block link; keep only current actions that can run in parallel; fix stalled ones on the spot. Is the project outcome still wanted?
 - Go through `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? If missing, add a project or next action on the spot; don't let product opportunities sit as a cold-storage backlog.
+- Per-item layout: for each finished project `gtd_check.sh` reports as `done-no-aar`, offer once to draft its after-action review now or mark it skipped (`organize/SKILL.md`'s "Per-item layout").
 
 ### ③ Get Creative
 - Go through `someday-maybe.md`: has anything ripened enough to pull into active?
@@ -78,7 +81,7 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 - **Calm red line (this skill's style)**: the three rings are only a balance prompt — no scoring, no judgment, no nagging if the user skips it.
 
 ## Workflow
-1. Run this skill's `scripts/gtd_review_prep.sh` to get the review prep pack; if the script is missing, fall back to `gtd_status.sh` + a manual scan of all lists.
+1. Run this skill's `scripts/gtd_review_prep.sh` to get the review prep pack (plus `gtd_list.sh` / `gtd_check.sh` in the per-item layout); if the script is missing, fall back to `gtd_status.sh` + a manual scan of all lists.
 2. Do organize's mechanical hygiene first: handle what can safely be handled automatically; gather decisions into one batch of questions.
 3. Proceed through ①②③④ in order; in each stage give the user only the points needing judgment, and let the AI organize, draft, and file the rest.
 4. Write to file only after the user confirms: clear the inbox, cross off, add next actions, move someday items, fill product ideas visibility, advance / downgrade / delete product ideas, update projects / waiting-for.

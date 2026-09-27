@@ -4,7 +4,7 @@
 
 ## 0. AI review prep pack (let the system do the grunt work first)
 - [ ] Run `scripts/gtd_review_prep.sh` to get overall counts + risk items + confirmation queue
-- [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection
+- [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection (per-item layout: from `gtd_check.sh`, including finished projects still missing an after-action review)
 - [ ] Generate candidates: to delete / needing a next action / needing a follow-up / someday items that could be activated / product ideas visibility gaps / next week's 3 things
 - [ ] Mark which items the AI already handled and which must be confirmed by the user
 

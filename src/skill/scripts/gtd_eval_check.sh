@@ -109,7 +109,19 @@ bash -n "$ROOT/scripts/gtd_review_prep.sh"
 bash -n "$ROOT/scripts/gtd_review_prep_notify.sh"
 bash -n "$ROOT/scripts/gtd_help.sh"
 bash -n "$ROOT/scripts/gtd_list.sh"
+bash -n "$ROOT/scripts/gtd_check.sh"
 ok "shell scripts pass bash -n"
+
+# gtd_check.sh's property vocabulary must match list-definitions.md's "Property values" table.
+for var in ENERGY_VOCAB CONTEXT_VOCAB; do
+  prop="$(echo "$var" | sed 's/_VOCAB//' | tr '[:upper:]' '[:lower:]')"
+  row="$(grep -E "^\| \`$prop\` \|" "$ROOT/references/list-definitions.md" | sed 's/\\|/,/g' | awk -F'|' '{ print $3 }')"
+  [ -n "$row" ] || fail "list-definitions.md has no Property values row for $prop"
+  for v in $(grep -E "^$var=" "$ROOT/scripts/gtd_check.sh" | sed -E 's/^[A-Z_]+="(.*)"$/\1/'); do
+    echo "$row" | grep -qF "\`$v\`" || fail "gtd_check.sh $prop value '$v' is not in list-definitions.md's Property values"
+  done
+done
+ok "gtd_check.sh vocabulary matches list-definitions.md Property values"
 
 # Per-item init fixture: builds the layout in a throwaway root, checks every list folder has its
 # README, README is never listed as an item, and init refuses to switch an existing layout.
@@ -138,6 +150,35 @@ rc=0; LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_init.sh" --confirm-c
 [ "$rc" -eq 4 ] || fail "init did not refuse to turn a single-file system into per-item (exit $rc, want 4)"
 [ ! -d "$fixture/files/memory/gtd/next-actions" ] || fail "refused per-item init still created next-actions/"
 ok "per-item init: folders + READMEs + bases created, README never an item, layout switch refused"
+
+# Per-item read path: lenses filter, _done/ is never listed, and gtd_check.sh finds each kind of
+# mechanical problem (and nothing on a clean note).
+G="$fixture/notes/memory/gtd"
+mkdir -p "$G/projects/Alpha" "$G/projects/Idle"
+printf -- '---\noutcome: Alpha shipped\n---\n' > "$G/projects/Alpha/README.md"
+printf -- '---\noutcome: Nothing linked\n---\n' > "$G/projects/Idle/README.md"
+printf -- '---\ntime: 10   # minutes\nenergy: low\ncontext: [computer, phone]\nproject: "[[projects/Alpha/README|Alpha]]"\n---\nx\n' > "$G/next-actions/Quick call.md"
+printf -- '---\ntime: 60-90 min\nenergy: deep work\ncontext: [lab]\nproject: "[[projects/Gone/README|Gone]]"\n---\nx\n' > "$G/next-actions/quick call (2).md"
+printf -- '---\ntime: 5\nenergy: low\ncontext: [home]\ncompleted: 2026-01-01\nlist: next-actions\n---\nx\n' > "$G/_done/Finished thing.md"
+printf -- '---\nlist: projects\n---\nx\n\n## After action review\n<!-- draft -->\n' > "$G/_done/Old project.md"
+na="$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions --max-time 10 --energy low)"
+[ "$(echo "$na" | grep -c .)" -eq 1 ] && echo "$na" | grep -q 'Quick call$' || fail "gtd_list.sh lenses returned: $na"
+echo "$na" | grep -q 'due=-' || fail "gtd_list.sh next-actions lacks the due= column"
+! LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions | grep -q 'Finished thing' || fail "gtd_list.sh listed a _done/ note"
+chk="$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_check.sh")"
+T=$'\t'
+dup="next-actions/quick call (2).md"
+for want in "orphan${T}$dup" "stalled${T}projects/Idle/README.md" "field${T}$dup${T}time" \
+  "field${T}$dup${T}energy" "field${T}$dup${T}context 'lab'" "duplicate${T}next-actions/" \
+  "done-completed${T}_done/Old project.md" "done-no-aar${T}_done/Old project.md"; do
+  echo "$chk" | grep -qF "$want" || fail "gtd_check.sh missed: $want"
+done
+! echo "$chk" | grep -qF "${T}next-actions/Quick call.md${T}" || fail "gtd_check.sh flagged a clean note"
+! echo "$chk" | grep -qF "stalled${T}projects/Alpha/" || fail "gtd_check.sh called a linked project stalled"
+[ -z "$(echo "$chk" | awk -F'\t' '$2 ~ /README\.md$/ && $2 !~ /^projects\/[^\/]+\/README\.md$/')" ] \
+  || fail "gtd_check.sh treated a list README as an item"
+LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_check.sh" | grep -q '^# layout: files' || fail "gtd_check.sh did not stand down in the single-file layout"
+ok "per-item read path: lenses filter, _done/ never listed, gtd_check.sh finds every kind of problem"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then

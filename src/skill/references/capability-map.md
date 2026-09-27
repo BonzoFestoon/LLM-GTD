@@ -36,7 +36,7 @@ The intent verbs above stay the same in both layouts; only the capability behind
 | Link an item to its project | `Project: [[projects#Name\|Name]]` on the line, plus a block link back from the project | `project: "[[projects/<Project name>/README\|<Project name>]]"` in the note's frontmatter only — the project README's embedded view finds it, nothing is written back |
 | Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
 | Complete an item | Delete the line (or, once the lifecycle phase ships, move it under `done.md`'s completion date with its outcome) | Move the note into `memory/gtd/_done/` with `completed`, `result`, and its outcome added to the frontmatter/body |
-| Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `gtd_list.sh <list>` plus a frontmatter scan for missing/invalid fields; never scans `_done/` |
+| Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, stalled, field, duplicate, filename, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
 | Read a list's local rules before writing | Read the top of `memory/gtd/<list>.md` | Read `memory/gtd/<list>/README.md` |
 
 ## Calendar source adapter + auto-write contract
