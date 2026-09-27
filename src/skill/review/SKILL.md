@@ -2,6 +2,8 @@
 name: gtd-review
 description: GTD skill scenario command · Weekly Review (the critical success factor). The AI first builds a review prep pack, then does Get Clear / Get Current / Get Creative + a Horizons vertical-focus check + a three-ring balance horizontal check (Laura Vanderkam). GTD step 4, Reflect.
 parent: gtd-harness
+model-tier: strongest
+example: "Help me do my weekly review"
 ---
 
 

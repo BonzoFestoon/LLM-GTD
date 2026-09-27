@@ -2,6 +2,40 @@
 
 All notable changes.
 
+## v1.15.0 — /gtd-help + per-command model guidance
+New read-only command `gtd-help`: every command's description, when to run it,
+and an example, sourced from each sub-skill's own frontmatter/body (via the
+new `scripts/gtd_help.sh`, never hand-written); the day-to-day rhythm; one
+"right now" suggestion from `gtd_status.sh`; and where things live.
+`/gtd-help <command>` gives one command's detail; `/gtd-help lists` explains
+list boundaries.
+
+Every sub-skill's frontmatter now carries `model-tier: fast | balanced |
+strongest` instead of a hard-coded model name — `references/model-guidance.md`
+is the only place actual Claude model names appear, mapped to tiers, so a new
+model family means editing one file. Every command compares the session's
+model against its tier before working: below tier, says so once and asks to
+continue or switch (capture is the exception — it always writes to the inbox
+first, then reports it skipped auto-clarify); above tier, at most one trailing
+tip, never an interruption; once per session. `personalized.md` can override
+the tier mapping or turn the check off.
+
+"Help / what can this do / which command should I use" routes to `help/SKILL.md`
+before the empty-input mind-sweep rule, so a genuine help request is never
+captured as an inbox item.
+
+New evals E24-E28. `gtd_eval_check.sh` gained three new guards: every
+sub-skill must appear in `gtd_help.sh`'s output, carry a valid `model-tier`,
+and have a command file on all three platforms (skipped gracefully when run
+from the synced plugin copy, which has no sibling command directories of its
+own); and no Claude model name may appear anywhere in the skill except
+`references/model-guidance.md`. Both of the latter two caught real issues
+during development — a model-name leak in the eval fixture text and the
+checker's own regex matching itself — fixed by rewriting the affected evals
+to use tier-relative language and excluding the checker script from its own
+scan, the same way the existing description-wording check already excludes
+itself.
+
 ## v1.14.1 — Calendar checks read event availability, not just title/length
 `clarify`, `engage`, and `review` now read each calendar event's availability
 field (free/busy, "Show as" / transparency) before treating it as blocking

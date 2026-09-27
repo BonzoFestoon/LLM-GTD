@@ -76,6 +76,7 @@ agent-native.
 | clean the system | `gtd-organize` | fixes mechanical drift: orphan actions, stalled projects, bad contexts, duplicates |
 | decide what to do now | `gtd-engage` | suggests 3-5 context-fit next actions based on context, time, energy, and priority |
 | run the weekly review | `gtd-review` | generates a read-only prep package, cleans mechanical drift, then reviews inbox/calendar/waiting/projects/horizons |
+| which command should I use | `gtd-help` | read-only: every command with what it does, when to run it, and its recommended model; the day-to-day rhythm; one "right now" suggestion; and where things live |
 
 The important design choice: **capture, clarify, and mechanical organize can be mostly automated;
 engage and review stay human-led.**
@@ -152,7 +153,7 @@ This repo is also a Claude Code plugin marketplace. From Claude Code:
 ```
 
 The bundled GTD skill auto-activates on GTD phrasing, and the `/gtd` router plus `/gtd-*` commands
-(`/gtd`, `/gtd-init`, `/gtd-capture`, `/gtd-clarify`, `/gtd-update`, `/gtd-organize`, `/gtd-engage`, `/gtd-review`) are added.
+(`/gtd`, `/gtd-init`, `/gtd-capture`, `/gtd-clarify`, `/gtd-update`, `/gtd-organize`, `/gtd-engage`, `/gtd-review`, `/gtd-help`) are added.
 State is written to your **current workspace**'s `memory/gtd/` — never bundled with the plugin
 (`${CLAUDE_PLUGIN_ROOT}` holds the read-only skill; your lists live in your project). Run `/gtd-init`
 (or just ask) in the workspace where you want your GTD lists to live.

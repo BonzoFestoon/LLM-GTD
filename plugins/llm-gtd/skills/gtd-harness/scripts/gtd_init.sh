@@ -27,7 +27,7 @@ AUTOMATIONS_DIR="${CODEX_HOME:-$HOME/.codex}/automations"
 CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
 CODEX_PROMPTS_DIR="$CODEX_HOME_DIR/prompts"
 CODEX_PROMPT_TEMPLATES="$SKILL_DIR/templates/codex-prompts"
-CODEX_PROMPT_FILES="gtd.md gtd-init.md gtd-capture.md gtd-clarify.md gtd-update.md gtd-organize.md gtd-engage.md gtd-review.md"
+CODEX_PROMPT_FILES="gtd.md gtd-init.md gtd-capture.md gtd-clarify.md gtd-update.md gtd-organize.md gtd-engage.md gtd-review.md gtd-help.md"
 
 IMPORT_LEGACY=0
 STATUS_ONLY=0

@@ -8,7 +8,7 @@ Purpose: lets Codex know the GTD harness exists when it reads the protocol, so i
 
 When the user mentions GTD / tasks / capture / clarify / next actions / weekly review / mind sweep / "what should I do this week", load the GTD harness:
 
-- **Read the source directly**: `rtk cat .cursor/skills/gtd-harness/SKILL.md` (package navigation), then `rtk cat` the subcommand matching the intent (init/capture/clarify/update/organize/engage/review).
+- **Read the source directly**: `rtk cat .cursor/skills/gtd-harness/SKILL.md` (package navigation), then `rtk cat` the subcommand matching the intent (init/capture/clarify/update/organize/engage/review/help). "Which command should I use" / "gtd help" routes to `help/SKILL.md` — read-only, never writes.
 - **Autonomous chaining**: spawn the `gtd-orchestrator` agent (`.codex/agents/gtd-orchestrator.toml`) to run the full flow.
 - **Natural-language entry**: the user doesn't have to name a subcommand; when they state a task / commitment directly, default to capture → clarify.
 - **State**: the trusted lists live in `memory/gtd/` (eight lists, plain markdown); `rtk bash .cursor/skills/gtd-harness/scripts/gtd_status.sh` shows the overview; for the weekly review run `rtk bash .cursor/skills/gtd-harness/scripts/gtd_review_prep.sh` first; first time, `… /gtd_init.sh`.

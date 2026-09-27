@@ -6,13 +6,14 @@
 
 1. Treat each "Input" as a user request.
 2. Judge pass/fail against "Expected route / Must / Must not".
-3. After changing the skill, run at least the 15 core evals in this file; all must pass before a public sync.
+3. After changing the skill, run at least the 20 core evals in this file; all must pass before a public sync. (E16-E23 are reserved for the per-item-layout Phase 3 evals in `areas/gtd-plugin/PLAN-gtd-per-item-notes.md`, not yet built — the numbering gap is intentional.)
 4. Static gate: `bash scripts/gtd_eval_check.sh` (inside the skill root) or `GTD_SKILL_ROOT=src/skill bash src/skill/scripts/gtd_eval_check.sh`.
 
 ## Initial manual run record
 
 - 2026-06-11: E01-E14 manually reviewed against the current entry routing, the loading tables at the top of each sub-skill, and the `list-definitions.md` permission table; result 14/14 pass. The static gate `gtd_eval_check.sh` also passed.
 - 2026-09-27: E15-calendar-free manually reviewed against `capability-map.md`'s new "read each event's availability" rule and its pointers from `clarify/SKILL.md`, `engage/SKILL.md`, and `review/SKILL.md`; pass.
+- 2026-09-27: E24-E28 manually reviewed against `help/SKILL.md`, `gtd_help.sh` (tested directly: all 9 commands, single-command detail, unknown-command error path), the router's new help-first routing rule, capture's model-check exception branch, and `SKILL.md`/`model-guidance.md`'s shared model check (which the other 6 sub-skills inherit without duplicating); 5/5 pass.
 
 ## Core Evals
 
@@ -33,6 +34,11 @@
 | E13-privacy | "Check privacy before publicly syncing this skill" | `references/evals.md` + privacy scan | Scan with a denylist from a private overlay or the external environment; real provider preferences belong only in the private overlay | Real names, real project names, or local paths appearing in the general skill |
 | E14-update-reality | "It's done / they replied / the schedule changed / it's cancelled" | `update/SKILL.md` | Read the existing lists, then sync the change in reality; delete completed items, re-clarify waiting-for replies, advance the project's next action when needed | Re-capture the change in reality as an inbox item |
 | E15-calendar-free | A 10-hour calendar event marked free (availability/"Show as": free) overlaps a proposed hard-appointment slot / today's free-time window / next week's capacity scan | `clarify/SKILL.md`, `engage/SKILL.md`, or `review/SKILL.md`, per which one is judging capacity | Read the event's availability field; treat it as not blocking time regardless of its length or title; proceed as if that slot is open | Flag it as a conflict, treat it as blocking time, or infer availability from the title / length alone |
+| E24-help | "/gtd-help" | `help/SKILL.md` | List all nine commands (gtd + 8 sub-commands) with what they do, when to run them, and an example; give one "right now" suggestion; write no files | Write to any `memory/gtd/` file; skip a command; invent commands text not sourced from `gtd_help.sh` |
+| E25-help-route | "How do I use GTD?" via `/gtd` | `help/SKILL.md` | Route to help before the mind-sweep rule; answer with the commands overview | Capture "how do I use GTD?" as an inbox item |
+| E26-model-under | `/gtd-capture` on a model below capture's `model-tier`; then `/gtd-clarify` on a model below its tier (see `references/model-guidance.md` for which model that is right now) | `capture/SKILL.md`; `clarify/SKILL.md` | Capture: write to the inbox first, skip auto-clarify, say so and name the switch + rerun command. Clarify: ask once whether to continue or switch, before any change | Capture: lose the input, or file it anyway. Clarify: change any list without asking first |
+| E27-model-over | `/gtd-capture` on a model above capture's `model-tier` (see `references/model-guidance.md`) | `capture/SKILL.md` | Capture and auto-clarify normally; at most one trailing tip, never an interrupting question | Ask before starting; repeat the tip on a later command in the same session |
+| E28-model-unknown-and-once | Model information unavailable, two commands run in the same session; then `Model check: off` in `personalized.md` | any sub-skill | No model message when unknown; no repeated check on the second command in the same session; the override in `personalized.md` disables the check entirely | Guess a model and act on the guess; repeat the below-tier prompt on every command; ignore the `Model check: off` override |
 
 ## Automated checks
 

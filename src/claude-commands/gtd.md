@@ -27,6 +27,7 @@ $ARGUMENTS
 <process>
 1. First read the GTD harness package navigation. If `memory/gtd/` doesn't exist here, do **not** run init automatically — read `init/SKILL.md`'s "One inbox per human" rule and ask the user whether GTD is already set up somewhere else before doing anything else, then continue with the user's input.
 2. Treat $ARGUMENTS as a natural-language intent; don't require the user to name a subcommand. Route by the following priority; on a match, read the corresponding subcommand's `SKILL.md` and execute it:
+   - Help / what can this do / how do I use this / which command should I use / what commands are there → `help/SKILL.md` (checked first, so "help" is never captured as an inbox item — distinct from "help me empty my head" / "help me sort through these", which are mind-sweep requests and stay routed to capture below)
    - Set up / initialize / self-check / status / install → `init/SKILL.md`
    - Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`
    - Clarify the inbox / process item by item / where do these to-dos go / clear out the inbox → `clarify/SKILL.md`

@@ -2,6 +2,8 @@
 name: gtd-clarify
 description: GTD skill scenario command · Clarify. Runs the decision tree on every inbox item (actionable → do it in 2 minutes / delegate / defer / project; not actionable → trash / someday / reference) and files it. GTD steps 2 + 3 (clarifying includes filing).
 parent: gtd-harness
+model-tier: balanced
+example: "Clarify my inbox"
 ---
 
 

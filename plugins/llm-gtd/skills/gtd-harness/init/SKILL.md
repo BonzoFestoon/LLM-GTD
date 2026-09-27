@@ -2,6 +2,8 @@
 name: gtd-init
 description: GTD skill scenario command · Set up / self-check the trusted system. Idempotently creates the memory/gtd/ eight core lists + product-ideas extension list + adapter-layer self-check + read-only check / explicit install of the automation cadence + optional import of old open loops. First-run entry point.
 parent: gtd-harness
+model-tier: balanced
+example: "Set up my GTD trusted system"
 ---
 
 

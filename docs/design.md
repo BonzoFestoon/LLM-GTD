@@ -26,7 +26,7 @@ a file is a file. Lists are physically separated (Allen's rule) so each stays si
 | `horizons.md` | Horizons | the six Horizons of Focus (purpose → runway) |
 
 ### Layer 1 — Logic (the workflow)
-`skill/SKILL.md` (navigation) + seven sub-command `SKILL.md` files. Written in **intent language**
+`skill/SKILL.md` (navigation) + eight sub-command `SKILL.md` files. Written in **intent language**
 ("read the list", "append a line") — **no platform tool names**. That neutrality is what lets one
 source feed three platforms.
 

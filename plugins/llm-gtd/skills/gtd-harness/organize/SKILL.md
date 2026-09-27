@@ -2,6 +2,8 @@
 name: gtd-organize
 description: GTD skill scenario command · Organize (structural hygiene). The AI automatically runs mechanical bookkeeping (orphans / stalled / constraint lenses / stale checkmarks) and surfaces only what needs the user's decision. Runs automatically before engage/review. GTD step 3.
 parent: gtd-harness
+model-tier: balanced
+example: "Clean up my GTD lists"
 ---
 
 

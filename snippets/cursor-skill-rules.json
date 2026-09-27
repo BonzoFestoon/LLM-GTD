@@ -27,7 +27,9 @@
           "horizons of focus",
           "sort out my to-dos",
           "what to do this week",
-          "task management system"
+          "task management system",
+          "gtd help",
+          "which gtd command"
         ],
         "intentPatterns": [
           "(set up|build|create|initialize).*(GTD|task system|list system)",

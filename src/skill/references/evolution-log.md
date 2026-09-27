@@ -82,6 +82,17 @@ Design principles:
 - **Parsed labels changed**: `- 下一步行动：` → `- Next actions:`, `- [ ] 机会：` → `- [ ] Opportunity:`, `- GTD 可见性：` → `- GTD visibility:`; eval-check headings and the vague-verb list are now English. Existing `memory/gtd/` files written in the old Chinese format need these labels updated for the stalled / visibility checks to work.
 - **Kept**: `--import-legacy` still reads the Chinese `@自己` / `@等待` / `@项目` sections of a legacy `open loops.md`.
 
+## v1.14.1 — Calendar checks read event availability
+- **Bug the general skill now fixes**: `clarify`, `engage`, and `review` previously had no way to tell a free-marked event (an informational all-day block, say) from a real busy conflict — they'd have had to guess from title or length. Fixed once in `capability-map.md`'s conflict and capacity judgment, pointed to from all three call sites instead of being copied three times.
+- **Local rule retired**: this had been patched around per-vault in `personalized.md`; that override is removed now that the general skill covers it. New eval E15-calendar-free.
+
+## v1.15 — `/gtd-help` + per-command model guidance
+- **New command**: `gtd-help`, read-only, never writes. Shows every command's description, When to run, and example (sourced from each sub-skill's own frontmatter/body via the new `gtd_help.sh`, never hand-written), the day-to-day rhythm, one "right now" suggestion from `gtd_status.sh`, and where things live. `/gtd-help <command>` gives one command's detail; `/gtd-help lists` explains list boundaries.
+- **Model tiers, not model names, in the skills**: every sub-skill's frontmatter gets `model-tier: fast | balanced | strongest`; `references/model-guidance.md` is the one place actual Claude model names appear, mapped to tiers, so a new model family means editing one file. `personalized.md` can override the mapping or turn the check off.
+- **The check**: every command compares the session's current model against its tier before working; below tier, says so once and asks whether to continue or switch — except capture, which always writes to the inbox first and only then says it skipped auto-clarify. Above tier: at most one trailing tip, never an interruption. Once per session.
+- **Routing**: "help / what can this do / which command should I use" routes to `help/SKILL.md` before the empty-input mind-sweep rule, so a genuine help request is never captured as an inbox item — distinct from "help me empty my head," which still means mind sweep.
+- **New evals**: E24-help, E25-help-route, E26-model-under, E27-model-over, E28-model-unknown-and-once. `gtd_eval_check.sh` now also fails if a sub-skill is missing from `gtd_help.sh`'s output, lacks a valid `model-tier`, lacks a command/prompt file in all three platforms, or if a Claude model name leaks anywhere outside `references/model-guidance.md`.
+
 ---
 
 **AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.

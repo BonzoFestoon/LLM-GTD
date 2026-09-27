@@ -2,6 +2,8 @@
 name: gtd-engage
 description: GTD skill scenario command · Engage. Uses the four criteria — context / time available / energy available / priority — to say "what to do right now" from the lists. GTD step 5.
 parent: gtd-harness
+model-tier: balanced
+example: "I have 30 minutes, what should I do?"
 ---
 
 

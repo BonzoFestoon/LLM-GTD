@@ -2,6 +2,8 @@
 name: gtd-update
 description: GTD skill scenario command · Update. Handles changes in reality the user reports — done, progress, a waiting-for reply, changed event details, a cancelled project, or a correction — and syncs the trusted lists forward.
 parent: gtd-harness
+model-tier: balanced
+example: "The dentist appointment got moved to Friday"
 ---
 
 

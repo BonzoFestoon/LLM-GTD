@@ -67,7 +67,7 @@ B) Codex "triggers on plain language": append the contents of snippets/AGENTS.ro
    <VAULT>/AGENTS.md (in the tool/command conventions section, away from any mirror blocks).
 
 Done. Usage:
-  Claude Code:  /gtd  /gtd-init  /gtd-capture  /gtd-clarify  /gtd-update  /gtd-organize  /gtd-engage  /gtd-review
+  Claude Code:  /gtd  /gtd-init  /gtd-capture  /gtd-clarify  /gtd-update  /gtd-organize  /gtd-engage  /gtd-review  /gtd-help
   Codex:        /gtd or /gtd-*; or just talk in plain language
   Dashboard:    bash .cursor/skills/gtd-harness/scripts/gtd_status.sh
 NOTE
