@@ -23,5 +23,5 @@ $ARGUMENTS
 </context>
 
 <process>
-Run the decision tree in clarify/SKILL.md: for each inbox item decide "is it actionable / what's the next concrete action", file it in the matching list (next-actions with light-field tags, >1 step becomes a project, knowledge handed to the ZK pipeline), and delete it from the inbox after filing. Recognize and flag the two-minute rule. When information is insufficient, ask one question; don't make things up.
+Run the decision tree in clarify/SKILL.md: for each inbox item decide "is it actionable / what's the next concrete action", file it in the matching list (next-actions with light-field tags, >1 step becomes a project, knowledge filed to reference.md), and delete it from the inbox after filing. Recognize and flag the two-minute rule. When information is insufficient, ask one question; don't make things up.
 </process>

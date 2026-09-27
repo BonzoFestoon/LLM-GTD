@@ -10,8 +10,7 @@ What is it?
 ├── No ──┬── Useless / expired ────────────→ 🗑️ Trash
 │        ├── Not now, but don't forget ─────→ 💭 someday-maybe.md (incubate)
 │        ├── Product / feature / scenario opportunity → 💡 product-ideas.md + 🎯 project + ✅ next-action
-│        └── Look up later / support material → 📚 reference.md
-│                                        (if it's knowledge / insight → hand off to the ZK pipeline fleeting-note)
+│        └── Look up later / support material, or knowledge / insight → 📚 reference.md
 │
 └── Yes ──→ What's the next concrete physical action?
             (must be a visible, doable physical action; concrete verb — reject "handle / follow up / research")
@@ -28,7 +27,7 @@ What is it?
 
 ## Why the two questions matter
 
-1. **"Is it actionable?"** — the Allen × Luhmann triage gate. Actions go into GTD, knowledge goes into the slip box. Piling knowledge into next-actions destroys the list's trustworthiness as "all doable actions".
+1. **"Is it actionable?"** — the triage gate. Actions go into GTD's action lists, knowledge goes into `reference.md`. Piling knowledge into next-actions destroys the list's trustworthiness as "all doable actions".
 
 2. **"What's the next concrete physical action?"** — the soul of GTD.
    - ❌ "Data" / "Project X planning" / "Deal with Colleague A's thing" (not actions, just topics)

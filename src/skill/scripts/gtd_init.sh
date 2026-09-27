@@ -378,8 +378,9 @@ seed "$GTD_DIR/reference.md" <<'EOF'
 # 📚 Reference
 
 > Non-actionable information you'll want to look up later — plus pointers to each project's support material.
-> Note: **knowledge / idea** notes go through the ZK pipeline (fleeting-note → your daily-notes folder), not here; this file only holds
-> look-up information tied directly to actions / projects (checklists, specs, contact details, links to project support material).
+> This is also where knowledge / idea notes go: checklists, specs, contact details, insights worth keeping, links to
+> project support material. `memory/gtd/personalized.md` can point this hand-off somewhere else instead (a separate
+> knowledge system) if you run one.
 > For headings inside GTD files, use Obsidian heading links: `[[filename#Heading|Heading]]`; bare `[[Heading]]` is only for real standalone files.
 
 ## General reference

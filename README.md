@@ -130,7 +130,7 @@ Capture, clarify, update, organize, engage, and review are all first-class.
 The agent can be replaced. The state and workflow remain.
 
 **It keeps knowledge and action separate.**
-Actions go to GTD. Ideas and notes should go to your note system, such as a Zettelkasten.
+Actions go to GTD's action lists. Non-actionable knowledge and ideas go to `reference.md` by default — point `personalized.md` at a separate note system (such as a Zettelkasten) instead if you run one.
 
 **It uses AI where AI actually helps.**
 Drafting a concrete next action, finding stale projects, and cleaning list structure are good AI jobs.

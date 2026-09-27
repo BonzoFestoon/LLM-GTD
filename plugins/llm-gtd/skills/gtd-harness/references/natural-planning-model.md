@@ -16,6 +16,6 @@ GTD's **vertical project planning method** — the five steps the mind follows n
 - For any stuck project, go back one step: usually some level (purpose / vision / organizing) hasn't been thought through.
 - Put a complex project's support material in reference.md, not in the body of projects.md.
 
-## Interface with ZK / strategic-advisor
+## Interface with strategic-advisor / knowledge
 - Need a deep strategic trade-off → layer on `strategic-advisor` or the relevant domain perspective skill.
-- Knowledge / methodology insights produced during planning → capture them via the ZK pipeline, not in the project list.
+- Knowledge / methodology insights produced during planning → file them to `reference.md`, not in the project list.

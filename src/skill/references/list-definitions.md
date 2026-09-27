@@ -11,14 +11,14 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | `calendar.md` | **Only** hard commitments that matter on a specific day / time | Not ordinary to-dos (the calendar is sacred; clutter destroys its trustworthiness) | By date |
 | `someday-maybe.md` | Not committed yet, incubating | Not things already committed to | Trigger condition (when it becomes worth starting) |
 | `product-ideas.md` | Raw opportunities and assumptions in product, feature, scenario, and opportunity spaces; each should also have project / next-action visibility | Not ordinary life wishes, and not a cold-storage backlog with no next action | Opportunity / user scenario / assumptions / evidence status / promotion criteria / GTD visibility |
-| `reference.md` | Non-actionable reference + project support material | Not knowledge / insight notes (those go to the ZK pipeline) | Two sections: general reference / project support |
+| `reference.md` | Non-actionable reference + project support material + knowledge / insight notes | Not actionable items (those go through clarify to next-actions / projects / waiting-for) | Two sections: general reference / project support |
 | `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
 
 ## The boundaries most often violated
 1. **Multi-step outcomes stuffed into next-actions** → split: the outcome goes to projects, the first step stays in next-actions.
 2. **Ordinary to-dos stuffed into the calendar** → the calendar holds only "must happen on this day / at this time"; everything else goes to next-actions.
 3. **Mixing product-ideas and someday** → product opportunities go to `product-ideas.md` and sync to project / next-action; ordinary "maybe someday" goes to `someday-maybe.md`.
-4. **Knowledge notes stuffed into GTD lists** → knowledge / insights go through `fleeting-note` → ZK pipeline, not into any GTD list.
+4. **Knowledge notes stuffed into actionable lists** → knowledge / insights go to `reference.md`, not `next-actions.md` / `projects.md` (overridable in `personalized.md` if you run a separate knowledge system).
 5. **A full task tree stuffed into projects** → keep only current parallel next-action / waiting-for block links; milestones, dependencies, and task trees go to `reference.md` or a project doc.
 
 ## Action permissions
@@ -28,7 +28,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | Read lists, generate dashboard, generate review prep pack | Read-only | Doesn't change GTD state |
 | Append new input to `inbox.md` | Auto | Capture always writes to file first |
 | Clarify and file after a single capture | Auto | Ask one question only when action/knowledge, the commitment itself, or the desired outcome is unclear |
-| Delete a clarified original item from `inbox.md` | Auto | Must already be written to the target list or explicitly handed to ZK |
+| Delete a clarified original item from `inbox.md` | Auto | Must already be written to the target list |
 | Move clearly misfiled items | Auto | Append to the target list first, then delete from the original spot |
 | Fill in Time / Energy / Constraint | Auto | List as pending confirmation when clearly uncertain |
 | Delete a completed next action | Auto | The user explicitly declared it done or there is strong evidence |

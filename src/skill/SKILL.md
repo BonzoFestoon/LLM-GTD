@@ -5,7 +5,7 @@ description: |
   Eight scenario commands: init (set up / self-check) · capture · clarify · update (status update) · organize · engage · review (Weekly Review) · help.
   Use when: GTD, task management, capture, clarify, updating task status, finishing a to-do, next actions, weekly review, organizing projects, mind sweep, closing out a session, mind like water, horizons of focus, gtd-harness.
   Also triggers on: "help me sort through these to-dos", "what should I do this week", "my head is a mess, help me empty it", "set up a GTD system".
-  Does not trigger on: pure knowledge / idea digestion (goes to fleeting-note → ZK pipeline); ad-hoc notes about a single open loop (the old open-loops skill still works).
+  Does not trigger on: pure knowledge / idea digestion (goes to reference.md, not an action list); ad-hoc notes about a single open loop (the old open-loops skill still works).
 model-tier: balanced
 example: "sort out my inbox"
 ---
@@ -27,7 +27,7 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 | `waiting-for.md` | Delegated / waiting on others |
 | `calendar.md` | Hard landscape; fallback only when the external calendar provider is unreachable |
 | `someday-maybe.md` | Not committed yet, but not to be forgotten |
-| `reference.md` | Non-actionable reference / project support material |
+| `reference.md` | Non-actionable reference / project support material / knowledge |
 | `horizons.md` | Six-horizon direction calibration |
 | `product-ideas.md` | Intake for product / feature / scenario opportunities |
 
@@ -66,8 +66,8 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 - User declares something done → delete the corresponding next action from the list; project outcome achieved with no next action → delete the project block.
 - User reports a change in reality (done, reply, rescheduled, cancelled, correction) → use update, don't re-capture it as a new inbox item.
 - The calendar is hard landscape; ordinary to-dos must not go into `calendar.md`.
-- Knowledge / ideas with no commitment → hand off to the ZK pipeline; don't write to GTD action lists.
-- `memory/gtd/personalized.md` may hold local preferences and private mappings; the general skill does not depend on it.
+- Knowledge / ideas with no commitment → file to `reference.md`; don't write to GTD action lists.
+- `memory/gtd/personalized.md` may hold local preferences and private mappings (including redirecting the knowledge hand-off to a different system); the general skill does not depend on it.
 - **Model check**: before a command's own work, compare the session's current model against its `model-tier` frontmatter using `references/model-guidance.md`; below tier, say so in one line and ask once whether to continue (capture is the exception — it always writes to the inbox first, see `capture/SKILL.md`). Skip silently if the model is unknown. See `references/model-guidance.md` for the full rule.
 
 ## Red lines

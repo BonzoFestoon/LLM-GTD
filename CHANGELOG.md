@@ -2,6 +2,19 @@
 
 All notable changes.
 
+## v1.15.1 — Knowledge defaults to reference.md, not a ZK pipeline
+Every place the skill said non-actionable knowledge/insight material gets "handed
+off to the ZK pipeline / fleeting-note" now says it files to `reference.md`
+instead: `list-definitions.md`, `capture`, `clarify`, the router `SKILL.md`,
+`natural-planning-model.md`, `clarify-decision-tree.md`, `evals.md` (E02),
+`templates/session-close-template.md`, `gtd_init.sh`'s written `reference.md`
+header, all three platforms' command files, the Codex orchestrator, the Cursor
+skill rules, and both READMEs. Still overridable: point the hand-off at a
+separate knowledge system (a Zettelkasten or otherwise) via `personalized.md`,
+the same override pattern already used for model-tier and the calendar rule.
+The plugin never assumed such a system existed for everyone; `reference.md`
+already existed for exactly this, so it's now the honest default.
+
 ## v1.15.0 — /gtd-help + per-command model guidance
 New read-only command `gtd-help`: every command's description, when to run it,
 and an example, sourced from each sub-skill's own frontmatter/body (via the

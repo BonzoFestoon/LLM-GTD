@@ -121,7 +121,7 @@ Capture、Clarify、Organize、Engage、Review 都是一等公民。
 agent 可以替换，状态和工作流留下来。
 
 **它把知识和行动分开。**
-行动进 GTD。想法、笔记和研究应该进你的知识系统，比如 Zettelkasten。
+行动进 GTD 的行动清单。不可执行的知识和想法默认进 `reference.md`——如果你自己维护一套笔记系统（比如 Zettelkasten），可以在 `personalized.md` 里把知识交接指向那里。
 
 **它只在 AI 真有帮助的地方使用 AI。**
 起草具体下一步、发现停滞项目、清理清单结构，是好的 AI 任务。

@@ -4,7 +4,7 @@
       "type": "workflow",
       "enforcement": "suggest",
       "priority": "high",
-      "description": "Main entry package for the GTD (David Allen) trusted system: init/capture/clarify/update/organize/engage/review. Moves tasks / commitments out of your head into the memory/gtd/ eight lists. New captures default to capture→clarify; completions / progress / replies / schedule changes go to update; knowledge / ideas go to fleeting-note (ZK pipeline).",
+      "description": "Main entry package for the GTD (David Allen) trusted system: init/capture/clarify/update/organize/engage/review. Moves tasks / commitments out of your head into the memory/gtd/ eight lists. New captures default to capture→clarify; completions / progress / replies / schedule changes go to update; knowledge / ideas go to reference.md.",
       "promptTriggers": {
         "keywords": [
           "GTD",

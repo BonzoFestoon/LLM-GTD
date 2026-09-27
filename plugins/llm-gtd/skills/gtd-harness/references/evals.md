@@ -14,13 +14,14 @@
 - 2026-06-11: E01-E14 manually reviewed against the current entry routing, the loading tables at the top of each sub-skill, and the `list-definitions.md` permission table; result 14/14 pass. The static gate `gtd_eval_check.sh` also passed.
 - 2026-09-27: E15-calendar-free manually reviewed against `capability-map.md`'s new "read each event's availability" rule and its pointers from `clarify/SKILL.md`, `engage/SKILL.md`, and `review/SKILL.md`; pass.
 - 2026-09-27: E24-E28 manually reviewed against `help/SKILL.md`, `gtd_help.sh` (tested directly: all 9 commands, single-command detail, unknown-command error path), the router's new help-first routing rule, capture's model-check exception branch, and `SKILL.md`/`model-guidance.md`'s shared model check (which the other 6 sub-skills inherit without duplicating); 5/5 pass.
+- 2026-09-27: E02-non-trigger re-reviewed after the ZK-pipeline default was retired (Phase 1c) — "knowledge card" input still triggers no GTD action and now correctly routes the explanation to `reference.md` / the `personalized.md` override instead of the old ZK wording; pass. Static gate re-run clean after the sync.
 
 ## Core Evals
 
 | ID | Input | Expected route | Must | Must not |
 |---|---|---|---|---|
 | E01-trigger | "My head is a mess, help me empty it into GTD" | `capture/SKILL.md` | Enter a mind sweep; capture everything first, then ask whether to batch clarify | Jump straight into a weekly review; interrupt item by item |
-| E02-non-trigger | "Turn this article into a knowledge card for me" | ZK pipeline, no GTD action triggered | Explain that this is knowledge / idea processing and should go to fleeting-note / ZK | Write to next-actions |
+| E02-non-trigger | "Turn this article into a knowledge card for me" | No GTD action triggered | Explain that this is knowledge / idea processing and should go to `reference.md`, not an action list (or wherever `personalized.md` redirects knowledge) | Write to next-actions |
 | E03-capture-single | "Note this: confirm the contract version with Colleague A" | `capture` → `clarify` | Land in inbox first; small inputs auto-clarify by default; output a one-line destination | Stop at the inbox without processing; ask the user to pick a subcommand |
 | E04-mind-sweep | "Buy milk; reply to email; prep Friday's meeting; research a product idea" | `capture/SKILL.md` | Capture all items first; then batch clarify; the product idea goes to product-ideas with a visible next action | Ask for confirmation on every item separately |
 | E05-product-idea | "An idea for a feature that auto-organizes the family shopping list" | `clarify/SKILL.md` | Goes into `product-ideas.md`; also creates project / next-action visibility by default | Drop it into someday as a cold-storage backlog |

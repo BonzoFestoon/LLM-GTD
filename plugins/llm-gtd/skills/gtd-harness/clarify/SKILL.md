@@ -31,7 +31,7 @@ What is it? Is it actionable?
 │   ├── Useless / expired             → Trash
 │   ├── Not now, but don't forget     → someday-maybe.md (incubate)
 │   ├── Product / feature / scenario opportunity → product-ideas.md (keep the original opportunity) + projects/next-actions (daily visibility)
-│   └── Reference / support material  → reference.md (knowledge / ideas → hand off to the ZK pipeline fleeting-note)
+│   └── Reference / support material, or knowledge / ideas → reference.md
 │
 └── Yes → What's the next concrete physical action?
     ├── < 2 minutes          → Do it (two-minute rule), cross it off when done
@@ -46,7 +46,7 @@ What is it? Is it actionable?
 
 1. Read `inbox.md` and run the decision tree item by item. One item at a time, no skipping.
 2. **Key questions**:
-   - "Is it actionable?" — this gate separates action from knowledge (knowledge → ZK pipeline, not GTD lists).
+   - "Is it actionable?" — this gate separates action from knowledge (knowledge → `reference.md`, not an action list).
    - "What's the next concrete physical action?" — it must be a visible physical action ("Call Colleague A to confirm the data definitions"), not "handle the data". Concrete verbs; reject vague verbs.
    - "What exactly counts as done for this?" — define the **outcome / definition of done** first, then decide whether it goes to `waiting-for`, `next-actions`, `projects`, or can be closed. Don't automatically treat milestones such as "approval passed", "meeting time agreed", or "got a reply" as final completion unless the user defines it that way.
    - "What's this action's Time / Energy / Constraint?" — only fill in light fields; don't turn lenses into a complex tagging system. The AI estimates by default and asks only when clearly unsure.
@@ -65,7 +65,7 @@ What is it? Is it actionable?
 ## Clarify rules for session-status input
 
 - A session status is not itself a to-do; first split it into atomic items, then run each through the clarify decision tree.
-- New commitments / project blockers → `projects.md` + `next-actions.md`; waiting on others → `waiting-for.md`; meaningful only on a specific day / time → calendar provider / `calendar.md` fallback chain; product opportunities → `product-ideas.md` + `projects.md` + `next-actions.md`; active-project support material → `reference.md`; pure knowledge insights → ZK pipeline.
+- New commitments / project blockers → `projects.md` + `next-actions.md`; waiting on others → `waiting-for.md`; meaningful only on a specific day / time → calendar provider / `calendar.md` fallback chain; product opportunities → `product-ideas.md` + `projects.md` + `next-actions.md`; active-project support material and pure knowledge insights alike → `reference.md`.
 - Don't leave a "today's summary / this session's summary" as a single item in `inbox.md` or `reference.md`. GTD holds only changes to the commitment system, not a chat log.
 - After clarifying, output the fixed five sections from `templates/session-close-template.md`; write "None" for empty sections — never omit them.
 
@@ -77,6 +77,6 @@ What is it? Is it actionable?
 - [ ] Projects whose desired outcome is achieved were deleted; no "Next actions: none" left behind
 - [ ] Waiting-for items state what/which milestone is currently awaited and when it finally counts as done; no intermediate milestone mistaken for closure
 - [ ] Target time slot checked for conflicts before writing a hard appointment; nothing written directly when there was a conflict
-- [ ] Knowledge / ideas handed to the ZK pipeline; GTD lists not polluted
+- [ ] Knowledge / ideas filed to `reference.md`; action lists not polluted
 - [ ] Session status split into atomic GTD items, no whole summary stuffed into a list, closed with the fixed five sections
 - [ ] Two-minute rule recognized and flagged

@@ -33,7 +33,7 @@ The state files in memory/gtd/ are plain markdown, shared by all three platforms
 1. If memory/gtd/ doesn't exist here → do NOT run init automatically. GTD needs exactly one inbox per person: read init/SKILL.md's "One inbox per human" rule and ask the user whether GTD is already set up somewhere else before running `gtd_init.sh` (which itself refuses to create anything without `--confirm-create`). Only after the user confirms, continue.
 2. Route by user intent to the matching subcommand (see the routing table in the package SKILL.md) and follow that subcommand's workflow. "Help / what can this do / which command should I use" routes to `help/SKILL.md` before anything else, so it is never captured as an inbox item. When the user gives a natural-language task / commitment directly, default to capture → clarify; ask back only when the intent is genuinely unclear.
 3. The Weekly Review (review) is the critical success factor: first bash …/scripts/gtd_review_prep.sh to generate the read-only review prep pack; if the script is unavailable, fall back to gtd_status.sh + a manual scan; then go through Get Clear / Current / Creative + the Horizons check stage by stage.
-4. Allen × Luhmann seam: input that is an action / commitment → GTD lists; input that is knowledge / an idea → hand off to the ZK pipeline (fleeting-note), not piled into GTD lists.
+4. Action vs. knowledge: input that is an action / commitment → GTD action lists; input that is knowledge / an idea → reference.md, not piled into action lists.
 5. Close the loop: the user declares something done → delete that line from the list (no checked-off history).
 </execution_flow>
 

@@ -93,6 +93,12 @@ Design principles:
 - **Routing**: "help / what can this do / which command should I use" routes to `help/SKILL.md` before the empty-input mind-sweep rule, so a genuine help request is never captured as an inbox item — distinct from "help me empty my head," which still means mind sweep.
 - **New evals**: E24-help, E25-help-route, E26-model-under, E27-model-over, E28-model-unknown-and-once. `gtd_eval_check.sh` now also fails if a sub-skill is missing from `gtd_help.sh`'s output, lacks a valid `model-tier`, lacks a command/prompt file in all three platforms, or if a Claude model name leaks anywhere outside `references/model-guidance.md`.
 
+## v1.15.1 — Knowledge defaults to reference.md, not a ZK pipeline
+- **Default changed**: every place the skill previously said non-actionable knowledge / insight material gets "handed off to the ZK pipeline / fleeting-note" now says it files to `reference.md` instead — `list-definitions.md`, `capture/SKILL.md`, `clarify/SKILL.md`, the router `SKILL.md`, `references/natural-planning-model.md`, `references/clarify-decision-tree.md`, `references/evals.md` (E02), `templates/session-close-template.md`, `gtd_init.sh`'s written `reference.md` header, all three platforms' `gtd`/`gtd-clarify` command files, `gtd-orchestrator.toml`, `cursor-skill-rules.json`, and both READMEs.
+- **Still overridable**: a vault that runs a separate knowledge system (a Zettelkasten or otherwise) points the hand-off there instead via `memory/gtd/personalized.md`, the same override pattern used for model-tier and the calendar rule. The general skill ships with no assumption that one exists.
+- **Why**: the ZK pipeline was never part of this plugin — it assumed an external system every user was expected to have. Most don't; `reference.md` is already one of the eight core lists and already existed for exactly this (non-actionable, look-up material), so it's the honest default. No behavior changed for anyone who never had a ZK pipeline to begin with.
+- New eval: E02-non-trigger's expectation rewritten to name `reference.md` (and the `personalized.md` override) instead of the ZK pipeline.
+
 ---
 
 **AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.
