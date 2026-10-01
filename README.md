@@ -1,7 +1,5 @@
 # LLM-GTD
 
-[中文](README.zh-CN.md) | English
-
 **A portable GTD skill for LLM agents.**
 
 Not a todo app. Not another productivity prompt. LLM-GTD is a trusted external system that lets
@@ -363,10 +361,7 @@ GTD commitment loop, packaged as a portable skill.
 
 ## Language
 
-The README is in English for open-source discovery.
-
-The skill prompts are currently written in Chinese because the original operating environment is Chinese.
-The methodology is David Allen's GTD; the implementation language can be localized.
+The README and the skill prompts are written in English, using David Allen's GTD terminology.
 
 ## License
 

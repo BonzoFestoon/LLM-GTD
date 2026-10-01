@@ -192,8 +192,8 @@ project" section.
 ## v1.13 — English translation
 All skill prompts, slash commands, Codex prompts, templates, and script output are
 now in English, using David Allen's GTD terminology. Scripts parse the English
-labels (`- Next actions:`, `- [ ] Opportunity:`, `- GTD visibility:`); vaults with
-Chinese-format `memory/gtd/` files need those labels updated.
+labels (`- Next actions:`, `- [ ] Opportunity:`, `- GTD visibility:`); vaults using the
+pre-1.13 label format need those labels updated.
 
 ## v1.12 — Update command for reported reality
 Added `gtd-update` for progress reports and corrections: completed next actions,
