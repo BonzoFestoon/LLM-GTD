@@ -1,13 +1,13 @@
 {
   "name": "llm-gtd",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "description": "A portable GTD trusted system for Claude Code — capture, clarify, update, organize, engage, and review commitments in plain Markdown lists under memory/gtd/. Calendar writes fail closed; engage and review stay human-led.",
   "author": {
-    "name": "mikonos",
-    "url": "https://github.com/mikonos"
+    "name": "BonzoFestoon",
+    "url": "https://github.com/BonzoFestoon"
   },
-  "homepage": "https://github.com/mikonos/LLM-GTD",
-  "repository": "https://github.com/mikonos/LLM-GTD",
+  "homepage": "https://github.com/BonzoFestoon/LLM-GTD",
+  "repository": "https://github.com/BonzoFestoon/LLM-GTD",
   "license": "MIT",
   "keywords": [
     "gtd",

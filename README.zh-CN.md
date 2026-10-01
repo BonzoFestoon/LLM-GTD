@@ -162,7 +162,7 @@ agent 可以替换，状态和工作流留下来。
 本仓库同时是一个 Claude Code 插件 marketplace。在 Claude Code 里：
 
 ```text
-/plugin marketplace add mikonos/LLM-GTD
+/plugin marketplace add BonzoFestoon/LLM-GTD
 /plugin install llm-gtd@llm-gtd
 ```
 
@@ -183,7 +183,7 @@ plugins/llm-gtd/
 把这个仓库加入 Codex 插件 marketplace，然后在 Codex 插件目录里安装 `llm-gtd`：
 
 ```bash
-codex plugin marketplace add https://github.com/mikonos/LLM-GTD.git
+codex plugin marketplace add https://github.com/BonzoFestoon/LLM-GTD.git
 codex plugin add llm-gtd@llm-gtd
 ```
 

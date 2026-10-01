@@ -173,7 +173,7 @@ fails, LLM-GTD does not pretend anything happened.
 This repo is also a Claude Code plugin marketplace. From Claude Code:
 
 ```text
-/plugin marketplace add mikonos/LLM-GTD
+/plugin marketplace add BonzoFestoon/LLM-GTD
 /plugin install llm-gtd@llm-gtd
 ```
 
@@ -196,7 +196,7 @@ Add this repository as a Codex plugin marketplace, then install `llm-gtd` from t
 plugin directory:
 
 ```bash
-codex plugin marketplace add https://github.com/mikonos/LLM-GTD.git
+codex plugin marketplace add https://github.com/BonzoFestoon/LLM-GTD.git
 codex plugin add llm-gtd@llm-gtd
 ```
 

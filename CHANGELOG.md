@@ -2,6 +2,13 @@
 
 All notable changes.
 
+## v1.17.1 — Standalone repository
+The plugin's author, homepage, repository and install commands now point at
+`BonzoFestoon/LLM-GTD` instead of the upstream `mikonos/LLM-GTD`, in both
+plugin manifests, the marketplace file, both READMEs and the issue-template
+link. This fork no longer tracks upstream. No skill behavior changes. The
+original MIT copyright notice is unchanged.
+
 ## v1.17.0 — Tickler for committed work that waits on a date (per-item layout)
 **New list: `memory/gtd/tickler/`.** Allen's tickler, one note per tickle, dated
 with `tickle:` for when it becomes actionable. It's for committed work that

@@ -1,13 +1,13 @@
 {
   "name": "llm-gtd",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "description": "LLM-GTD is a portable GTD trusted system for Codex that keeps commitments in plain Markdown lists.",
   "author": {
-    "name": "mikonos",
-    "url": "https://github.com/mikonos"
+    "name": "BonzoFestoon",
+    "url": "https://github.com/BonzoFestoon"
   },
-  "homepage": "https://github.com/mikonos/LLM-GTD",
-  "repository": "https://github.com/mikonos/LLM-GTD",
+  "homepage": "https://github.com/BonzoFestoon/LLM-GTD",
+  "repository": "https://github.com/BonzoFestoon/LLM-GTD",
   "license": "MIT",
   "keywords": [
     "gtd",
@@ -22,14 +22,14 @@
     "displayName": "LLM-GTD",
     "shortDescription": "Run a GTD trusted system from plain Markdown lists.",
     "longDescription": "LLM-GTD helps Codex capture, clarify, update, organize, engage, and review commitments in a durable plain-Markdown GTD system. It initializes GTD lists under memory/gtd/, treats progress reports as state updates instead of new inbox items, and uses a calendar provider only when an existing integration is available.",
-    "developerName": "mikonos",
+    "developerName": "BonzoFestoon",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/mikonos/LLM-GTD",
+    "websiteURL": "https://github.com/BonzoFestoon/LLM-GTD",
     "defaultPrompt": [
       "Set up my GTD trusted system",
       "Capture and clarify this task",
