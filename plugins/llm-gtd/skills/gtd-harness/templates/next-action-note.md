@@ -12,7 +12,7 @@ Concrete, verb-first action text (confirm / send / call / write — no vague ver
 Constraint: the free-text detail behind the context tags above (needs computer, tax bill / account number, payment method, etc).
 
 <!--
-No new vocabulary: these are exactly the fields the single-file next-actions.md line already carries.
+Values come from the "Property values" table in references/list-definitions.md.
 A note with no properties filled in is still a valid action — clarify fills them, organize repairs missing or invalid ones, the user never tags anything.
 `context` holds only the lens values Engage already uses, not a free-form tag system.
 Filename: short, verb-first, filesystem-safe (no : / \ ? * " < > |); add "(2)" on a collision. The old block id stays traceable as `id:`.

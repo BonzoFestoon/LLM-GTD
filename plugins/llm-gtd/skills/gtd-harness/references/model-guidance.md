@@ -8,7 +8,7 @@ Last reviewed: 2026-09-27.
 
 | Tier | Commands | Current Claude model | Why |
 |---|---|---|---|
-| strongest | `review`, project after-action reviews, the migration | Opus 5.5 | Reads across many lists and notes, weighs priorities against your horizons, and writes summaries you'll rely on later |
+| strongest | `review`, project after-action reviews | Opus 5.5 | Reads across many lists and notes, weighs priorities against your horizons, and writes summaries you'll rely on later |
 | balanced | `capture`, `clarify`, `update`, `organize`, `engage`, `gtd` (router), `init` | Sonnet 5 (Opus 5.5 also fine) | Rule-following edits with moderate judgment. A misfiled item or broken link is what makes a GTD system feel untrustworthy, so never go below this tier |
 | fast | `help` | Haiku 4.5 (any model is fine) | Read-only, mostly script output |
 

@@ -2,6 +2,37 @@
 
 All notable changes.
 
+## v2.0.0 — One note per item only; no product-ideas list
+**Breaking.** Two things LLM-GTD 1.x had are gone.
+
+**The single-file layout.** Lists are always folders of one note per item
+(`next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, `tickler/`,
+`_done/`), with general reference in a workspace-root `reference/` folder; the
+inbox, calendar fallback and horizons stay single files. `gtd_init.sh` always
+builds this layout, and its `--layout` and `--import-legacy` flags are gone.
+Every script refuses a `memory/gtd/` that still holds 1.x single-file lists
+(`next-actions.md`, `projects.md`, …) with exit 4 and a pointer to the
+migration, instead of silently missing their items. **Upgrading from
+single-file lists:** install 1.17.x, run its `scripts/gtd_migrate_to_notes.sh`
+(dry run, then `--apply` on a clean git tree), then upgrade. The migration
+script itself is not part of 2.0.0.
+
+**The product-ideas list.** It was an extension, not one of Allen's lists. A
+product or feature idea is now ordinary input: clarify files it like anything
+else (committed to building it → a project, with the opportunity and
+assumptions in its README, plus a next action; not committed → someday-maybe;
+only knowledge → reference). The dashboard line, the review-prep audit and
+intake sections, and the evidence / promotion / GTD-visibility fields are gone.
+An existing `product-ideas/` folder is simply ignored; clarify its notes into
+projects or someday-maybe, then delete it.
+
+**Smaller changes.** The next-actions README no longer carries the legacy
+`@computer/@calls/…` groups (context is a property). `templates/done-log.md`,
+`templates/project-template.md` and `templates/product-idea-note.md` are
+removed. Evals: E05 is now E05-feature-idea, E23 (migration) is retired, and
+new E36 covers the single-file refusal; the static gate checks that refusal in
+every script and fails on any remaining product-ideas mention.
+
 ## v1.17.1 — Standalone repository
 The plugin's author, homepage, repository and install commands now point at
 `BonzoFestoon/LLM-GTD` instead of the upstream `mikonos/LLM-GTD`, in both

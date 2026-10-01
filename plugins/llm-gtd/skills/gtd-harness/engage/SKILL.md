@@ -17,7 +17,7 @@ example: "I have 30 minutes, what should I do?"
 - Hard landscape / free time windows: read `references/capability-map.md`.
 - Daily Engage automation cadence or Approval Radar: read `references/automation-profiles.md`.
 - Automation boundary: offer only a 3-5 item candidate menu; never present candidates as today's commitments, never schedule them into the calendar automatically.
-- Read the action pool and waiting-for through `scripts/gtd_list.sh` (either layout; in the per-item layout it replaces opening every note). Never read `memory/gtd/_done/` or `done.md` — finished work is never a candidate.
+- Read the action pool and waiting-for through `scripts/gtd_list.sh` (it replaces opening every note). Never read `memory/gtd/_done/` — finished work is never a candidate.
 
 ## When to run
 - The user asks "what should I do now", "what can I do for a bit", "I have 30 minutes, what can I get done".
@@ -39,9 +39,9 @@ example: "I have 30 minutes, what should I do?"
 - **Energy lens**: low energy / medium energy / deep work / low emotional load.
 - **Hard-setting lens**: shopping, on-the-way errands, materials at home, before a meeting, a person present, prep chain.
 - **Tool / channel constraint**: needs computer, needs phone, needs documents, needs payment, needs ID, needs equipment.
-- **Collaboration lens**: follow-ups due, @agenda-person, needs a decision.
+- **Collaboration lens**: follow-ups due, things to raise with a person you'll see, needs a decision.
 
-Legacy `@computer/@calls/@errands/@home/@agenda` groups are read only as historical compatibility signals; an item is never recommended by default just because it's under `@computer`. Context is defined as "a constraint on whether it can really be done right now", not a location category.
+An item is never recommended by default just because its `context` is `computer`. Context is defined as "a constraint on whether it can really be done right now", not a location category.
 
 ## Allen's rules of judgment
 
@@ -53,23 +53,23 @@ Legacy `@computer/@calls/@errands/@home/@agenda` groups are read only as histori
 
 0. **Silently run organize structural hygiene first** (the mechanical automatic items in `organize/SKILL.md`: orphans / stalled / contexts / stale checkmarks / duplicates) — so "what to do now" is based on a clean structure and stalled projects don't slip. Add one line only if something needs your decision; otherwise don't interrupt.
 1. First read **hard appointments for today / the current window** and compute the free time block until the next hard-landscape item; if the external calendar provider is reachable it is authoritative; if all are unreachable, read the `calendar.md` fallback and note "based on local fallback, may be incomplete". Read each event's availability, not just its title or length, before counting it as blocking time (`references/capability-map.md`'s conflict and capacity judgment).
-   **Per-item layout: what came due today first**, whatever the calendar's reachability. Step 0's organize normally turns a due tickle into a next action (or an inbox pointer): open the menu with that new action ("Tickler: now actionable — …"). If one is still due in `gtd_list.sh tickler --due` (organize couldn't handle it), open with it and hand it to organize / clarify rather than leaving it in the tickler.
+   **What came due today first**, whatever the calendar's reachability. Step 0's organize normally turns a due tickle into a next action (or an inbox pointer): open the menu with that new action ("Tickler: now actionable — …"). If one is still due in `gtd_list.sh tickler --due` (organize couldn't handle it), open with it and hand it to organize / clarify rather than leaving it in the tickler.
 2. If this run is the Daily Engage automation cadence and Approval Radar is enabled, do the read-only Approval Radar per `references/automation-profiles.md`: flag only approvals needing action or with status changes, never auto approve / reject / remind; if read-only permission is missing, state the gap and continue with Engage.
 3. Ask (or infer from context) the user's **context, time available, energy**. Support natural-language lenses: `I only have 10 minutes`, `I'm out of energy`, `I'm heading out`, `I'm shopping`, `what do I need to prep for tomorrow morning`, `what needs a follow-up`. If the calendar-derived window differs from the time the user states, use the smaller one.
-4. Read the action pool with `gtd_list.sh next-actions`, turning the lenses into flags where they map (`--max-time 10`, `--energy low`, `--context errands`, `--project "<Name>"`); a lens with no flag (priority, "prep for tomorrow") is judged from the output. If a flag leaves fewer than 3 items, rerun looser rather than padding. Honor legacy `@computer/@calls/@errands/@home/@agenda` group signals (single-file layout) but filter by the four criteria and lenses, and give **3–5** "best to do now" candidates, each with its time estimate and why it fits "now".
+4. Read the action pool with `gtd_list.sh next-actions`, turning the lenses into flags where they map (`--max-time 10`, `--energy low`, `--context errands`, `--project "<Name>"`); a lens with no flag (priority, "prep for tomorrow") is judged from the output. If a flag leaves fewer than 3 items, rerun looser rather than padding. Filter by the four criteria and lenses, and give **3–5** "best to do now" candidates, each with its time estimate and why it fits "now".
 5. When ranking by priority, **check upward against the Horizons**: which one best serves the current 30k goals / 20k areas of focus. Not "most urgent" but "most important and doable right now".
 6. If there isn't enough free time today, or the user's declared today-musts clearly exceed the remaining time, output an "overcommitment" alert with four kinds of renegotiation suggestions — delete, defer, delegate, downgrade; don't automatically schedule next-actions into the calendar.
 7. Also flag any waiting-for items that are due for a follow-up (`gtd_list.sh waiting-for`: `follow-up=` on or before today, or long past `delegated=` with no follow-up date).
-8. When the user finishes an item → close the loop through `update/SKILL.md` (it knows how completion works in each layout).
+8. When the user finishes an item → close the loop through `update/SKILL.md` (it moves the note to the done record).
 
 ## Quality check
 - [ ] All candidates are doable in the user's **current context** (nothing recommended that can't be done)
 - [ ] Looked at the hard landscape first and constrained candidates by the real free time window
 - [ ] Gave time estimates matching the user's time available / energy
 - [ ] Lenses like `10 min` / `low energy` / `deep work` / `shopping` / `prep` / `follow-ups due` can filter candidates from the action pool, without turning lenses into a big tagging system the user must maintain
-- [ ] Nothing recommended by default just because it sits under a legacy `@computer/@calls` group; hard setting, time, and energy take precedence over soft tool groups
+- [ ] Nothing recommended by default just because of a soft tool context like `computer`; hard setting, time, and energy take precedence
 - [ ] Priority is grounded in the Horizons, not just "looks urgent"
 - [ ] On overcommitment, gave renegotiation suggestions instead of cramming next-actions into the calendar
 - [ ] Flagged waiting-for items due for a follow-up
-- [ ] Read the pool via `gtd_list.sh`; nothing from `_done/` / `done.md` offered
+- [ ] Read the pool via `gtd_list.sh`; nothing from `_done/` offered
 - [ ] If the Daily Engage cadence has Approval Radar enabled, approvals were scanned read-only, and an approval provider failure did not interrupt Engage

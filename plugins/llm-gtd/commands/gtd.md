@@ -32,7 +32,7 @@ $ARGUMENTS
    - Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`
    - Clarify the inbox / process item by item / where do these to-dos go / clear out the inbox → `clarify/SKILL.md`
    - Done / finished / bought it / sent it / confirmed / they replied / the schedule changed / cancelled or dropped → `update/SKILL.md`
-   - Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday / product ideas hygiene → `organize/SKILL.md`
+   - Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday hygiene → `organize/SKILL.md`
    - What now / what today / for a bit / I have 30 minutes / filter by energy or context → `engage/SKILL.md`
    - Weekly review / weekly retro / review / the system is a mess / don't trust the lists → `review/SKILL.md`
 3. Conflict handling:
@@ -40,6 +40,6 @@ $ARGUMENTS
    - When the user reports a change that already happened, prefer update; don't re-capture.
    - When the sentence itself is new input / a new commitment, prefer capture → clarify; don't lecture on GTD theory first.
    - For `/gtd help me empty my head` or an empty `/gtd`, enter capture's mind-sweep flow and first ask the user to dump everything line by line.
-   - Pure knowledge / ideas with no commitment are filed to reference.md via the clarify gate and not written to GTD action lists.
+   - Pure knowledge / ideas with no commitment are filed to reference/ via the clarify gate and not written to GTD action lists.
 4. Ask one short question only when "action vs knowledge" or the "desired outcome" can't be determined; don't make the user pick a specific subcommand.
 </process>

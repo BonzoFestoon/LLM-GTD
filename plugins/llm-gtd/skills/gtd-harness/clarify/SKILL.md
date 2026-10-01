@@ -21,7 +21,6 @@ example: "Clarify my inbox"
 ## When to run
 - `inbox.md` has items to clarify (the dashboard flags this).
 - The user says "help me sort through my inbox", "where should these to-dos go", "go through these one by one".
-- After a legacy import, the "Needs light fields" section needs re-evaluation.
 
 ## Decision tree (ask for each inbox item)
 
@@ -29,74 +28,67 @@ example: "Clarify my inbox"
 What is it? Is it actionable?
 ├── No → three destinations:
 │   ├── Useless / expired             → Trash
-│   ├── Not now, but don't forget     → someday-maybe.md (incubate)
-│   ├── Product / feature / scenario opportunity → product-ideas.md (keep the original opportunity) + projects/next-actions (daily visibility)
-│   └── Reference / support material, or knowledge / ideas → reference.md
+│   ├── Not now, but don't forget     → someday-maybe/ (incubate)
+│   └── Reference / support material, or knowledge / ideas → reference/ (or the project's folder)
 │
 └── Yes → What's the next concrete physical action?
     ├── < 2 minutes          → Do it (two-minute rule), cross it off when done
-    ├── Someone else should  → Delegate it → waiting-for.md (record person + agreement + date)
+    ├── Someone else should  → Delegate it → waiting-for/ (record person + agreement + date)
     └── Mine, > 2 minutes    → Defer it:
          ├── Time- / day-specific → hard landscape (calendar): check the target time window first; if no conflict and details are complete, write to the reachable calendar provider; if unreachable or key fields are missing, fall back
-         ├── Committed, but can't act until a date → tickler/ (per-item layout: a dated tickle; never someday-maybe or waiting-for)
-         └── As soon as possible  → next-actions.md (action pool; state Time / Energy / Constraint)
-    ※ If completion takes >1 step → also create a project in projects.md (outcome + next action); the next action goes into next-actions
-    ※ A committed project that can't start until a date → project + a tickle linked to it (on hold, not stalled); see "Filing in the per-item layout"
+         ├── Committed, but can't act until a date → tickler/ (a dated tickle; never someday-maybe or waiting-for)
+         └── As soon as possible  → next-actions/ (action pool; state time / energy / context)
+    ※ If completion takes >1 step → also create a project folder in projects/ (outcome); its next action goes into next-actions/
+    ※ A committed project that can't start until a date → project + a tickle linked to it (on hold, not stalled); see "Filing notes"
 ```
 
 ## Workflow
 
 1. Read `inbox.md` and run the decision tree item by item. One item at a time, no skipping.
 2. **Key questions**:
-   - "Is it actionable?" — this gate separates action from knowledge (knowledge → `reference.md`, not an action list).
+   - "Is it actionable?" — this gate separates action from knowledge (knowledge → `reference/`, not an action list).
    - "What's the next concrete physical action?" — it must be a visible physical action ("Call Colleague A to confirm the data definitions"), not "handle the data". Concrete verbs; reject vague verbs.
    - "What exactly counts as done for this?" — define the **outcome / definition of done** first, then decide whether it goes to `waiting-for`, `next-actions`, `projects`, or can be closed. Don't automatically treat milestones such as "approval passed", "meeting time agreed", or "got a reply" as final completion unless the user defines it that way.
-   - "What's this action's Time / Energy / Constraint?" — only fill in light fields; don't turn lenses into a complex tagging system. The AI estimates by default and asks only when clearly unsure.
-3. **Filing**: append the item to the end of the matching group in the target list per the decision tree (see each list's template for the format). **Per-item layout** (`memory/gtd/next-actions/` is a folder): create a note instead of appending a line — follow "Filing in the per-item layout" below; the decisions are the same, only the storage differs.
-   - Anything going into next-actions must carry three light fields: `Time` (2 min / 10 min / 30 min / 60-90 min), `Energy` (low energy / medium energy / deep work / low emotional load), `Constraint` (hard location / setting, tool / channel, person present, prep chain, shopping, before a meeting, ID / payment / documents / equipment, etc.). Legacy `@computer/@calls/@errands/@home/@agenda-name` groups are kept for compatibility only and are no longer the default primary grouping.
-   - When it's clearly a product idea / feature opportunity / scenario opportunity, put it in `product-ideas.md` keeping the original opportunity, and by default also create visible work items in `projects.md` + `next-actions.md`; only when the user explicitly says "store it, don't process it / capture only" is it left un-promoted.
-   - When creating a project, write the outcome + next action in projects.md and sync the next action into next-actions. A project's "Next actions" must not just say "see next-actions" or a generic context; link to the specific next-actions block, e.g. first append `^na-short-id-YYYYMMDD` to the action line, then write `[[next-actions#^na-short-id-YYYYMMDD|Concrete next action]] (constraint: needs computer)` in the project.
-   - For headings inside GTD files, use Obsidian heading links: project references are `[[projects#Project name|Project name]]`; support material references are `[[reference#Entry name|Entry name]]`. Bare `[[Heading]]` is only for real standalone files.
+   - "What's this action's time / energy / context?" — only fill in light fields; don't turn lenses into a complex tagging system. The AI estimates by default and asks only when clearly unsure.
+3. **Filing**: create one note in the target list per the decision tree — see "Filing notes" below.
+   - A product / feature / scenario idea is ordinary input, not its own list: if the user is committed to building it, it is a project (keep the original opportunity, assumptions and evidence in the project README's body) with a next action; if not, someday-maybe; if it's only knowledge, reference.
    - When updating an existing project, if the desired outcome is achieved and no next action still needs pushing → close it through `update/SKILL.md`'s "Project close" (AAR, then the done record); don't write "Next actions: none" or leave a finished project in the active list.
    - **Waiting-for items must state two layers**: `what you're currently waiting for` and `what finally counts as done`. Especially for payment flows, approval flows, legal routing, refunds, and reimbursements, `approval passed / submitted / they replied / technical evaluation started` are often just milestones, not closure. If the final definition of done is "payment received / fully signed / item received / actually scheduled and happened", state it in the waiting-for text or agreement to avoid deleting the item too early.
    - For anything doable in 2 minutes, tell the user "This one takes <2 minutes — I suggest doing it now."
    - **Time-specific items → calendar (hard landscape)**: one-calendar hard rule — when an external calendar provider is reachable, write to it first; only when all are unreachable write the `calendar.md` fallback; **never keep a copy**. Writing to an external calendar is a high-consequence action, but it may be done automatically when event details are complete. Before writing, read the target time slot's hard landscape (read each existing event's availability, not just its title or length — see `references/capability-map.md`'s conflict and capacity judgment); if an event already occupies it or the buffer before/after is too small to keep the commitment, list the conflict and stop, suggesting reschedule, cancel, delegate, or downgrade to next-action/someday. Report "written" only after the external tool returns success; on failure / unreachable, fall back step by step per `references/capability-map.md` and say so honestly — **never misreport**. When key fields such as date, time, or title / subject are missing, ask only for the missing fields; meetings without a duration default to 60 minutes.
-4. After filing, **delete the item from the inbox** (once clarified it shouldn't stay in the inbox).
-5. Not enough information to decide the next action → put it in next-actions as "TBD + what information is missing", or ask the user one question.
+4. After filing, **delete the item from the inbox** (once clarified it shouldn't stay in the inbox) — only after its note exists.
+5. Not enough information to decide the next action → file it in next-actions as "TBD + what information is missing", or ask the user one question.
 
-## Filing in the per-item layout
+## Filing notes
 
-Applies when `memory/gtd/next-actions/` is a folder (see `references/list-definitions.md` "Layouts" and "Note formats"). The decision tree, the key questions and the one-question rule don't change; each filed item becomes one note instead of one line.
+Each filed item becomes one note (see `references/list-definitions.md` "Layout" and "Note formats").
 
-1. **Read the target list's `README.md` first** (e.g. `memory/gtd/next-actions/README.md`) — local rules the user added there apply, as the top of the single-file list did.
-2. **Create one note per item** from that list's template: `templates/next-action-note.md`, `waiting-for-note.md`, `someday-maybe-note.md`, `product-idea-note.md`, `tickler-note.md`. Filename = a short, verb-first title, filesystem-safe (drop `: / \ ? * " < > |`); if the name exists add ` (2)`, ` (3)`, …; never `README.md`. Fill `id` (`na-` / `wf-` / `sm-` / `pi-` / `tk-` + short id + `YYYYMMDD`), `source`, and `created` (today). Drop the template's HTML comment and any optional property that has no value — never write placeholders.
-3. **Next-action properties**: convert the light fields per the "Property values" table in `references/list-definitions.md` — `time` a number of minutes (a range → its upper bound), `energy` one of `low | medium | deep | low-emotional`, `context` only values from that table's list. The concrete action goes in the body; the full free-text constraint goes on a `Constraint:` line under it. Estimate as today; a property you genuinely can't estimate is left out (organize repairs it), never asked about as a "tag". The user never tags anything.
-4. **Projects are folders**: a new project is `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md` (`outcome:` one sentence; drop the empty Decisions / Support material / AAR stubs if there's nothing for them yet, keep `## Next actions` with its embedded view). Each of its actions or waiting-for items gets `project: "[[projects/<Project name>/README|<Project name>]]"`. **Don't write the actions into the README and don't add block ids or back-links** — the README's embedded view and `gtd_list.sh --project` find them. An existing project: check `projects/` for its folder before creating another.
-5. **Product ideas**: `product-ideas/<Opportunity>.md` plus, by default, the project folder and a next validation action, linked from the idea's "GTD visibility" line as `[[projects/<Project name>/README|<Project name>]]` · `[[next-actions/<Title>|<Title>]]` — the "capture only" exception is unchanged.
-6. **Tickler** (committed, but can't act until a date — `references/list-definitions.md` "Tickler"): `tickler/<Verb-first title>.md` with `tickle: YYYY-MM-DD` (when it becomes actionable), `project:` when it belongs to a project, and the body written as the concrete action it will become. A project waiting on a date keeps (or gets) its folder and gets this tickle instead of a next action; it is on hold, not stalled. Never file it in someday-maybe (not committed), waiting-for (nobody owes it), or the calendar (not an appointment).
+1. **Read the target list's `README.md` first** (e.g. `memory/gtd/next-actions/README.md`) — local rules the user added there apply.
+2. **Create one note per item** from that list's template: `templates/next-action-note.md`, `waiting-for-note.md`, `someday-maybe-note.md`, `tickler-note.md`. Filename = a short, verb-first title, filesystem-safe (drop `: / \ ? * " < > |`); if the name exists add ` (2)`, ` (3)`, …; never `README.md`. Fill `id` (`na-` / `wf-` / `sm-` / `tk-` + short id + `YYYYMMDD`), `source`, and `created` (today). Drop the template's HTML comment and any optional property that has no value — never write placeholders.
+3. **Next-action properties**: fill the light fields per the "Property values" table in `references/list-definitions.md` — `time` a number of minutes (a range → its upper bound), `energy` one of `low | medium | deep | low-emotional`, `context` only values from that table's list. The concrete action goes in the body; the full free-text constraint (hard location / setting, tool / channel, person present, prep chain, shopping, before a meeting, ID / payment / documents / equipment, etc.) goes on a `Constraint:` line under it. Estimate it yourself; a property you genuinely can't estimate is left out (organize repairs it), never asked about as a "tag". The user never tags anything.
+4. **Projects are folders**: a new project is `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md` (`outcome:` one sentence; drop the empty Decisions / Support material / AAR stubs if there's nothing for them yet, keep `## Next actions` with its embedded view). Each of its actions or waiting-for items gets `project: "[[projects/<Project name>/README|<Project name>]]"`. **Don't write the actions into the README and don't add back-links** — the README's embedded view and `gtd_list.sh --project` find them. An existing project: check `projects/` for its folder before creating another.
+5. **Tickler** (committed, but can't act until a date — `references/list-definitions.md` "Tickler"): `tickler/<Verb-first title>.md` with `tickle: YYYY-MM-DD` (when it becomes actionable), `project:` when it belongs to a project, and the body written as the concrete action it will become. A project waiting on a date keeps (or gets) its folder and gets this tickle instead of a next action; it is on hold, not stalled. Never file it in someday-maybe (not committed), waiting-for (nobody owes it), or the calendar (not an appointment).
    - **An inbox pointer to a due tickle** (`- Tickle due: <title> → [[tickler/<title>]]`, added by organize): clarify the **note itself**, not the line — move it to `next-actions/` (drop `tickle`, fill the properties), make it a project, re-date it, move it to `someday-maybe/`, or delete it — then delete the inbox line.
-   - **Single-file layout**: there is no tickler. File a real date in the calendar and anything else as before, and mention once that the tickler needs the per-item layout.
-7. **Reference / knowledge**: project-specific support material → a note (or a short section in the README) inside that project's folder; general reference and knowledge → `reference/<Title>.md` at the **workspace root** (not `memory/gtd/`) from `templates/reference-note.md`, unless `personalized.md` redirects the hand-off.
-8. **Unchanged in this layout**: the inbox, the calendar / `calendar.md` fallback chain, the two-minute rule, and deleting the clarified line from `inbox.md` (only after the note exists). Closing a finished project is update's job (after-action review, then the whole folder moves to `_done/`) — clarify never deletes a project folder.
-9. **Report** each filed item with its note path, e.g. `→ next-actions/Call the dentist to book a cleaning.md (10 min · low · phone)`.
+6. **Reference / knowledge**: project-specific support material → a note (or a short section in the README) inside that project's folder; general reference and knowledge → `reference/<Title>.md` at the **workspace root** (not `memory/gtd/`) from `templates/reference-note.md`, unless `personalized.md` redirects the hand-off.
+7. **Not clarify's job**: closing a finished project is update's (after-action review, then the whole folder moves to `_done/`) — clarify never deletes a project folder.
+8. **Report** each filed item with its note path, e.g. `→ next-actions/Call the dentist to book a cleaning.md (10 min · low · phone)`.
 
 ## Clarify rules for session-status input
 
 - A session status is not itself a to-do; first split it into atomic items, then run each through the clarify decision tree.
-- New commitments / project blockers → `projects.md` + `next-actions.md`; waiting on others → `waiting-for.md`; meaningful only on a specific day / time → calendar provider / `calendar.md` fallback chain; product opportunities → `product-ideas.md` + `projects.md` + `next-actions.md`; active-project support material and pure knowledge insights alike → `reference.md`.
-- Don't leave a "today's summary / this session's summary" as a single item in `inbox.md` or `reference.md`. GTD holds only changes to the commitment system, not a chat log.
+- New commitments / project blockers → `projects/` + `next-actions/`; waiting on others → `waiting-for/`; meaningful only on a specific day / time → calendar provider / `calendar.md` fallback chain; active-project support material → the project's folder; pure knowledge insights → `reference/`.
+- Don't leave a "today's summary / this session's summary" as a single item in `inbox.md` or `reference/`. GTD holds only changes to the commitment system, not a chat log.
 - After clarifying, output the fixed five sections from `templates/session-close-template.md`; write "None" for empty sections — never omit them.
 
 ## Quality check
 - [ ] Every inbox item has a clear destination (one of the six), nothing left over
-- [ ] Everything in next-actions is a **concrete physical action** + has Time / Energy / Constraint; each project's "Next actions" links directly to a specific action block
+- [ ] Everything in next-actions is a **concrete physical action** with time / energy / context filled from the fixed vocabulary (nothing asked of the user as a tag)
 - [ ] Every >1-step item has a project with a next action, waiting-for item or tickle (nothing stalled; `references/list-definitions.md` "Stalled projects")
-- [ ] Headings inside GTD files are referenced as `[[filename#Heading|Heading]]`; no in-list heading was mis-linked as a standalone file
+- [ ] One note per item in the right folder, the project linked from the note's `project:` field only, general reference at the workspace-root `reference/`
 - [ ] Projects whose desired outcome is achieved were handed to update's Project close; no "Next actions: none" left behind
 - [ ] Waiting-for items state what/which milestone is currently awaited and when it finally counts as done; no intermediate milestone mistaken for closure
 - [ ] Target time slot checked for conflicts before writing a hard appointment; nothing written directly when there was a conflict
-- [ ] Knowledge / ideas filed to `reference.md`; action lists not polluted
+- [ ] Knowledge / ideas filed to `reference/`; action lists not polluted
 - [ ] Session status split into atomic GTD items, no whole summary stuffed into a list, closed with the fixed five sections
 - [ ] Two-minute rule recognized and flagged
-- [ ] Committed-but-not-until-a-date items became tickles (per-item), not someday-maybe, waiting-for or calendar entries
-- [ ] Per-item layout: one note per item in the right folder, properties filled from the fixed vocabulary (nothing asked of the user as a tag), no line appended to a list file, the project linked from the note's `project:` field only, general reference at the workspace-root `reference/`
+- [ ] Committed-but-not-until-a-date items became tickles, not someday-maybe, waiting-for or calendar entries

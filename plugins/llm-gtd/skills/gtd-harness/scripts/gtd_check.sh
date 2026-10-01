@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gtd_check.sh — read-only: organize's mechanical hygiene findings for the per-item layout.
+# gtd_check.sh — read-only: organize's mechanical hygiene findings.
 # It never fixes anything; organize reads the findings, fixes the mechanical ones, and batches
 # the rest as questions (see organize/SKILL.md).
 #
@@ -30,8 +30,7 @@
 # README.md is never an item. _done/ is only checked for its own two findings — its notes never
 # count as open work, and never satisfy a project's "has a next action" check.
 #
-# In the single-file layout there is nothing to check here: organize scans the list files
-# directly. Compatible with macOS bash 3.2 (no associative arrays / mapfile).
+# Compatible with macOS bash 3.2 (no associative arrays / mapfile).
 
 set -euo pipefail
 
@@ -44,11 +43,7 @@ if [ ! -d "$GTD_DIR" ]; then
   exit 1
 fi
 
-if [ "$GTD_LAYOUT" != "notes" ]; then
-  echo "# layout: files — per-item checks don't apply; organize scans the list files directly"
-  exit 0
-fi
-echo "# layout: notes"
+gtd_refuse_single_file
 
 # Keep in step with references/list-definitions.md "Property values" (gtd_eval_check.sh verifies).
 ENERGY_VOCAB="low medium deep low-emotional"

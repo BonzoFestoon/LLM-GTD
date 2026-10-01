@@ -110,8 +110,15 @@ bash -n "$ROOT/scripts/gtd_review_prep_notify.sh"
 bash -n "$ROOT/scripts/gtd_help.sh"
 bash -n "$ROOT/scripts/gtd_list.sh"
 bash -n "$ROOT/scripts/gtd_check.sh"
-bash -n "$ROOT/scripts/gtd_migrate_to_notes.sh"
 ok "shell scripts pass bash -n"
+
+# product-ideas was retired in 2.0.0: product opportunities are clarified like any other input.
+# Only the history (evolution-log.md) may still name it.
+if grep -rni 'product-idea' "$ROOT" --include='*.md' --include='*.sh' --include='*.toml' --include='*.json' \
+  | grep -v '/references/evolution-log.md:' | grep -v '/scripts/gtd_eval_check.sh:'; then
+  fail "product-ideas is still mentioned (retired in 2.0.0)"
+fi
+ok "no product-ideas list anywhere"
 
 # gtd_check.sh's property vocabulary must match list-definitions.md's "Property values" table.
 for var in ENERGY_VOCAB CONTEXT_VOCAB; do
@@ -124,39 +131,41 @@ for var in ENERGY_VOCAB CONTEXT_VOCAB; do
 done
 ok "gtd_check.sh vocabulary matches list-definitions.md Property values"
 
-# Per-item init fixture: builds the layout in a throwaway root, checks every list folder has its
-# README, README is never listed as an item, and init refuses to switch an existing layout.
+# Init fixture: builds the lists in a throwaway root, checks every list folder has its README,
+# README is never listed as an item, and every script refuses LLM-GTD 1.x single-file lists.
 fixture="$(mktemp -d)"
 trap 'rm -rf "$fixture"' EXIT
-mkdir -p "$fixture/notes" "$fixture/files"
+mkdir -p "$fixture/notes" "$fixture/files/memory/gtd"
 LLM_GTD_ROOT="$fixture/notes" CODEX_HOME="$fixture/codex" \
-  bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes --with-bases >/dev/null \
-  || fail "gtd_init.sh --layout notes failed"
+  bash "$ROOT/scripts/gtd_init.sh" --confirm-create --with-bases >/dev/null \
+  || fail "gtd_init.sh failed"
 for f in memory/gtd/inbox.md memory/gtd/calendar.md memory/gtd/horizons.md reference/README.md \
   memory/gtd/next-actions/README.md memory/gtd/waiting-for/README.md memory/gtd/projects/README.md \
-  memory/gtd/someday-maybe/README.md memory/gtd/product-ideas/README.md memory/gtd/_done/README.md \
+  memory/gtd/someday-maybe/README.md memory/gtd/_done/README.md \
   memory/gtd/next-actions.base memory/gtd/done.base memory/gtd/tickler/README.md memory/gtd/tickler.base; do
-  [ -f "$fixture/notes/$f" ] || fail "per-item init did not create $f"
+  [ -f "$fixture/notes/$f" ] || fail "init did not create $f"
 done
 grep -q '^## Note format' "$fixture/notes/memory/gtd/tickler/README.md" || fail "tickler README lacks its Note format section"
 grep -qi 'tickle' "$fixture/notes/memory/gtd/projects/README.md" || fail "projects README's stalled rule does not name the tickle"
-for f in next-actions waiting-for projects someday-maybe product-ideas reference; do
-  [ ! -e "$fixture/notes/memory/gtd/$f.md" ] || fail "per-item init also wrote single-file $f.md"
+for f in next-actions waiting-for projects someday-maybe reference; do
+  [ ! -e "$fixture/notes/memory/gtd/$f.md" ] || fail "init wrote a single-file $f.md"
 done
+[ ! -e "$fixture/notes/memory/gtd/product-ideas" ] || fail "init created a product-ideas/ list (retired in 2.0.0)"
 grep -q '^## Note format' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Note format section"
-grep -q '^## Legacy groups' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Legacy groups section"
 [ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions)" ] || fail "gtd_list.sh counted README.md as an item"
 [ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" projects)" ] || fail "gtd_list.sh counted projects/README.md as a project"
-LLM_GTD_ROOT="$fixture/files" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
-  || fail "gtd_init.sh single-file init failed"
-[ ! -e "$fixture/files/memory/gtd/tickler.md" ] && [ ! -e "$fixture/files/memory/gtd/tickler" ] \
-  || fail "single-file init created a tickler (the tickler is per-item only)"
-rc=0; LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null 2>&1 || rc=$?
-[ "$rc" -eq 4 ] || fail "init did not refuse to turn a single-file system into per-item (exit $rc, want 4)"
-[ ! -d "$fixture/files/memory/gtd/next-actions" ] || fail "refused per-item init still created next-actions/"
-ok "per-item init: folders + READMEs + bases created (tickler included), README never an item, layout switch refused"
+# A 1.x single-file system: every script refuses (exit 4) and init writes nothing.
+touch "$fixture/files/memory/gtd/next-actions.md"
+for sc in gtd_init.sh gtd_status.sh gtd_list.sh gtd_check.sh gtd_review_prep.sh; do
+  case "$sc" in gtd_init.sh) arg="--confirm-create" ;; gtd_list.sh) arg="next-actions" ;; *) arg="" ;; esac
+  rc=0; LLM_GTD_ROOT="$fixture/files" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/$sc" $arg >/dev/null 2>"$fixture/err" || rc=$?
+  [ "$rc" -eq 4 ] || fail "$sc did not refuse single-file lists (exit $rc, want 4)"
+  grep -q 'gtd_migrate_to_notes.sh' "$fixture/err" || fail "$sc refused single-file lists without naming the 1.17.x migration"
+done
+[ ! -d "$fixture/files/memory/gtd/next-actions" ] || fail "refused init still created next-actions/"
+ok "init: folders + READMEs + bases created (tickler included), README never an item; single-file lists refused by every script"
 
-# Per-item read path: lenses filter, _done/ is never listed, and gtd_check.sh finds each kind of
+# Read path: lenses filter, _done/ is never listed, and gtd_check.sh finds each kind of
 # mechanical problem (and nothing on a clean note).
 G="$fixture/notes/memory/gtd"
 mkdir -p "$G/projects/Alpha" "$G/projects/Idle"
@@ -188,41 +197,26 @@ done
 [ -z "$(echo "$chk" | awk -F'\t' '$2 ~ /README\.md$/ && $2 !~ /^(projects|_done)\/[^\/]+\/README\.md$/')" ] \
   || fail "gtd_check.sh treated a list README as an item"
 ! echo "$chk" | grep -qF "PLAN.md" || fail "gtd_check.sh treated a finished project's support doc as a done record"
-LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_check.sh" | grep -q '^# layout: files' || fail "gtd_check.sh did not stand down in the single-file layout"
-ok "per-item read path: lenses filter, _done/ never listed, gtd_check.sh finds every kind of problem"
+ok "read path: lenses filter, _done/ never listed, gtd_check.sh finds every kind of problem"
 
-# Done record (both layouts): gtd_list.sh done lists every record once, never a support doc or the
+# Done record: gtd_list.sh done lists every record once, never a support doc or the
 # folder README, and --since / --project / --problems filter it.
 done_all="$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done)"
-[ "$(echo "$done_all" | grep -c .)" -eq 4 ] || fail "gtd_list.sh done (per-item) listed: $done_all"
+[ "$(echo "$done_all" | grep -c .)" -eq 4 ] || fail "gtd_list.sh done listed: $done_all"
 echo "$done_all" | grep -q "list=projects${T}project=Old project${T}.*Old project$" || fail "gtd_list.sh done missed the finished project folder"
 [ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --since 2026-01-15 | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --since did not filter"
 [ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --problems | cut -f1-7 | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --problems did not filter"
 [ "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" done --project "Old project" | grep -c .)" -eq 2 ] || fail "gtd_list.sh done --project did not find the project and its step"
-[ -f "$fixture/files/memory/gtd/done.md" ] || fail "single-file init did not seed done.md"
-cat >> "$fixture/files/memory/gtd/done.md" <<'EOF'
-## 2026-03-01
-- [x] Pay the tax bill · From: next-actions · Result: done · Project: [[projects#Taxes|Taxes]] ^na-tax-20260201
-  - Done: paid online
-  - Problems and fixes: the portal timed out twice; paying before 8 am worked.
-- [x] Project: Taxes — filed and paid · From: projects · Result: done
-  - Done: filed and paid
-  - Problems and fixes: none noted
-EOF
-done_sf="$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" done)"
-[ "$(echo "$done_sf" | grep -c .)" -eq 2 ] || fail "gtd_list.sh done (single-file) listed: $done_sf"
-echo "$done_sf" | grep -q "^na-tax-20260201${T}completed=2026-03-01${T}result=done${T}list=next-actions${T}.*problems=yes" || fail "gtd_list.sh done (single-file) misparsed: $done_sf"
-[ "$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" done --project Taxes | grep -c .)" -eq 2 ] || fail "gtd_list.sh done --project (single-file) did not match the project line"
-ok "done record: gtd_list.sh done reads both layouts and filters by --since / --project / --problems"
+ok "done record: gtd_list.sh done filters by --since / --project / --problems"
 
-# Tickler (per-item only): a tickle puts its project in play (never stalled), a due tickle is
+# Tickler: a tickle puts its project in play (never stalled), a due tickle is
 # tickler-due, --due / --within split by date, tickles get the actions' project-link checks, the inbox
 # guard, the dashboard line and review prep's Tickler section; no tickler lists nothing.
 # Dates are relative to the run date so the gate never goes stale.
 TK="$fixture/tick"
 mkdir -p "$TK"
-LLM_GTD_ROOT="$TK" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null \
-  || fail "gtd_init.sh --layout notes failed (tickler fixture)"
+LLM_GTD_ROOT="$TK" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
+  || fail "gtd_init.sh failed (tickler fixture)"
 TG="$TK/memory/gtd"
 mkdir -p "$TG/tickler"
 tk_today="$(date +%Y-%m-%d)"
@@ -306,88 +300,11 @@ part_of "$rp" '^## Confirmation queue' '^## ' | grep -q 'Tickler:' || fail "revi
 
 NT="$fixture/notick"
 mkdir -p "$NT"
-LLM_GTD_ROOT="$NT" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null || fail "gtd_init.sh failed (no-tickler fixture)"
+LLM_GTD_ROOT="$NT" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null || fail "gtd_init.sh failed (no-tickler fixture)"
 rm -rf "$NT/memory/gtd/tickler"
 out="$(LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -z "$out" ] || fail "gtd_list.sh tickler with no tickler/ folder: $out"
 LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_status.sh" >/dev/null 2>&1 || fail "gtd_status.sh failed with no tickler/ folder"
-out="$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -z "$out" ] || fail "gtd_list.sh tickler in the single-file layout: $out"
-! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_status.sh" 2>&1 | grep -q 'Tickler' || fail "gtd_status.sh shows a Tickler line in the single-file layout"
-! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 | grep -q '^## Tickler' || fail "gtd_review_prep.sh shows a Tickler section in the single-file layout"
-ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep; none in single-file"
-
-# Migration (E23 mechanically): a single-file workspace -> per-item. Dry run writes nothing; apply
-# refuses a dirty git tree; counts match; every non-item line of each line-item list is in its
-# README; links are rewritten except inside code; nothing is orphaned; old lists kept in _migrated/.
-if command -v git >/dev/null 2>&1; then
-  M="$fixture/migrate"
-  mkdir -p "$M"
-  LLM_GTD_ROOT="$M" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null
-  MG="$M/memory/gtd"
-  cat >> "$MG/next-actions.md" <<'EOF'
-- [ ] Call the dentist to book a cleaning · Time: 10 min · Energy: low energy · Constraint: phone · Project: [[projects#Teeth fixed|Teeth fixed]] · Source: inbox capture · Date: 20260901 ^na-dentist-20260901
-- [ ] Buy printer paper, the cheap kind · Time: 60-90 min · Energy: medium energy · Constraint: shopping · Due: 20261001 ^na-paper-20260902
-EOF
-  sed -i.bak 's/^## @calls$/## @calls\n\n- [ ] Ask Sam about the lease · Time: 5 min · Energy: low-emotional · Constraint: call ^na-sam-20260903/' "$MG/next-actions.md" && rm -f "$MG/next-actions.md.bak"
-  printf -- '- [ ] [Pat] · signed contract back · Agreed: by Friday · Delegated: 20260910 · Project: [[projects#Teeth fixed|Teeth fixed]] ^wf-pat-20260910\n' >> "$MG/waiting-for.md"
-  printf -- '- [ ] Learn to sail · trigger: after the move, when weekends free up · Date: 20260101\n' >> "$MG/someday-maybe.md"
-  cat >> "$MG/projects.md" <<'EOF'
-## Teeth fixed
-
-- Desired outcome: both cavities filled, no pain.
-- Next actions:
-  - [[next-actions#^na-dentist-20260901|Call the dentist]] (constraint: phone)
-- Decided 20260901: go to the clinic on Main St.
-- Support material: [[reference#Dentist contacts|Dentist contacts]]
-- Source: inbox capture · Date: 20260901
-EOF
-  printf -- '\n### A better inbox\n\n- [ ] Opportunity: capture from anywhere\n- Evidence status: none yet\n- GTD visibility: [[projects#Teeth fixed|Teeth fixed]]\n' >> "$MG/product-ideas.md"
-  printf -- '\n### Dentist contacts\n\n- Clinic: 555-0100\n\n### Wifi password\n\n- see the router\n' >> "$MG/reference.md"
-  printf -- '# Notes\n\nSee [[next-actions#^na-dentist-20260901|the call]] and [[projects]]; `[[next-actions#^na-dentist-20260901|code]]` stays.\n' > "$M/elsewhere.md"
-  git -C "$M" init -q && git -C "$M" -c core.autocrlf=false add -A && git -C "$M" -c user.email=e@x -c user.name=e commit -qm base
-  before="$(cd "$M" && find . -path ./.git -prune -o -type f -print | sort | xargs cat | cksum)"
-  LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" > "$fixture/dry.txt" 2>&1 || fail "migration dry run failed: $(tail -3 "$fixture/dry.txt")"
-  [ "$before" = "$(cd "$M" && find . -path ./.git -prune -o -type f -print | sort | xargs cat | cksum)" ] || fail "migration dry run changed files"
-  grep -q 'MISMATCH' "$fixture/dry.txt" && fail "migration dry run reports a count mismatch: $(grep MISMATCH "$fixture/dry.txt")"
-  echo x >> "$M/elsewhere.md"
-  rc=0; LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" --apply >/dev/null 2>&1 || rc=$?
-  [ "$rc" -eq 5 ] || fail "migration --apply did not refuse a dirty git tree (exit $rc, want 5)"
-  git -C "$M" checkout -q -- elsewhere.md
-  LLM_GTD_ROOT="$M" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" --apply > "$fixture/apply.txt" 2>&1 || fail "migration --apply failed: $(tail -3 "$fixture/apply.txt")"
-  for l in next-actions waiting-for projects someday-maybe product-ideas; do
-    b="$(GTD_LAYOUT=files LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" "$l" 2>/dev/null | grep -c . || true)"
-    [ -f "$MG/_migrated/$l.md" ] || fail "migration did not keep memory/gtd/_migrated/$l.md"
-    a="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" "$l" | grep -c . || true)"
-    b="$(awk '/^- \[ \] /' "$MG/_migrated/$l.md" | grep -c . || true)"
-    case "$l" in projects) b="$(grep -c '^## ' "$MG/_migrated/$l.md" || true)" ;; product-ideas) b="$(grep -c '^### ' "$MG/_migrated/$l.md" || true)" ;; esac
-    [ "$a" = "$b" ] || fail "migration count for $l: $b before, $a after"
-  done
-  for l in next-actions waiting-for someday-maybe; do
-    awk '!/^- \[ \] / && !/^[ \t]+[^ \t]/ && NF' "$MG/_migrated/$l.md" | while IFS= read -r line; do
-      # Byte comparison: GNU grep 3.0 (Git Bash) misses 4-byte emoji (e.g. 💭) under a UTF-8 locale.
-      LC_ALL=C grep -qF -- "$line" "$MG/$l/README.md" || { echo "missing"; break; }
-    done | grep -q missing && fail "migration dropped a header line from $l (E23)"
-  done
-  sam="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" next-actions --context phone)"
-  echo "$sam" | grep -q 'energy=low-emotional' || fail "migration lost the @calls group context or the energy value: $sam"
-  echo "$sam" | grep -q 'Call the dentist' || fail "migration: Constraint 'phone' did not become context phone"
-  grep -q '^time: 90$' "$MG/next-actions/Buy printer paper, the cheap kind.md" || fail "migration did not take a time range's upper bound"
-  grep -q '^due: 2026-10-01$' "$MG/next-actions/Buy printer paper, the cheap kind.md" || fail "migration did not convert Due"
-  [ -f "$MG/projects/Teeth fixed/Dentist contacts.md" ] || fail "migration did not move a one-project reference entry into the project folder"
-  [ -f "$M/reference/Wifi password.md" ] || fail "migration did not put general reference in reference/"
-  [ -f "$MG/tickler/README.md" ] || fail "migration did not create tickler/ (init after apply)"
-  grep -qF '[[next-actions/Call the dentist to book a cleaning|the call]]' "$M/elsewhere.md" || fail "migration did not rewrite a next-actions block link: $(cat "$M/elsewhere.md")"
-  grep -qF '[[projects/README|projects]]' "$M/elsewhere.md" || fail "migration did not rewrite a bare list link"
-  grep -qF '`[[next-actions#^na-dentist-20260901|code]]`' "$M/elsewhere.md" || fail "migration rewrote a link inside code"
-  grep -qF '[[projects/Teeth fixed/Dentist contacts|Dentist contacts]]' "$MG/projects/Teeth fixed/README.md" || fail "migration did not point the project at its moved support note"
-  chk="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_check.sh")"
-  ! echo "$chk" | grep -qE '^(orphan|link-form|stalled)' || fail "migration left orphaned or stalled items: $chk"
-  st="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_status.sh" 2>&1 || true)"; echo "$st" | grep -q "Done, last 7 days" || fail "gtd_status.sh (per-item, nothing stalled) did not run to the end: $st"; echo "$st" | grep -q "Projects *: 1 (stalled[^0-9]* 0)" || fail "gtd_status.sh per-item counts wrong: $st"
-  rc=0; LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" >/dev/null 2>&1 || rc=$?
-  [ "$rc" -eq 4 ] || fail "migration did not refuse an already per-item workspace (exit $rc, want 4)"
-  ok "migration: dry run writes nothing, dirty tree refused, counts match, READMEs keep headers (E23), links rewritten outside code"
-else
-  echo "ℹ️  git not found; skipped the migration fixture"
-fi
+ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then

@@ -1,6 +1,6 @@
 {
   "name": "llm-gtd",
-  "version": "1.17.1",
+  "version": "2.0.0",
   "description": "LLM-GTD is a portable GTD trusted system for Codex that keeps commitments in plain Markdown lists.",
   "author": {
     "name": "BonzoFestoon",

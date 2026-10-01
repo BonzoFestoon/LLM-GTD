@@ -17,8 +17,8 @@
 | Profile | Recommendation | Example id | Purpose | Boundary |
 |---|---|---|---|---|
 | Weekly Review | Recommended | `gtd-ai` | A true AI-judged review once a week: system trustworthiness, structural issues, next week's 3 things, capacity conflicts (including tickles coming due next week), follow-up messages; due tickles reported as candidates | Never auto-delete, cut projects, send messages, write to the calendar, or make high-consequence commitments for the user |
-| Monthly Reflect | Recommended | `gtd-2` | Monthly review of someday-maybe, product-ideas, horizons, and the next 30 days' capacity (including tickles coming due, and any that fall on a blocked day) | Uses Reflect vocabulary, not organize; only suggests activate / keep / delete / add information |
-| Daily Engage + Approval Radar | Installed / updated with `--install-cron` | `gtd` / `gtd-engage` | A light daily choice of "how to use the first block of time now / tonight / tomorrow morning", with Approval Radar | Not a daily review; never fully re-scans projects/someday/product-ideas/horizons |
+| Monthly Reflect | Recommended | `gtd-2` | Monthly review of someday-maybe, horizons, and the next 30 days' capacity (including tickles coming due, and any that fall on a blocked day) | Uses Reflect vocabulary, not organize; only suggests activate / keep / delete / add information |
+| Daily Engage + Approval Radar | Installed / updated with `--install-cron` | `gtd` / `gtd-engage` | A light daily choice of "how to use the first block of time now / tonight / tomorrow morning", with Approval Radar | Not a daily review; never fully re-scans projects/someday/horizons |
 | Session Clarify | Advanced, optional | `gtd-session-clarify` | Scan sessions for real commitments and clarify / file them | Session-provider specific; high frequency and wide scan surface, not part of init's default suggestions |
 
 ## Daily Engage + Approval Radar standard boundary
@@ -28,7 +28,7 @@ Daily Engage is Allen's Engage, not Review. It answers only "how to use the next
 Must do:
 - Read the hard landscape: prefer the preferred calendar provider; if unreachable, fall back along the fallback provider chain; if all are unreachable, read `calendar.md` and state the limitation.
 - Compute the current / first available time window; if it conflicts with the time the user states, use the smaller one.
-- Per-item layout: list due tickles first (`gtd_list.sh tickler --due`), as `engage/SKILL.md` does, whatever the calendar's reachability.
+- List due tickles first (`gtd_list.sh tickler --due`), as `engage/SKILL.md` does, whatever the calendar's reachability.
 - Filter the action pool by the four criteria: context / time / energy / priority.
 - Scan Approval Radar: keep only approval items needing action or with status changes; if none, write "no approval actions today".
 - Output a capacity judgment: green / yellow / red; when overloaded, only suggest delete, defer, delegate, downgrade.
@@ -44,7 +44,7 @@ Must not do:
 When the runtime has an approval provider capability, Daily Engage reads the corresponding approval provider adapter and does a read-only scan:
 
 1. First check whether the approval provider adapter is available; never output tokens or secrets.
-2. Scan approvals submitted by the current user, focusing on in-progress instances and approval ids recorded in GTD `waiting-for.md` / `reference.md`.
+2. Scan approvals submitted by the current user, focusing on in-progress instances and approval ids recorded in GTD `waiting-for/` / `reference/`.
 3. Scan approvals submitted by others that need the current user's confirmation; if read-only permission is missing, report the gap only and never attempt to authorize automatically.
 4. If an approval status change affects GTD truth, you may conservatively update waiting-for/reference: e.g. from "waiting for approval" to "check payment received on the agreed date"; but never treat an intermediate state as done.
 

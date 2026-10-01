@@ -15,33 +15,33 @@
 
 | GTD intent verb | Capability needed | Fallback rule |
 |---|---|---|
-| Read a list | Read `memory/gtd/<list>.md` | If the file is missing, do not run init automatically — ask the user whether GTD is already set up somewhere else first (see `init/SKILL.md`'s "One inbox per human" rule) |
-| Append / delete / minimally replace a line | File editing | Ask one question when high-risk or multiple matches |
+| Read a list | `scripts/gtd_list.sh <list>` over `memory/gtd/<list>/` | If `memory/gtd/` is missing, do not run init automatically — ask the user whether GTD is already set up somewhere else first (see `init/SKILL.md`'s "One inbox per human" rule) |
+| Create / edit / delete a note | File editing | Ask one question when high-risk or multiple matches |
 | Scan all lists | Walk `memory/gtd/` | If the read-only scan fails, report the gap |
 | Run the dashboard / init / review prep scripts | shell/script execution | If scripts are unavailable, read the lists manually |
 | Schedule the GTD automation cadence | Platform automation/reminder capability | Never hand-write unknown platform state; only output a handoff |
 | Read the hard landscape (calendar) | calendar provider adapter | If all providers are unreachable, read the `calendar.md` fallback |
-| Read the tickler | `scripts/gtd_list.sh tickler [--due \| --within N]` (per-item only) | Local only — never a calendar provider, never part of the calendar fallback chain |
+| Read the tickler | `scripts/gtd_list.sh tickler [--due \| --within N]` | Local only — never a calendar provider, never part of the calendar fallback chain |
 | Write a calendar event | calendar provider adapter create/update | Never claim done before the tool succeeds; on failure write the fallback |
 | Read approval radar | approval provider read-only adapter | If the provider is unreachable, state the gap and continue Engage |
 | Send messages / follow up / delegate to others | messaging provider | Draft only; confirmation required before sending |
 
-## Intent verbs by layout
+## Intent verbs on the list folders
 
-The intent verbs above stay the same in both layouts; only the capability behind each one changes shape. See `references/list-definitions.md`'s "Layouts" section for the folder structure and layout-detection rule this table assumes.
+The intent verbs above, as the concrete capability behind each one. See `references/list-definitions.md`'s "Layout" section for the folder structure this table assumes.
 
-| GTD intent verb | Single-file capability | Per-item capability |
-|---|---|---|
-| Read a list | Read `memory/gtd/<list>.md` | Run `scripts/gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project P]`; falls back to opening every note only if the script is unavailable |
-| Append an item | Append a line to `memory/gtd/<list>.md` | Create `memory/gtd/<list>/<Title>.md` from that list's `templates/*-note.md` with frontmatter, skipping `README.md` as a reserved filename; a project is a folder, `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md`; general reference is `reference/<Title>.md` at the workspace root |
-| Link an item to its project | `Project: [[projects#Name\|Name]]` on the line, plus a block link back from the project | `project: "[[projects/<Project name>/README\|<Project name>]]"` in the note's frontmatter only — the project README's embedded view finds it, nothing is written back |
-| Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
-| Complete an item | Move the line under `done.md`'s completion date with its outcome sub-bullets | Move the note into `memory/gtd/_done/` with `completed`, `result`, `list`, and its outcome added to the frontmatter/body |
-| Close a project | Delete the block from `projects.md`; add a `- [x] Project: …` line with its AAR to `done.md` | AAR in the README, then move the whole folder to `memory/gtd/_done/<Project name>/` and rewrite links to it |
-| Read the tickler | — (no tickler in the single-file layout) | `gtd_list.sh tickler [--due \| --within N] [--project P]` |
-| Read the done record | Read `done.md` | `gtd_list.sh done [--since DATE] [--project P] [--problems]` (both layouts) |
-| Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, stalled, field, duplicate, filename, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
-| Read a list's local rules before writing | Read the top of `memory/gtd/<list>.md` | Read `memory/gtd/<list>/README.md` |
+| GTD intent verb | Capability |
+|---|---|
+| Read a list | Run `scripts/gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project P]`; fall back to opening every note only if the script is unavailable |
+| Append an item | Create `memory/gtd/<list>/<Title>.md` from that list's `templates/*-note.md` with frontmatter, skipping `README.md` as a reserved filename; a project is a folder, `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md`; general reference is `reference/<Title>.md` at the workspace root |
+| Link an item to its project | `project: "[[projects/<Project name>/README\|<Project name>]]"` in the note's frontmatter only — the project README's embedded view finds it, nothing is written back |
+| Delete / minimally replace an item | Edit or delete the matching note file |
+| Complete an item | Move the note into `memory/gtd/_done/` with `completed`, `result`, `list`, and its outcome added to the frontmatter/body |
+| Close a project | AAR in the README, then move the whole folder to `memory/gtd/_done/<Project name>/` and rewrite links to it |
+| Read the tickler | `gtd_list.sh tickler [--due \| --within N] [--project P]` |
+| Read the done record | `gtd_list.sh done [--since DATE] [--project P] [--problems]` |
+| Scan a list for stalled / orphaned / malformed items | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, stalled, field, duplicate, filename, tickler, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
+| Read a list's local rules before writing | Read `memory/gtd/<list>/README.md` |
 
 ## Calendar source adapter + auto-write contract
 

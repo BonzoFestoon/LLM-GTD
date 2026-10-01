@@ -116,6 +116,12 @@ Design principles:
 - **Per-item only, relaxing v1.16's "every feature works in both layouts" rule for this feature.** The single-file layout behaves as in v1.16 with no tickler.
 - New evals E29-E35; the static gate gained a tickler fixture (stalled rule, due/within split, inbox guard, dashboard, review prep, single-file stand-down).
 
+## v2.0 — Per-item only; product-ideas retired
+- **One layout.** The single-file layout is dropped: every list that holds items is a folder of one note per item, and `gtd_list.sh` / `gtd_check.sh` are the only readers. Keeping two storage shapes doubled every script and most skill text, the tickler had already gone per-item only in v1.17, and this fork's only system had migrated. A `memory/gtd/` with 1.x single-file lists is refused by every script (exit 4) rather than half-read; `gtd_migrate_to_notes.sh` stays in 1.17.x for anyone who needs it.
+- **No product-ideas list.** It was an upstream extension, not one of Allen's lists, with its own fields and review steps. A product idea is now clarified like any input (committed → project + next action; not → someday-maybe; knowledge → reference).
+- **Dropped with them**: `--layout`, `GTD_LAYOUT`, `--import-legacy`, the legacy `@context` groups in the next-actions README, `done.md`, and the single-file templates. Eval E23 retired, E05 rewritten, new E36.
+- This fork no longer tracks upstream (`mikonos/LLM-GTD`) as of v1.17.1.
+
 ---
 
 **AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.
