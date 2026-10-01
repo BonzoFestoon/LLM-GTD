@@ -112,15 +112,6 @@ bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
 
 `--with-bases` adds optional Obsidian Bases lens views ("15 min or less", "Low energy", "Errands", "Done this week"). Nothing depends on them.
 
-To move an existing single-file system over, commit your vault first, then:
-
-```bash
-bash <skill>/scripts/gtd_migrate_to_notes.sh            # dry run: every note, README and link rewrite it would make
-bash <skill>/scripts/gtd_migrate_to_notes.sh --apply    # needs a clean git tree; old lists are kept in memory/gtd/_migrated/
-```
-
-The migration rewrites links to your list items anywhere in the vault (never inside code), keeps each list's header rules in its folder's `README.md`, and checks that every list has the same number of items before and after. Undo it with git, or restore from `_migrated/`.
-
 **The tickler (per-item layout only).** Some committed work can't start until a date: an account you can open only after a trade settles, a renewal you'll decide in March. That is neither someday/maybe (you've committed) nor waiting-for (nobody owes it to you). Clarify files it in `memory/gtd/tickler/`, one note per tickle with a `tickle:` date. A project linked from a tickle is on hold on purpose, so it is never reported as stalled. When the date arrives, organize turns a concrete project tickle into a next action and queues anything else in the inbox for clarify; engage lists what came due first, and the Weekly Review shows what's due, what's coming in the next 14 days, and each project on hold. The tickler is always local: it is never written to your external calendar. Organize flags a tickle whose date the calendar shows as blocked, and suggests another date.
 
 ## How It Works

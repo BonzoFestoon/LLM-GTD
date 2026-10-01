@@ -6,7 +6,7 @@
 
 1. Treat each "Input" as a user request.
 2. Judge pass/fail against "Expected route / Must / Must not".
-3. After changing the skill, run the core evals in this file; all must pass before a public sync. E16-E23 cover the per-item layout, the done record, and migration; run them against a scratch per-item workspace (`gtd_init.sh --confirm-create --layout notes` in a temp folder), and E17/E20/E21 in both layouts. E29-E35 cover the tickler, which exists only in the per-item layout.
+3. After changing the skill, run the core evals in this file; all must pass before a public sync. E16-E22 cover the per-item layout and the done record (E23, migration, was retired in 2.0.0 with the migration script); run them against a scratch per-item workspace (`gtd_init.sh --confirm-create --layout notes` in a temp folder), and E17/E20/E21 in both layouts. E29-E35 cover the tickler, which exists only in the per-item layout.
 4. Static gate: `bash scripts/gtd_eval_check.sh` (inside the skill root) or `GTD_SKILL_ROOT=src/skill bash src/skill/scripts/gtd_eval_check.sh`.
 
 ## Initial manual run record
@@ -44,7 +44,6 @@
 | E20-done-quiet | "Done" on a 5-minute standalone action, with no session context | `update/SKILL.md` "Done record" | Ask nothing; record `Problems and fixes: none noted` in the done record | Ask the optional outcome question (it's only for project-linked or 30+ min / deep work) |
 | E21-project-aar | The last open action of a project is done and its outcome is achieved | `update/SKILL.md` "Project close" | Gather the project's done items (`gtd_list.sh done --project`), draft the AAR, offer filing how-tos to the project folder or `reference/`, close on one confirmation: per-item, the whole folder moves to `_done/<Project name>/` and links to it are rewritten; single-file, a `- [x] Project:` line with the AAR goes to `done.md` | Close without offering the AAR; make the filing a separate interruption; close while open actions still link to it; write how-tos into an action list |
 | E22-review-done | "Help me do my weekly review" after a week with done items, one with a real problem-and-fix | `review/SKILL.md` | The prep pack (`gtd_review_prep.sh --since <last review>`) shows "Done since last review": wins first, then the problem items; filing to reference is offered only for those, once | Offer filing for every done item; make the filing required; count done items as open work |
-| E23-readme-kept | `gtd_migrate_to_notes.sh --apply` on a single-file system | migration script | Every non-item line of each old list (title, rules, format line, legacy group headings and notes) appears in that folder's `README.md`; no script counts `README.md` as an item. Checked mechanically by `gtd_eval_check.sh`'s migration fixture | Drop a header line; list `README.md` as an item |
 | E24-help | "/gtd-help" | `help/SKILL.md` | List all nine commands (gtd + 8 sub-commands) with what they do, when to run them, and an example; give one "right now" suggestion; write no files | Write to any `memory/gtd/` file; skip a command; invent commands text not sourced from `gtd_help.sh` |
 | E25-help-route | "How do I use GTD?" via `/gtd` | `help/SKILL.md` | Route to help before the mind-sweep rule; answer with the commands overview | Capture "how do I use GTD?" as an inbox item |
 | E26-model-under | `/gtd-capture` on a model below capture's `model-tier`; then `/gtd-clarify` on a model below its tier (see `references/model-guidance.md` for which model that is right now) | `capture/SKILL.md`; `clarify/SKILL.md` | Capture: write to the inbox first, skip auto-clarify, say so and name the switch + rerun command. Clarify: ask once whether to continue or switch, before any change | Capture: lose the input, or file it anyway. Clarify: change any list without asking first |
@@ -69,7 +68,6 @@ bash -n scripts/gtd_review_prep.sh
 bash -n scripts/gtd_review_prep_notify.sh
 bash -n scripts/gtd_list.sh
 bash -n scripts/gtd_check.sh
-bash -n scripts/gtd_migrate_to_notes.sh
 LLM_GTD_ROOT="$(mktemp -d)" bash scripts/gtd_init.sh --status
 LLM_GTD_ROOT="$(mktemp -d)" bash scripts/gtd_init.sh --confirm-create --layout notes --with-bases
 ```

@@ -52,7 +52,7 @@ GTD only works with exactly one inbox per person. The canonical GTD folder is wh
    bash <this-skill>/scripts/gtd_init.sh --confirm-create --layout notes [--with-bases]
    ```
    Creates `inbox.md`, `calendar.md` and `horizons.md` as files; `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, `product-ideas/`, `tickler/` (per-item only: committed work dated for when it becomes actionable) and `_done/` as folders, each with a `README.md` holding that list's rules and note format; and a `reference/` folder at the workspace root for general reference. `--with-bases` adds starter Obsidian lens views (`next-actions.base`, `done.base`, `tickler.base`) — optional, nothing depends on them. Once created, later runs detect the layout by themselves; no flag needed.
-   - **Init never switches layouts.** If the folder already holds single-file lists (or per-item folders, for `--layout files`), the script refuses with exit 4 so no items become invisible. Switching an existing system is a migration (`scripts/gtd_migrate_to_notes.sh`, dry run first) — tell the user that, don't work around it.
+   - **Init never switches layouts.** If the folder already holds single-file lists (or per-item folders, for `--layout files`), the script refuses with exit 4 so no items become invisible. Switching an existing system needs the migration script from LLM-GTD 1.17.x (`gtd_migrate_to_notes.sh`, dry run first) — tell the user that, don't work around it.
 
 2. **Self-check only, no file writes**: `bash …/scripts/gtd_init.sh --status` (also prints the live layout, and warns if both layouts are present)
 

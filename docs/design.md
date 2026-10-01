@@ -41,10 +41,7 @@ exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of 
 compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
 storage shape; its sibling `gtd_check.sh` reports organize's mechanical findings (orphans, stalled
 projects, bad properties, duplicates, unsafe filenames, `_done/` gaps) without fixing anything. The
-dashboard and review prep scripts read either layout. An existing single-file system moves over with
-`gtd_migrate_to_notes.sh`: a dry run by default that prints every note, README and link rewrite; `--apply`
-requires a clean git tree so the whole migration is one revertible commit, and the old lists are kept
-in `memory/gtd/_migrated/`. Full folder structure, note formats, and the done/AAR record are in
+dashboard and review prep scripts read either layout. Full folder structure, note formats, and the done/AAR record are in
 `references/list-definitions.md`.
 
 ### Layer 1 — Logic (the workflow)

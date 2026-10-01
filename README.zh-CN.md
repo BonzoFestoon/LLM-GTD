@@ -103,15 +103,6 @@ bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
 
 `--with-bases` 会额外生成可选的 Obsidian Bases 视图（"15 min or less"、"Low energy"、"Errands"、"Done this week"），没有任何功能依赖它们。
 
-把现有的单文件系统迁移过去，先提交你的 vault，然后：
-
-```bash
-bash <skill>/scripts/gtd_migrate_to_notes.sh            # 预演：列出将创建的每条笔记、README 和链接改写
-bash <skill>/scripts/gtd_migrate_to_notes.sh --apply    # 需要干净的 git 工作区；旧清单保存在 memory/gtd/_migrated/
-```
-
-迁移会改写整个 vault 中指向清单事项的链接（代码中的除外），把每个清单原来的头部规则保留在对应文件夹的 `README.md` 里，并检查每个清单迁移前后的事项数量一致。可以用 git 撤销，或从 `_migrated/` 恢复。
-
 **Tickler（仅限每事项一条笔记的布局）。** 有些已承诺的事要等到某个日期才能开始：比如交易交割后才能开的账户，或者三月才决定的续约。它既不是 someday/maybe（你已经承诺了），也不是 waiting-for（没人欠你什么）。Clarify 把它放进 `memory/gtd/tickler/`，每条 tickle 一条笔记，带 `tickle:` 日期。被 tickle 链接的项目是有意搁置，不会被报告为停滞。到了日期，organize 把具体的项目 tickle 变成下一步行动，其余的放进 inbox 交给 clarify；engage 优先列出到期的事项，每周回顾会显示到期的、未来 14 天内的，以及每个搁置中的项目。Tickler 始终是本地的，从不写入外部日历。如果日历显示某个 tickle 的日期整天被占用，organize 会提示并建议另一个日期。
 
 ## 它怎么工作

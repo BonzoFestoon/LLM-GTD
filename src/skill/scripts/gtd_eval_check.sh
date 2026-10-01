@@ -110,7 +110,6 @@ bash -n "$ROOT/scripts/gtd_review_prep_notify.sh"
 bash -n "$ROOT/scripts/gtd_help.sh"
 bash -n "$ROOT/scripts/gtd_list.sh"
 bash -n "$ROOT/scripts/gtd_check.sh"
-bash -n "$ROOT/scripts/gtd_migrate_to_notes.sh"
 ok "shell scripts pass bash -n"
 
 # gtd_check.sh's property vocabulary must match list-definitions.md's "Property values" table.
@@ -314,80 +313,6 @@ out="$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" tickler 2>
 ! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_status.sh" 2>&1 | grep -q 'Tickler' || fail "gtd_status.sh shows a Tickler line in the single-file layout"
 ! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 | grep -q '^## Tickler' || fail "gtd_review_prep.sh shows a Tickler section in the single-file layout"
 ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep; none in single-file"
-
-# Migration (E23 mechanically): a single-file workspace -> per-item. Dry run writes nothing; apply
-# refuses a dirty git tree; counts match; every non-item line of each line-item list is in its
-# README; links are rewritten except inside code; nothing is orphaned; old lists kept in _migrated/.
-if command -v git >/dev/null 2>&1; then
-  M="$fixture/migrate"
-  mkdir -p "$M"
-  LLM_GTD_ROOT="$M" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null
-  MG="$M/memory/gtd"
-  cat >> "$MG/next-actions.md" <<'EOF'
-- [ ] Call the dentist to book a cleaning · Time: 10 min · Energy: low energy · Constraint: phone · Project: [[projects#Teeth fixed|Teeth fixed]] · Source: inbox capture · Date: 20260901 ^na-dentist-20260901
-- [ ] Buy printer paper, the cheap kind · Time: 60-90 min · Energy: medium energy · Constraint: shopping · Due: 20261001 ^na-paper-20260902
-EOF
-  sed -i.bak 's/^## @calls$/## @calls\n\n- [ ] Ask Sam about the lease · Time: 5 min · Energy: low-emotional · Constraint: call ^na-sam-20260903/' "$MG/next-actions.md" && rm -f "$MG/next-actions.md.bak"
-  printf -- '- [ ] [Pat] · signed contract back · Agreed: by Friday · Delegated: 20260910 · Project: [[projects#Teeth fixed|Teeth fixed]] ^wf-pat-20260910\n' >> "$MG/waiting-for.md"
-  printf -- '- [ ] Learn to sail · trigger: after the move, when weekends free up · Date: 20260101\n' >> "$MG/someday-maybe.md"
-  cat >> "$MG/projects.md" <<'EOF'
-## Teeth fixed
-
-- Desired outcome: both cavities filled, no pain.
-- Next actions:
-  - [[next-actions#^na-dentist-20260901|Call the dentist]] (constraint: phone)
-- Decided 20260901: go to the clinic on Main St.
-- Support material: [[reference#Dentist contacts|Dentist contacts]]
-- Source: inbox capture · Date: 20260901
-EOF
-  printf -- '\n### A better inbox\n\n- [ ] Opportunity: capture from anywhere\n- Evidence status: none yet\n- GTD visibility: [[projects#Teeth fixed|Teeth fixed]]\n' >> "$MG/product-ideas.md"
-  printf -- '\n### Dentist contacts\n\n- Clinic: 555-0100\n\n### Wifi password\n\n- see the router\n' >> "$MG/reference.md"
-  printf -- '# Notes\n\nSee [[next-actions#^na-dentist-20260901|the call]] and [[projects]]; `[[next-actions#^na-dentist-20260901|code]]` stays.\n' > "$M/elsewhere.md"
-  git -C "$M" init -q && git -C "$M" -c core.autocrlf=false add -A && git -C "$M" -c user.email=e@x -c user.name=e commit -qm base
-  before="$(cd "$M" && find . -path ./.git -prune -o -type f -print | sort | xargs cat | cksum)"
-  LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" > "$fixture/dry.txt" 2>&1 || fail "migration dry run failed: $(tail -3 "$fixture/dry.txt")"
-  [ "$before" = "$(cd "$M" && find . -path ./.git -prune -o -type f -print | sort | xargs cat | cksum)" ] || fail "migration dry run changed files"
-  grep -q 'MISMATCH' "$fixture/dry.txt" && fail "migration dry run reports a count mismatch: $(grep MISMATCH "$fixture/dry.txt")"
-  echo x >> "$M/elsewhere.md"
-  rc=0; LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" --apply >/dev/null 2>&1 || rc=$?
-  [ "$rc" -eq 5 ] || fail "migration --apply did not refuse a dirty git tree (exit $rc, want 5)"
-  git -C "$M" checkout -q -- elsewhere.md
-  LLM_GTD_ROOT="$M" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" --apply > "$fixture/apply.txt" 2>&1 || fail "migration --apply failed: $(tail -3 "$fixture/apply.txt")"
-  for l in next-actions waiting-for projects someday-maybe product-ideas; do
-    b="$(GTD_LAYOUT=files LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" "$l" 2>/dev/null | grep -c . || true)"
-    [ -f "$MG/_migrated/$l.md" ] || fail "migration did not keep memory/gtd/_migrated/$l.md"
-    a="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" "$l" | grep -c . || true)"
-    b="$(awk '/^- \[ \] /' "$MG/_migrated/$l.md" | grep -c . || true)"
-    case "$l" in projects) b="$(grep -c '^## ' "$MG/_migrated/$l.md" || true)" ;; product-ideas) b="$(grep -c '^### ' "$MG/_migrated/$l.md" || true)" ;; esac
-    [ "$a" = "$b" ] || fail "migration count for $l: $b before, $a after"
-  done
-  for l in next-actions waiting-for someday-maybe; do
-    awk '!/^- \[ \] / && !/^[ \t]+[^ \t]/ && NF' "$MG/_migrated/$l.md" | while IFS= read -r line; do
-      # Byte comparison: GNU grep 3.0 (Git Bash) misses 4-byte emoji (e.g. 💭) under a UTF-8 locale.
-      LC_ALL=C grep -qF -- "$line" "$MG/$l/README.md" || { echo "missing"; break; }
-    done | grep -q missing && fail "migration dropped a header line from $l (E23)"
-  done
-  sam="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" next-actions --context phone)"
-  echo "$sam" | grep -q 'energy=low-emotional' || fail "migration lost the @calls group context or the energy value: $sam"
-  echo "$sam" | grep -q 'Call the dentist' || fail "migration: Constraint 'phone' did not become context phone"
-  grep -q '^time: 90$' "$MG/next-actions/Buy printer paper, the cheap kind.md" || fail "migration did not take a time range's upper bound"
-  grep -q '^due: 2026-10-01$' "$MG/next-actions/Buy printer paper, the cheap kind.md" || fail "migration did not convert Due"
-  [ -f "$MG/projects/Teeth fixed/Dentist contacts.md" ] || fail "migration did not move a one-project reference entry into the project folder"
-  [ -f "$M/reference/Wifi password.md" ] || fail "migration did not put general reference in reference/"
-  [ -f "$MG/tickler/README.md" ] || fail "migration did not create tickler/ (init after apply)"
-  grep -qF '[[next-actions/Call the dentist to book a cleaning|the call]]' "$M/elsewhere.md" || fail "migration did not rewrite a next-actions block link: $(cat "$M/elsewhere.md")"
-  grep -qF '[[projects/README|projects]]' "$M/elsewhere.md" || fail "migration did not rewrite a bare list link"
-  grep -qF '`[[next-actions#^na-dentist-20260901|code]]`' "$M/elsewhere.md" || fail "migration rewrote a link inside code"
-  grep -qF '[[projects/Teeth fixed/Dentist contacts|Dentist contacts]]' "$MG/projects/Teeth fixed/README.md" || fail "migration did not point the project at its moved support note"
-  chk="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_check.sh")"
-  ! echo "$chk" | grep -qE '^(orphan|link-form|stalled)' || fail "migration left orphaned or stalled items: $chk"
-  st="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_status.sh" 2>&1 || true)"; echo "$st" | grep -q "Done, last 7 days" || fail "gtd_status.sh (per-item, nothing stalled) did not run to the end: $st"; echo "$st" | grep -q "Projects *: 1 (stalled[^0-9]* 0)" || fail "gtd_status.sh per-item counts wrong: $st"
-  rc=0; LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_migrate_to_notes.sh" >/dev/null 2>&1 || rc=$?
-  [ "$rc" -eq 4 ] || fail "migration did not refuse an already per-item workspace (exit $rc, want 4)"
-  ok "migration: dry run writes nothing, dirty tree refused, counts match, READMEs keep headers (E23), links rewritten outside code"
-else
-  echo "ℹ️  git not found; skipped the migration fixture"
-fi
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then
