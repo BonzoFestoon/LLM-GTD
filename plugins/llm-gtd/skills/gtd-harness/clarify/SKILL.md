@@ -38,8 +38,10 @@ What is it? Is it actionable?
     ├── Someone else should  → Delegate it → waiting-for.md (record person + agreement + date)
     └── Mine, > 2 minutes    → Defer it:
          ├── Time- / day-specific → hard landscape (calendar): check the target time window first; if no conflict and details are complete, write to the reachable calendar provider; if unreachable or key fields are missing, fall back
+         ├── Committed, but can't act until a date → tickler/ (per-item layout: a dated tickle; never someday-maybe or waiting-for)
          └── As soon as possible  → next-actions.md (action pool; state Time / Energy / Constraint)
     ※ If completion takes >1 step → also create a project in projects.md (outcome + next action); the next action goes into next-actions
+    ※ A committed project that can't start until a date → project + a tickle linked to it (on hold, not stalled); see "Filing in the per-item layout"
 ```
 
 ## Workflow
@@ -67,13 +69,16 @@ What is it? Is it actionable?
 Applies when `memory/gtd/next-actions/` is a folder (see `references/list-definitions.md` "Layouts" and "Note formats"). The decision tree, the key questions and the one-question rule don't change; each filed item becomes one note instead of one line.
 
 1. **Read the target list's `README.md` first** (e.g. `memory/gtd/next-actions/README.md`) — local rules the user added there apply, as the top of the single-file list did.
-2. **Create one note per item** from that list's template: `templates/next-action-note.md`, `waiting-for-note.md`, `someday-maybe-note.md`, `product-idea-note.md`. Filename = a short, verb-first title, filesystem-safe (drop `: / \ ? * " < > |`); if the name exists add ` (2)`, ` (3)`, …; never `README.md`. Fill `id` (`na-` / `wf-` / `sm-` / `pi-` + short id + `YYYYMMDD`), `source`, and `created` (today). Drop the template's HTML comment and any optional property that has no value — never write placeholders.
+2. **Create one note per item** from that list's template: `templates/next-action-note.md`, `waiting-for-note.md`, `someday-maybe-note.md`, `product-idea-note.md`, `tickler-note.md`. Filename = a short, verb-first title, filesystem-safe (drop `: / \ ? * " < > |`); if the name exists add ` (2)`, ` (3)`, …; never `README.md`. Fill `id` (`na-` / `wf-` / `sm-` / `pi-` / `tk-` + short id + `YYYYMMDD`), `source`, and `created` (today). Drop the template's HTML comment and any optional property that has no value — never write placeholders.
 3. **Next-action properties**: convert the light fields per the "Property values" table in `references/list-definitions.md` — `time` a number of minutes (a range → its upper bound), `energy` one of `low | medium | deep | low-emotional`, `context` only values from that table's list. The concrete action goes in the body; the full free-text constraint goes on a `Constraint:` line under it. Estimate as today; a property you genuinely can't estimate is left out (organize repairs it), never asked about as a "tag". The user never tags anything.
 4. **Projects are folders**: a new project is `memory/gtd/projects/<Project name>/README.md` from `templates/project-note.md` (`outcome:` one sentence; drop the empty Decisions / Support material / AAR stubs if there's nothing for them yet, keep `## Next actions` with its embedded view). Each of its actions or waiting-for items gets `project: "[[projects/<Project name>/README|<Project name>]]"`. **Don't write the actions into the README and don't add block ids or back-links** — the README's embedded view and `gtd_list.sh --project` find them. An existing project: check `projects/` for its folder before creating another.
 5. **Product ideas**: `product-ideas/<Opportunity>.md` plus, by default, the project folder and a next validation action, linked from the idea's "GTD visibility" line as `[[projects/<Project name>/README|<Project name>]]` · `[[next-actions/<Title>|<Title>]]` — the "capture only" exception is unchanged.
-6. **Reference / knowledge**: project-specific support material → a note (or a short section in the README) inside that project's folder; general reference and knowledge → `reference/<Title>.md` at the **workspace root** (not `memory/gtd/`) from `templates/reference-note.md`, unless `personalized.md` redirects the hand-off.
-7. **Unchanged in this layout**: the inbox, the calendar / `calendar.md` fallback chain, the two-minute rule, and deleting the clarified line from `inbox.md` (only after the note exists). Closing a finished project is update's job (after-action review, then the whole folder moves to `_done/`) — clarify never deletes a project folder.
-8. **Report** each filed item with its note path, e.g. `→ next-actions/Call the dentist to book a cleaning.md (10 min · low · phone)`.
+6. **Tickler** (committed, but can't act until a date — `references/list-definitions.md` "Tickler"): `tickler/<Verb-first title>.md` with `tickle: YYYY-MM-DD` (when it becomes actionable), `project:` when it belongs to a project, and the body written as the concrete action it will become. A project waiting on a date keeps (or gets) its folder and gets this tickle instead of a next action; it is on hold, not stalled. Never file it in someday-maybe (not committed), waiting-for (nobody owes it), or the calendar (not an appointment).
+   - **An inbox pointer to a due tickle** (`- Tickle due: <title> → [[tickler/<title>]]`, added by organize): clarify the **note itself**, not the line — move it to `next-actions/` (drop `tickle`, fill the properties), make it a project, re-date it, move it to `someday-maybe/`, or delete it — then delete the inbox line.
+   - **Single-file layout**: there is no tickler. File a real date in the calendar and anything else as before, and mention once that the tickler needs the per-item layout.
+7. **Reference / knowledge**: project-specific support material → a note (or a short section in the README) inside that project's folder; general reference and knowledge → `reference/<Title>.md` at the **workspace root** (not `memory/gtd/`) from `templates/reference-note.md`, unless `personalized.md` redirects the hand-off.
+8. **Unchanged in this layout**: the inbox, the calendar / `calendar.md` fallback chain, the two-minute rule, and deleting the clarified line from `inbox.md` (only after the note exists). Closing a finished project is update's job (after-action review, then the whole folder moves to `_done/`) — clarify never deletes a project folder.
+9. **Report** each filed item with its note path, e.g. `→ next-actions/Call the dentist to book a cleaning.md (10 min · low · phone)`.
 
 ## Clarify rules for session-status input
 
@@ -85,7 +90,7 @@ Applies when `memory/gtd/next-actions/` is a folder (see `references/list-defini
 ## Quality check
 - [ ] Every inbox item has a clear destination (one of the six), nothing left over
 - [ ] Everything in next-actions is a **concrete physical action** + has Time / Energy / Constraint; each project's "Next actions" links directly to a specific action block
-- [ ] Every >1-step item has a project with a next action (nothing stalled)
+- [ ] Every >1-step item has a project with a next action, waiting-for item or tickle (nothing stalled; `references/list-definitions.md` "Stalled projects")
 - [ ] Headings inside GTD files are referenced as `[[filename#Heading|Heading]]`; no in-list heading was mis-linked as a standalone file
 - [ ] Projects whose desired outcome is achieved were handed to update's Project close; no "Next actions: none" left behind
 - [ ] Waiting-for items state what/which milestone is currently awaited and when it finally counts as done; no intermediate milestone mistaken for closure
@@ -93,4 +98,5 @@ Applies when `memory/gtd/next-actions/` is a folder (see `references/list-defini
 - [ ] Knowledge / ideas filed to `reference.md`; action lists not polluted
 - [ ] Session status split into atomic GTD items, no whole summary stuffed into a list, closed with the fixed five sections
 - [ ] Two-minute rule recognized and flagged
+- [ ] Committed-but-not-until-a-date items became tickles (per-item), not someday-maybe, waiting-for or calendar entries
 - [ ] Per-item layout: one note per item in the right folder, properties filled from the fixed vocabulary (nothing asked of the user as a tag), no line appended to a list file, the project linked from the note's `project:` field only, general reference at the workspace-root `reference/`

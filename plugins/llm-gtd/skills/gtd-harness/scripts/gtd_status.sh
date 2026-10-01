@@ -102,6 +102,9 @@ if [ "$GTD_LAYOUT" = "notes" ]; then
   n_someday="$(bash "$SCRIPT_DIR/gtd_list.sh" someday-maybe | count_lines)"
   n_ideas="$(bash "$SCRIPT_DIR/gtd_list.sh" product-ideas | count_lines)"
   stalled_n="$(bash "$SCRIPT_DIR/gtd_check.sh" | awk -F'\t' '$1 == "stalled"' | count_lines)"
+  # The tickler is per-item only; a tickled project is on hold, so gtd_check.sh never calls it stalled.
+  n_tickler="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler | count_lines)"
+  n_tickler_due="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler --due | count_lines)"
   layout_label="per-item"
 else
   n_next="$(count_open next-actions.md)"
@@ -122,6 +125,9 @@ printf "  ✅ Next Actions       : %s\n" "$n_next"
 printf "  🎯 Projects           : %s (stalled≈ %s)\n" "$n_projects" "$stalled_n"
 printf "  ⏳ Waiting For        : %s\n" "$n_waiting"
 printf "  📅 Calendar (hard)    : %s\n" "$(count_calendar)"
+if [ "$GTD_LAYOUT" = "notes" ]; then
+  printf "  🗂️  Tickler            : %s (%s due)\n" "$n_tickler" "$n_tickler_due"
+fi
 printf "  💭 Someday/Maybe      : %s\n" "$n_someday"
 printf "  💡 Product Ideas      : %s\n" "$n_ideas"
 printf "  🏁 Done, last 7 days  : %s\n" "$n_done_week"
@@ -131,5 +137,8 @@ echo "────────────────────────�
 inbox_n=$(count_inbox)
 [ "$inbox_n" -gt 0 ] && echo "  ⚠️  Inbox has $inbox_n unclarified item(s) → run /gtd-clarify"
 [ "$stalled_n" -gt 0 ] && echo "  ⚠️  ~$stalled_n project(s) lack a valid next action or are completed leftovers → /gtd-organize"
+if [ "$GTD_LAYOUT" = "notes" ] && [ "$n_tickler_due" -gt 0 ]; then
+  echo "  ⚠️  $n_tickler_due tickle(s) now actionable → /gtd-organize"
+fi
 echo "  🔭 The Weekly Review (Reflect) is the critical success factor → /gtd-review"
 echo "════════════════════════════════════"

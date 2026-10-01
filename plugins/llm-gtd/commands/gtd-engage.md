@@ -20,5 +20,5 @@ $ARGUMENTS
 </context>
 
 <process>
-Follow engage/SKILL.md: ask about / infer context + time + energy, filter 3-5 candidates from next-actions with time estimates, check priority upward against the horizons, and also flag today's hard appointments and waiting-for items due for a follow-up. If a criterion is missing, ask one question.
+Follow engage/SKILL.md: ask about / infer context + time + energy, filter 3-5 candidates from next-actions with time estimates, check priority upward against the horizons, and also flag today's hard appointments and waiting-for items due for a follow-up. Per-item layout: list due tickles first (`gtd_list.sh tickler --due`), whatever the calendar's reachability. If a criterion is missing, ask one question.
 </process>

@@ -10,6 +10,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | `waiting-for.md` | Things delegated / waiting on others | Not your own next actions | [Person] + what you're waiting for + agreement + delegated date |
 | `calendar.md` | **Only** hard commitments that matter on a specific day / time | Not ordinary to-dos (the calendar is sacred; clutter destroys its trustworthiness) | By date |
 | `someday-maybe.md` | Not committed yet, incubating | Not things already committed to | Trigger condition (when it becomes worth starting) |
+| `tickler/` (per-item layout only) | Committed things you can't (or don't want to) act on until a date — Allen's tickler; one note per tickle, dated `tickle:` for when it becomes actionable | Not appointments (calendar), not things someone owes you (waiting-for), not uncommitted maybes (someday-maybe); **never exported to the external calendar** | By `tickle` date |
 | `product-ideas.md` | Raw opportunities and assumptions in product, feature, scenario, and opportunity spaces; each should also have project / next-action visibility | Not ordinary life wishes, and not a cold-storage backlog with no next action | Opportunity / user scenario / assumptions / evidence status / promotion criteria / GTD visibility |
 | `reference.md` | Non-actionable reference + project support material + knowledge / insight notes | Not actionable items (those go through clarify to next-actions / projects / waiting-for) | Two sections: general reference / project support (per-item layout: workspace-root `reference/` notes + each project's own folder) |
 | `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
@@ -21,13 +22,18 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 3. **Mixing product-ideas and someday** → product opportunities go to `product-ideas.md` and sync to project / next-action; ordinary "maybe someday" goes to `someday-maybe.md`.
 4. **Knowledge notes stuffed into actionable lists** → knowledge / insights go to `reference.md`, not `next-actions.md` / `projects.md` (overridable in `personalized.md` if you run a separate knowledge system).
 5. **A full task tree stuffed into projects** → keep only current parallel next-action / waiting-for block links; milestones, dependencies, and task trees go to `reference.md` or a project doc.
+6. **A committed project waiting on a date parked in someday-maybe or waiting-for** → it stays a project and gets a tickle: someday-maybe is for what you haven't committed to, waiting-for for what someone else owes you. (Per-item layout; in the single-file layout there is no tickler.)
+
+## Stalled projects
+
+A project is **in play** when at least one open next action, waiting-for item, or tickle links to it; otherwise it is **stalled**. A tickle means the project is on hold on purpose until its date: it stays in `projects/`, is never called stalled, and organize never drafts a next action for it. A tickle that has come due is organize's to handle (see "Tickler"), not a stalled project. In the single-file layout (no tickler) only next actions and waiting-for items count. `gtd_check.sh` (per-item) and the dashboard apply this rule; every other statement of it in the skill points here.
 
 ## Layouts
 
-Two layouts hold the same eight lists and the same rules; only the storage shape differs.
+Two layouts hold the same eight lists and the same rules; only the storage shape differs. The one exception is the tickler, which exists only in the per-item layout.
 
 - **Single-file (default).** One list = one `.md` file, as the table above describes. Every skill in this package works this way unless per-item mode is detected.
-- **Per-item (opt-in).** One list = one folder of item notes, one commitment per note, with the same fields as the single-file item line moved into YAML frontmatter (see "Note formats" below). `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, and `product-ideas/` become folders under `memory/gtd/`, plus `_done/`; `reference.md` is replaced by a `reference/` folder at the workspace root (see "Reference folder"); `inbox.md`, `calendar.md`, `horizons.md`, and `personalized.md` always stay single files (the inbox must stay one-line capture from anywhere, and the others are documents, not item lists). Set up with `gtd_init.sh --confirm-create --layout notes` (optionally `--with-bases`); init never switches an existing layout — that is the migration script's job: `scripts/gtd_migrate_to_notes.sh` (a dry run by default, printing every note, README and link rewrite; `--apply` needs a clean git tree, keeps the old lists in `memory/gtd/_migrated/`, and `--titles FILE` overrides any proposed note title).
+- **Per-item (opt-in).** One list = one folder of item notes, one commitment per note, with the same fields as the single-file item line moved into YAML frontmatter (see "Note formats" below). `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, and `product-ideas/` become folders under `memory/gtd/`, plus `_done/` and the per-item-only `tickler/`; `reference.md` is replaced by a `reference/` folder at the workspace root (see "Reference folder"); `inbox.md`, `calendar.md`, `horizons.md`, and `personalized.md` always stay single files (the inbox must stay one-line capture from anywhere, and the others are documents, not item lists). Set up with `gtd_init.sh --confirm-create --layout notes` (optionally `--with-bases`); init never switches an existing layout — that is the migration script's job: `scripts/gtd_migrate_to_notes.sh` (a dry run by default, printing every note, README and link rewrite; `--apply` needs a clean git tree, keeps the old lists in `memory/gtd/_migrated/`, and `--titles FILE` overrides any proposed note title).
 - **Layout detection.** Per-item mode if `memory/gtd/next-actions/` exists as a directory, otherwise single-file. An optional `GTD_LAYOUT=notes|files` override is read by `gtd_env.sh` for testing or forcing a mode.
 - **Filenames.** A short, verb-first title, made filesystem-safe (no `: / \ ? * " < > |`), with `(2)`, `(3)`, … appended on a collision. The old block id (`^na-…`, `^wf-…`) is kept as the note's `id:` field so existing links stay traceable during migration.
 - **List README files.** Every folder-backed list, plus `_done/`, gets a `README.md` holding what used to sit at the top of the single-file list: the title, the rules for what belongs there and what doesn't, the item format, and (for `next-actions/`) a note per legacy `@computer/@calls/@errands/@home/@agenda` group and the `context` value it now maps to. **`README.md` is never an item** — `gtd_list.sh`, the status/review scripts, organize's checks (`gtd_check.sh`), and every Bases view skip it by name. Before creating, moving, or repairing a note in a list, read that list's `README.md` first, the same way earlier skills read the top of the single-file list; general rules still live in this file.
@@ -67,10 +73,13 @@ The body keeps the full concrete action text and the free-text constraint; `cont
 | `context` | a list drawn from: `computer`, `phone`, `errands`, `home`, `person-present`, `before-meeting`, `prep-chain`, `payment`, `documents`, `equipment` | The hard constraints in `Constraint:` (shopping and on-the-way errands → `errands`; ID → `documents`); legacy `@computer/@calls/@errands/@home/@agenda` → `computer`/`phone`/`errands`/`home`/`person-present`. Anything that doesn't map stays in the body's `Constraint:` line only |
 | `due` | `YYYY-MM-DD` | `Due:` — only a real deadline |
 | `created` | `YYYY-MM-DD` | `Date: YYYYMMDD` |
+| `tickle` | `YYYY-MM-DD` | (tickler only, no single-file field) — the date the tickle becomes actionable |
 
 **Waiting for**: same shape, with `person`, `delegated`, `follow-up`, and optional `project` instead of `time`/`energy`/`context`.
 
 **Someday / maybe**: adds `trigger` (the condition that makes it worth starting).
+
+**Tickle** (`memory/gtd/tickler/Open the per-bot accounts.md`; format in `templates/tickler-note.md`): `id: tk-<short>-<created YYYYMMDD>` (the creation date, so re-dating never changes it), `tickle: YYYY-MM-DD`, optional `project:` in the same `[[projects/<Name>/README|<Name>]]` form as an action, `source`, `created`; the body says what becomes actionable, as concretely as possible.
 
 **Product idea**: adds `evidence` and `promotion` (criteria), with project and next-action links kept in the body — the "GTD visibility" rule is unchanged.
 
@@ -114,6 +123,16 @@ created: 2026-09-27
 clock was a weekend or outside trading hours...
 ```
 
+## Tickler
+
+Per-item layout only. A tickle holds a commitment until its date; the project it links stays in `projects/`, on hold (see "Stalled projects").
+
+- **Filing**: clarify files "committed, but can't act until a date" here (see `clarify-decision-tree.md`), never in someday-maybe or waiting-for, and never in the calendar unless it is a real appointment.
+- **When the date arrives** (`gtd_list.sh tickler --due`, `gtd_check.sh` `tickler-due`): organize moves a project tickle whose body is a concrete action into `next-actions/` (drop `tickle`, fill time / energy / context, keep `project:`). Any other due tickle — standalone, or too vague to be an action — gets an **inbox pointer**: one line `- Tickle due: <title> → [[tickler/<title>]] · Captured: YYYYMMDD`, with the note left in place so nothing in its body is lost; clarify then works on the note itself (move it to `next-actions/`, make it a project, re-date it, move it to `someday-maybe/`, or delete it) and removes the line. While the inbox links the note, `gtd_check.sh` reports it as "queued in inbox" and organize does not queue it again. Engage lists due tickles first.
+- **Calendar conflicts**: a tickle dated on a day the hard landscape shows as blocked is flagged (rule in `capability-map.md`), never re-dated automatically.
+- **Always local**: the tickler is not part of the calendar adapter or its fallback chain; nothing in it is ever written to an external calendar provider, and organize's `calendar.md` reconcile never touches it.
+- **Changes**: "the date moved" re-dates `tickle` (id unchanged); a cancelled tickle is deleted (no done record); cancelling or closing a project removes or resolves its tickles first — a project with an open tickle is not closed.
+
 ## Done record
 
 Completed next actions, received waiting-for items, finished projects, and cancelled project steps move to `_done/` (per-item) or `done.md` (single-file, one line per item under its completion date) with an outcome: what was done, what problems came up and how they were solved. This replaces deleting the item outright — the active lists still hold only open commitments, and the done record is the raw material for the Weekly Review's "done since last review" section and each project's after-action review (AAR). A cancelled *standalone* action, or a someday item you drop, is still simply deleted — only project-linked work is worth keeping a record of. `_done/` and `done.md` are never read by Engage, never counted as open, and never checked for orphans/stalled status.
@@ -135,7 +154,10 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 | Move clearly misfiled items | Auto | Append to the target list first, then delete from the original spot |
 | Fill in Time / Energy / Constraint | Auto | List as pending confirmation when clearly uncertain |
 | Delete a cancelled standalone action or a dropped someday item | Auto | The user explicitly cancelled it; project-linked work goes to the done record as `cancelled` instead |
-| Draft a next action for a stalled project | Auto | Act-then-surface; the user can change it in one sentence |
+| Draft a next action for a stalled project | Auto | Act-then-surface; the user can change it in one sentence. Never for a project on hold (a tickle links it) |
+| Turn a due tickle into a next action, or add an inbox pointer to it | Auto | Per-item tickler; a concrete project tickle moves to `next-actions/`, anything else is queued in the inbox once; reported in organize's one-line summary |
+| Re-date a tickle that conflicts with the calendar | Needs confirmation | Organize flags it with a suggested date; never re-dates on its own |
+| Export a tickle to the external calendar | Never | The tickler is local: when things become actionable, not appointments |
 | Move a completed item to `_done/` / `done.md` with its outcome | Auto | The user explicitly declared it done or there is strong evidence; act-then-surface; never blocks on the outcome text, never re-asked later |
 | Close a finished project into the done record | Auto after the AAR confirmation | Desired outcome achieved and no open action still linked; the AAR confirm / edit / skip is the one confirmation |
 | Draft a project after-action review | Auto | Act-then-surface when the project's outcome is achieved; the user confirms, edits, or skips in one step |
@@ -154,4 +176,4 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 - Pointing to a specific action in `next-actions.md` / `waiting-for.md`: prefer a block link, e.g. append `^na-short-id-YYYYMMDD` to the end of the action line, and write one or more `[[next-actions#^na-short-id-YYYYMMDD|Concrete next action]] (constraint: needs computer)` in the project; waiting items are written `[[waiting-for#^wf-short-id-YYYYMMDD|Waiting for someone to deliver something]] (waiting)`.
 - Pointing to a real standalone file: only then use a bare `[[filename]]`.
 - Don't write in-list headings as bare `[[Heading]]`, or Obsidian will treat it as a new file to be created.
-- **Per-item layout only:** a next action or waiting-for item is a real file, so it's linked directly — `[[next-actions/<Title>|Concrete next action]]` — not with a block link. A project is linked from an action's `project:` frontmatter field (and from anywhere else) as `[[projects/<Project name>/README|<Project name>]]`; a general reference note as `[[reference/<Title>|<Title>]]`. A bare link to a list file, such as today's `[[projects]]` or `[[next-actions]]` in `horizons.md`, becomes `[[projects/README|projects]]` — Obsidian resolves the path, so having several `README` files across folders is not ambiguous.
+- **Per-item layout only:** a next action, waiting-for item or tickle is a real file, so it's linked directly — `[[next-actions/<Title>|Concrete next action]]`, `[[tickler/<Title>|…]]` — not with a block link. A project is linked from an action's `project:` frontmatter field (and from anywhere else) as `[[projects/<Project name>/README|<Project name>]]`; a general reference note as `[[reference/<Title>|<Title>]]`. A bare link to a list file, such as today's `[[projects]]` or `[[next-actions]]` in `horizons.md`, becomes `[[projects/README|projects]]` — Obsidian resolves the path, so having several `README` files across folders is not ambiguous.

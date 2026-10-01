@@ -9,7 +9,7 @@
 #   bash gtd_init.sh --install-cron   # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
 #   bash gtd_init.sh --confirm-create --layout notes [--with-bases]
 #                                     # opt-in per-item layout: inbox/calendar/horizons stay files; next-actions, waiting-for,
-#                                     # projects, someday-maybe, product-ideas become folders, plus _done/, each with a README.md;
+#                                     # projects, someday-maybe, product-ideas, tickler become folders, plus _done/, each with a README.md;
 #                                     # general reference is a workspace-root reference/ folder. --with-bases also writes starter
 #                                     # Obsidian .base lens views. Without --layout, init keeps whatever layout is already there
 #                                     # (single-file for a fresh folder). It never switches an existing layout — that is migration.
@@ -543,8 +543,30 @@ readme_waiting_for() {
 }
 
 readme_projects() {
-  header_projects | annotate_format
+  # Per-item only: a tickle also puts a project in play (list-definitions.md "Stalled"); single-file
+  # projects.md has no tickler and keeps the original wording.
+  header_projects | annotate_format | sed \
+    -e 's/every project must have \*\*at least one clear next action\*\*, or it stalls\./every project must have **at least one clear next action, waiting-for item or tickle**, or it stalls (a tickle means on hold on purpose until its date)./' \
+    -e 's/^> At least 1 next action, or the project is stalled\./> At least 1 next action, waiting-for item or tickle, or the project is stalled./'
   note_format_section project-note.md 'Each project is a folder, `projects/<Project name>/README.md`, not a single note: the README holds the outcome, decisions and an embedded next-actions view; plan docs, design notes and research for the project live as ordinary files beside it, linked with a bare `[[filename]]`. Actions point at the project with `project: "[[projects/<Project name>/README|<Project name>]]"` — the README never lists them by hand. When the outcome is achieved: after-action review, then the whole folder moves to `_done/<Project name>/`.'
+}
+
+header_tickler() {
+  cat <<'EOF'
+# 🗂️ Tickler
+
+> Committed things you can't (or don't want to) act on until a date — Allen's tickler. One note per tickle, dated with `tickle:` for when it becomes actionable. Per-item layout only.
+> **Not** appointments (those go to the calendar), **not** things someone owes you (waiting-for), **not** uncommitted maybes (someday-maybe).
+> A project linked from a tickle is on hold on purpose, not stalled; it stays in `projects/`.
+> **Always local**: never exported to the external calendar, and never touched by organize's calendar-fallback reconcile.
+> When the date arrives, organize moves a concrete project tickle into `next-actions/` (dropping `tickle`, adding time / energy / context) and queues anything else in the inbox for clarify, as a line linking the note. Engage lists due tickles first.
+EOF
+}
+
+readme_tickler() {
+  header_tickler
+  note_format_section tickler-note.md "${NOTE_RULES//<list>/tickler}"
+  views_section tickler '- [[tickler.base]] — Upcoming (by date). Each project README embeds its "For this project" view.'
 }
 
 readme_someday_maybe() {
@@ -683,6 +705,35 @@ views:
 EOF
 }
 
+base_tickler() {
+  cat <<'EOF'
+# LLM-GTD tickler views. Optional Obsidian extra: every GTD command works without it.
+# "For this project" is meant to be embedded in a project README: ![[tickler.base#For this project]]
+filters:
+  and:
+    - file.inFolder("memory/gtd/tickler")
+    - file.basename != "README"
+views:
+  - type: table
+    name: Upcoming
+    order:
+      - file.name
+      - tickle
+      - project
+    sort:
+      - property: tickle
+        direction: ASC
+  - type: table
+    name: For this project
+    filters:
+      and:
+        - file.hasLink(this.file)
+    order:
+      - file.name
+      - tickle
+EOF
+}
+
 build_files_layout() {
   seed "$GTD_DIR/inbox.md" < <(file_inbox)
   seed "$GTD_DIR/next-actions.md" < <(file_next_actions)
@@ -708,6 +759,7 @@ build_notes_layout() {
   seed "$GTD_DIR/waiting-for/README.md" < <(readme_waiting_for)
   seed "$GTD_DIR/someday-maybe/README.md" < <(readme_someday_maybe)
   seed "$GTD_DIR/product-ideas/README.md" < <(readme_product_ideas)
+  seed "$GTD_DIR/tickler/README.md" < <(readme_tickler)
   seed "$GTD_DIR/_done/README.md" < <(readme_done)
   seed "$GTD_DIR/calendar.md" < <(file_calendar)
   seed "$VAULT_ROOT/reference/README.md" < <(readme_reference)
@@ -718,6 +770,7 @@ build_notes_layout() {
   if [ "$WITH_BASES" -eq 1 ]; then
     seed "$GTD_DIR/next-actions.base" < <(base_next_actions)
     seed "$GTD_DIR/done.base" < <(base_done)
+    seed "$GTD_DIR/tickler.base" < <(base_tickler)
   fi
 }
 
@@ -749,7 +802,7 @@ fi
 mkdir -p "$GTD_DIR"
 echo ""
 if [ "$LAYOUT" = "notes" ]; then
-  echo "── Building memory/gtd/ per-item layout: inbox, calendar, horizons + 5 list folders + _done/, and reference/ (existing files skipped) ──"
+  echo "── Building memory/gtd/ per-item layout: inbox, calendar, horizons + 6 list folders (incl. tickler) + _done/, and reference/ (existing files skipped) ──"
   build_notes_layout
 else
   echo "── Building memory/gtd/ eight core lists + product-ideas extension list (existing files skipped) ──"

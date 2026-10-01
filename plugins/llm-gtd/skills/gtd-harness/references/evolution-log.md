@@ -107,6 +107,15 @@ Design principles:
 - **Migration**: `gtd_migrate_to_notes.sh`, a dry run by default; `--apply` needs a clean git tree, never overwrites, keeps the old lists in `memory/gtd/_migrated/`, rewrites list links across the workspace (never inside code), and refuses if any list's item count would change.
 - New evals E16-E23; the static gate gained per-item init, read-path, done-record, and migration fixtures.
 
+## v1.17 — Tickler (per-item layout)
+- **New list `tickler/`** (Allen's tickler): committed work that can't be acted on until a date, one note per tickle with a `tickle:` date. Not someday-maybe (uncommitted), not waiting-for (nobody owes it), not the calendar (not an appointment).
+- **Stalled, defined once** in `list-definitions.md`: a project is in play when an open next action, waiting-for, or tickle links to it. A tickled project is on hold on purpose: never stalled, never given a drafted next action, never closed over an open tickle.
+- **On the date**, organize moves a concrete project tickle into `next-actions/` and queues anything else in the inbox as a pointer to the note (never twice); engage leads with what came due; the Weekly Review shows due / next 14 days / on-hold projects and asks once whether each date holds.
+- **Always local**: never exported to the external calendar, outside the calendar fallback chain; `calendar.md`'s contract is unchanged. Organize flags tickle dates the calendar shows as blocked and never re-dates them.
+- **Why a separate list**: the first draft put the tickler in a `calendar.md` section, but that file is a fallback copy that organize exports and deletes, read only when the external calendar is unreachable, so a tickle there would have been exported or never seen.
+- **Per-item only, relaxing v1.16's "every feature works in both layouts" rule for this feature.** The single-file layout behaves as in v1.16 with no tickler.
+- New evals E29-E35; the static gate gained a tickler fixture (stalled rule, due/within split, inbox guard, dashboard, review prep, single-file stand-down).
+
 ---
 
 **AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.

@@ -31,7 +31,7 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 | `horizons.md` | Six-horizon direction calibration |
 | `product-ideas.md` | Intake for product / feature / scenario opportunities |
 
-**Per-item layout (opt-in)**: if `memory/gtd/next-actions/` is a folder, next-actions / waiting-for / projects / someday-maybe / product-ideas are folders of one note per item (each with a `README.md` of rules), projects are folders, finished work goes to `_done/`, and general reference is `reference/` at the workspace root. Inbox, calendar and horizons stay files. See `references/list-definitions.md` "Layouts".
+**Per-item layout (opt-in)**: if `memory/gtd/next-actions/` is a folder, next-actions / waiting-for / projects / someday-maybe / product-ideas are folders of one note per item (each with a `README.md` of rules), projects are folders, `tickler/` holds committed work dated for when it becomes actionable (per-item only; a tickled project is on hold, not stalled), finished work goes to `_done/`, and general reference is `reference/` at the workspace root. Inbox, calendar and horizons stay files. See `references/list-definitions.md` "Layouts".
 
 ## Routing
 

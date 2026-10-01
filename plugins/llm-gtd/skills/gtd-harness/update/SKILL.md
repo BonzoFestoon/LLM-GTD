@@ -51,7 +51,8 @@ Update does one thing: sync the change in reality the user just reported into `m
    | Project progress | The user gave facts that affect the next action | Update project support facts; move the completed next action to the done record; derive a new concrete next action |
    | Waiting For reply | Clearly matches one `waiting-for` item | Move it to the done record with what arrived as its outcome; clarify the reply into a next action / reference / project closure |
    | Event details changed | Date / time / place / departure window changed | Update the external calendar provider event; if no clear event is found and details are complete, create one; ask one question if unsure |
-   | Commitment cancelled / dropped | The user explicitly cancels | A project-linked action or waiting-for → done record with `result: cancelled` and the reason; a standalone action or a someday item → delete it; a whole project → ask once, then close it as cancelled (the AAR is optional). If merely paused but still wanted, move it to someday-maybe |
+   | Commitment cancelled / dropped | The user explicitly cancels | A project-linked action or waiting-for → done record with `result: cancelled` and the reason; a standalone action or a someday item → delete it; a tickle → delete it (no done record); a whole project → ask once, then close it as cancelled (the AAR is optional), removing its tickles too. If merely paused but still wanted, move it to someday-maybe |
+   | Tickle date moved (per-item) | "That can't start until X now" / "push it to December" for a tickle | Change the note's `tickle:` (the `id` stays); if the project's whole timeline moved, say so in its README's Decisions |
    | Text correction | The user corrects an existing fact or wording | Minimally replace the corresponding list line / note, or project support material |
 
 3. **Matching rules**:
@@ -60,7 +61,7 @@ Update does one thing: sync the change in reality the user just reported into `m
    - Moving a finished item to the done record closes the GTD loop; live lists hold only commitments that still need attention, never checked-off history.
 
 4. **Advance projects**:
-   - When a completed action belongs to a project, read that project (block or `README.md`) and its remaining open actions / waiting-for (`gtd_list.sh next-actions --project "<Name>"`, same for waiting-for).
+   - When a completed action belongs to a project, read that project (block or `README.md`) and its remaining open actions / waiting-for / tickles (`gtd_list.sh next-actions --project "<Name>"`, same for waiting-for and tickler). A tickle still linking it means the project is on hold until that date, not stalled: don't draft a new next action for it.
    - If the desired outcome is achieved and no next action still needs pushing → close it with an after-action review ("Project close" below).
    - If the project is still unfinished → draft **one** most suitable current next action from the new facts and link it to the project (single-file: point the project's next-action link to it; per-item: a note whose `project:` links the README).
    - If the new next action needs the user's value judgment or information is missing → don't force one; list the gap and ask one question.
@@ -87,7 +88,7 @@ When a project's outcome is achieved (here, or when organize / review hands one 
 5. **Close**:
    - Per-item: add `completed`, `result`, and `list: projects` to the README, and ask in that same confirmation which support files are worth keeping (default: keep all). Move the whole folder to `memory/gtd/_done/<Project name>/`. Then rewrite links to it: every `[[projects/<Project name>/…` anywhere in the workspace becomes `[[_done/<Project name>/…`, including the `project:` of its done notes. `gtd_check.sh` should then report no `done-link` or `orphan-closed` for it.
    - Single-file: delete the project block from `projects.md` and add `- [x] Project: <Name> — <outcome> · From: projects · Result: done` with its `Done:`, `Problems and fixes:`, and AAR sub-bullets to `done.md`.
-6. Open actions still linked to the project mean it isn't finished. Ask about them first (done, cancelled, or re-home them) rather than closing over them.
+6. Open actions or tickles still linked to the project mean it isn't finished. Ask about them first (done, cancelled, or re-home them) rather than closing over them.
 
 5. **Calendar update contract**:
    - When an external calendar provider is reachable, it is the hard landscape; never claim a write before the update succeeds.

@@ -8,7 +8,7 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 # Weekly Review · YYYY-MM-DD (Week N)
 
 ## System status (pre-review dashboard)
-- 📥 Inbox: __ · ✅ Next Actions: __ · 🎯 Projects: __ (stalled __) · ⏳ Waiting: __ · 💭 Someday: __ · 💡 Product Ideas: __
+- 📥 Inbox: __ · ✅ Next Actions: __ · 🎯 Projects: __ (stalled __) · ⏳ Waiting: __ · 🗂️ Tickler: __ (due __) · 💭 Someday: __ · 💡 Product Ideas: __
 
 ## 0. AI review prep pack
 - Handled automatically:
@@ -27,6 +27,8 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 - Projects closed (AAR done / skipped):
 - New next actions:
 - Waiting-for items to follow up on:
+- Tickles now actionable (became):
+- On-hold projects re-dated / released:
 - Stalled projects given a next action:
 - Product Ideas visibility gaps:
 

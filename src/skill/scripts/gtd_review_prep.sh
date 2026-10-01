@@ -97,6 +97,35 @@ stalled_projects() {
   ' "$f"
 }
 
+# Tickler (per-item only): "- title · date · project" lines from gtd_list.sh tickler [flags].
+tickle_lines() {
+  list tickler "$@" | awk -F'\t' '{
+    t = $2; sub(/^tickle=/, "", t)
+    p = $3; sub(/^project=/, "", p)
+    if (p ~ /\|/) { sub(/^.*\|/, "", p); sub(/\]\]$/, "", p) }
+    else { gsub(/^\[\[|\]\]$/, "", p); sub(/^projects\//, "", p); sub(/\/README$/, "", p) }
+    line = "- " $NF " · " t
+    if (p != "-") line = line " · " p
+    print line
+  }'
+}
+
+# Projects on hold: each live project linked from a future tickle, with its earliest date.
+projects_on_hold() {
+  local today
+  today="$(date +%Y-%m-%d)"
+  list tickler | awk -F'\t' -v today="$today" '{
+    t = $2; sub(/^tickle=/, "", t)
+    if (t !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ || t <= today) next
+    p = $3; sub(/^project=/, "", p)
+    if (p == "-") next
+    gsub(/^\[\[|\]\]$/, "", p); sub(/\|.*$/, "", p); sub(/^projects\//, "", p); sub(/\/README$/, "", p)
+    if (!(p in d) || t < d[p]) d[p] = t
+  } END { for (p in d) print p "\t" d[p] }' | sort | while IFS=$'\t' read -r name date; do
+    [ -f "$GTD_DIR/projects/$name/README.md" ] && echo "- $name · until $date"
+  done
+}
+
 VAGUE_VERBS='(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)'
 
 vague_next_actions() {
@@ -222,7 +251,8 @@ fi
 
 if [ "$NOTES" -eq 1 ]; then
   section "Hygiene findings (gtd_check.sh)"
-  findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' || true)"
+  # Stalled projects and due tickles have their own sections below.
+  findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' | grep -v '^tickler-due' || true)"
   if [ -n "$findings" ]; then
     echo "$findings" | awk -F'\t' '{ print "- " $1 ": " $2 " — " $3 }'
   else
@@ -244,6 +274,16 @@ if [ -n "$waiting_items" ]; then
   echo "$waiting_items"
 else
   echo "None."
+fi
+
+if [ "$NOTES" -eq 1 ]; then
+  section "Tickler"
+  echo "Due now (organize turns each into a next action, or queues it in the inbox for clarify):"
+  out="$(tickle_lines --due)"; echo "${out:-None.}"
+  echo "Next 14 days (anything to prepare now?):"
+  out="$(tickle_lines --within 14)"; echo "${out:-None.}"
+  echo "Projects on hold (does each date still hold?):"
+  out="$(projects_on_hold)"; echo "${out:-None.}"
 fi
 
 section "Next Action hygiene"
@@ -284,6 +324,9 @@ echo "- Empty the inbox: clarify item by item to zero."
 echo "- Done since last review: for each problem solved, file its how-to to reference now or leave it for the project's after-action review."
 echo "- Stalled projects: add at least one concrete next action per project; attach several parallel actions if needed, or confirm cutting it."
 echo "- Waiting for: confirm which items to follow up on; AI can draft a neutral message first."
+if [ "$NOTES" -eq 1 ]; then
+  echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
+fi
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
 echo "- Product ideas: first fill missing project / next-action visibility; then confirm gathering evidence, advancing to PRD, downgrading, or deleting."
 echo "- Next week's 3 things: AI proposes candidates; the user confirms."

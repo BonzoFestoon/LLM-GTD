@@ -43,11 +43,22 @@ esac
 
 # Per-item lists: one folder each under memory/gtd/. General reference is not one of them —
 # in the per-item layout it lives at the workspace root (reference/), outside memory/gtd/.
-GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe product-ideas"
+# The tickler exists only in the per-item layout (no single-file tickler.md).
+GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe product-ideas tickler"
 
 # gtd_days_ago N — the date N days before today as YYYY-MM-DD (GNU date, then BSD/macOS date).
 gtd_days_ago() {
   date -d "$1 days ago" +%Y-%m-%d 2>/dev/null || date -v-"$1"d +%Y-%m-%d
+}
+
+# gtd_days_ahead N — the date N days after today as YYYY-MM-DD (GNU date, then BSD/macOS date).
+gtd_days_ahead() {
+  date -d "+$1 days" +%Y-%m-%d 2>/dev/null || date -v+"$1"d +%Y-%m-%d
+}
+
+# gtd_is_date TEXT — true for a well-formed YYYY-MM-DD.
+gtd_is_date() {
+  echo "$1" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
 }
 
 # SEP is a unit separator (0x1f), not tab: bash's `read` treats IFS whitespace

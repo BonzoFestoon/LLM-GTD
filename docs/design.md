@@ -33,7 +33,10 @@ holding its README and its support material), plus a `_done/` record folder for 
 its outcome — nothing here is deleted outright anymore, so an after-action review has raw material to
 draw on. `reference.md` becomes a `reference/` folder at the workspace root, outside `memory/gtd/`:
 general knowledge that GTD files into but that isn't GTD state. `inbox.md`, `calendar.md`,
-`horizons.md`, and `personalized.md` always stay single files. `gtd_init.sh --layout notes` sets it up. Layout is auto-detected from whether `next-actions/`
+`horizons.md`, and `personalized.md` always stay single files. The per-item layout also has a
+`tickler/` folder (Allen's tickler): committed work that can't be acted on until a date, one note per
+tickle; a project linked from a tickle is on hold, not stalled, and on the date organize turns the
+tickle into a next action or queues it in the inbox. It is always local, never on the external calendar. `gtd_init.sh --layout notes` sets it up. Layout is auto-detected from whether `next-actions/`
 exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of the harness one
 compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
 storage shape; its sibling `gtd_check.sh` reports organize's mechanical findings (orphans, stalled

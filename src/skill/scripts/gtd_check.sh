@@ -8,10 +8,14 @@
 #
 # Output: one tab-separated line per finding — check, path (relative to memory/gtd/), detail —
 # then a "# N finding(s)" line. Checks:
-#   orphan          an open action / waiting-for whose project: link resolves to no project
+#   orphan          an open action / waiting-for / tickle whose project: link resolves to no project
 #   orphan-closed   ...whose project has already moved to _done/ (surface: close or re-link)
 #   link-form       project: points at the project but not as [[projects/<Name>/README|<Name>]]
-#   stalled         a project folder with no open next action or waiting-for linked to it
+#   stalled         a project folder with no open next action, waiting-for or tickle linked to it
+#                   (list-definitions.md "Stalled": a tickle means on hold on purpose)
+#   tickler-due     a tickle dated today or earlier (organize turns it into a next action, or adds
+#                   an inbox pointer to it); "queued in inbox" when inbox.md already links the note
+#   tickler-date    a tickle with no tickle: date, or one that isn't YYYY-MM-DD
 #   field           missing or out-of-vocabulary property (vocabulary: list-definitions.md
 #                   "Property values")
 #   duplicate       two notes in one list with the same title, ignoring case and a "(N)" suffix
@@ -86,9 +90,11 @@ project_name() {
 
 # --- open actions and waiting-for: project links + fields --------------------
 
-LINKED=""   # newline-separated project names that have at least one open action / waiting-for
+LINKED=""   # newline-separated project names that have at least one open action / waiting-for / tickle
+TODAY="$(date +%Y-%m-%d)"
+INBOX="$GTD_DIR/inbox.md"
 
-for list in next-actions waiting-for; do
+for list in next-actions waiting-for tickler; do
   dir="$GTD_DIR/$list"
   [ -d "$dir" ] || continue
   for f in "$dir"/*.md; do
@@ -128,6 +134,18 @@ for list in next-actions waiting-for; do
         IFS="$old_ifs"
       fi
       [ -z "$due" ] || is_date "$due" || finding field "$rel" "due '$due' is not YYYY-MM-DD"
+    elif [ "$list" = "tickler" ]; then
+      tickle="$(fm_get "$f" tickle)"
+      if [ -z "$tickle" ]; then finding tickler-date "$rel" "missing tickle: date"
+      elif ! is_date "$tickle"; then finding tickler-date "$rel" "tickle '$tickle' is not YYYY-MM-DD"
+      elif [ ! "$tickle" \> "$TODAY" ]; then
+        # An inbox line linking the note means organize already queued it for clarify.
+        if [ -f "$INBOX" ] && { grep -qF "[[tickler/$base]]" "$INBOX" || grep -qF "[[tickler/$base|" "$INBOX"; }; then
+          finding tickler-due "$rel" "tickle $tickle — queued in inbox"
+        else
+          finding tickler-due "$rel" "tickle $tickle — now actionable"
+        fi
+      fi
     else
       person="$(fm_get "$f" person)"
       delegated="$(fm_get "$f" delegated)"
@@ -148,7 +166,7 @@ if [ -d "$GTD_DIR/projects" ]; then
     name="$(basename "$(dirname "$readme")")"
     case $'\n'"$LINKED" in
       *$'\n'"$name"$'\n'*) ;;
-      *) finding stalled "projects/$name/README.md" "no open next action or waiting-for links to it" ;;
+      *) finding stalled "projects/$name/README.md" "no open next action, waiting-for or tickle links to it" ;;
     esac
   done
 fi

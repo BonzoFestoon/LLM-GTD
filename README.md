@@ -23,7 +23,7 @@ A while later you report back:
 > **You:** Talked it through — they are interested, two sessions/week, ~1h each
 > **LLM-GTD:** Checks the talk off; **advances the project** to *"shortlist 2-3 options — slots, price, distance, trial terms"*; logs the facts as support material; flags your "~1h" as **needs-confirmation**.
 
-A project without a current next action is a stalled promise. LLM-GTD keeps the promise **live across
+A project with nothing in play (no next action, no waiting-for, no dated tickle) is a stalled promise. LLM-GTD keeps the promise **live across
 days** — you supply judgment and report reality; it does the bookkeeping.
 → [full walkthrough](docs/demo.md)
 
@@ -120,6 +120,8 @@ bash <skill>/scripts/gtd_migrate_to_notes.sh --apply    # needs a clean git tree
 ```
 
 The migration rewrites links to your list items anywhere in the vault (never inside code), keeps each list's header rules in its folder's `README.md`, and checks that every list has the same number of items before and after. Undo it with git, or restore from `_migrated/`.
+
+**The tickler (per-item layout only).** Some committed work can't start until a date: an account you can open only after a trade settles, a renewal you'll decide in March. That is neither someday/maybe (you've committed) nor waiting-for (nobody owes it to you). Clarify files it in `memory/gtd/tickler/`, one note per tickle with a `tickle:` date. A project linked from a tickle is on hold on purpose, so it is never reported as stalled. When the date arrives, organize turns a concrete project tickle into a next action and queues anything else in the inbox for clarify; engage lists what came due first, and the Weekly Review shows what's due, what's coming in the next 14 days, and each project on hold. The tickler is always local: it is never written to your external calendar. Organize flags a tickle whose date the calendar shows as blocked, and suggests another date.
 
 ## How It Works
 
@@ -350,7 +352,7 @@ CHANGELOG.md          project changelog
 
 - **The inbox is not the system.** It is only the capture sink.
 - **A next action must be physical and concrete.** "Handle taxes" is not a next action. "Email CPA the W-2 PDF" is.
-- **Projects must have a current next action.** A project without a next action is a stalled promise.
+- **Projects must have something in play.** A current next action, a waiting-for, or (per-item layout) a dated tickle. A project with none of them is a stalled promise.
 - **Calendar is sacred.** Only time-specific commitments belong there.
 - **Weekly review is not optional.** Without review, GTD decays into a task pile.
 - **No hidden writes.** Calendar writes and other high-consequence actions need confirmation.

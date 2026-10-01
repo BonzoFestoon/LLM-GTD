@@ -135,9 +135,11 @@ LLM_GTD_ROOT="$fixture/notes" CODEX_HOME="$fixture/codex" \
 for f in memory/gtd/inbox.md memory/gtd/calendar.md memory/gtd/horizons.md reference/README.md \
   memory/gtd/next-actions/README.md memory/gtd/waiting-for/README.md memory/gtd/projects/README.md \
   memory/gtd/someday-maybe/README.md memory/gtd/product-ideas/README.md memory/gtd/_done/README.md \
-  memory/gtd/next-actions.base memory/gtd/done.base; do
+  memory/gtd/next-actions.base memory/gtd/done.base memory/gtd/tickler/README.md memory/gtd/tickler.base; do
   [ -f "$fixture/notes/$f" ] || fail "per-item init did not create $f"
 done
+grep -q '^## Note format' "$fixture/notes/memory/gtd/tickler/README.md" || fail "tickler README lacks its Note format section"
+grep -qi 'tickle' "$fixture/notes/memory/gtd/projects/README.md" || fail "projects README's stalled rule does not name the tickle"
 for f in next-actions waiting-for projects someday-maybe product-ideas reference; do
   [ ! -e "$fixture/notes/memory/gtd/$f.md" ] || fail "per-item init also wrote single-file $f.md"
 done
@@ -147,10 +149,12 @@ grep -q '^## Legacy groups' "$fixture/notes/memory/gtd/next-actions/README.md" |
 [ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" projects)" ] || fail "gtd_list.sh counted projects/README.md as a project"
 LLM_GTD_ROOT="$fixture/files" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
   || fail "gtd_init.sh single-file init failed"
+[ ! -e "$fixture/files/memory/gtd/tickler.md" ] && [ ! -e "$fixture/files/memory/gtd/tickler" ] \
+  || fail "single-file init created a tickler (the tickler is per-item only)"
 rc=0; LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null 2>&1 || rc=$?
 [ "$rc" -eq 4 ] || fail "init did not refuse to turn a single-file system into per-item (exit $rc, want 4)"
 [ ! -d "$fixture/files/memory/gtd/next-actions" ] || fail "refused per-item init still created next-actions/"
-ok "per-item init: folders + READMEs + bases created, README never an item, layout switch refused"
+ok "per-item init: folders + READMEs + bases created (tickler included), README never an item, layout switch refused"
 
 # Per-item read path: lenses filter, _done/ is never listed, and gtd_check.sh finds each kind of
 # mechanical problem (and nothing on a clean note).
@@ -211,6 +215,106 @@ echo "$done_sf" | grep -q "^na-tax-20260201${T}completed=2026-03-01${T}result=do
 [ "$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" done --project Taxes | grep -c .)" -eq 2 ] || fail "gtd_list.sh done --project (single-file) did not match the project line"
 ok "done record: gtd_list.sh done reads both layouts and filters by --since / --project / --problems"
 
+# Tickler (per-item only): a tickle puts its project in play (never stalled), a due tickle is
+# tickler-due, --due / --within split by date, tickles get the actions' project-link checks, the inbox
+# guard, the dashboard line and review prep's Tickler section; no tickler lists nothing.
+# Dates are relative to the run date so the gate never goes stale.
+TK="$fixture/tick"
+mkdir -p "$TK"
+LLM_GTD_ROOT="$TK" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null \
+  || fail "gtd_init.sh --layout notes failed (tickler fixture)"
+TG="$TK/memory/gtd"
+mkdir -p "$TG/tickler"
+tk_today="$(date +%Y-%m-%d)"
+tk_soon="$(date -d '+3 days' +%Y-%m-%d 2>/dev/null || date -v+3d +%Y-%m-%d)"
+for p in "On hold" "Due now" "Soon" "Nothing"; do
+  mkdir -p "$TG/projects/$p"
+  printf -- '---\noutcome: %s done\n---\n' "$p" > "$TG/projects/$p/README.md"
+done
+mkdir -p "$TG/_done/Closed"
+printf -- '---\ncompleted: 2026-01-01\nresult: done\nlist: projects\n---\nx\n\n## After action review\n- fine\n' > "$TG/_done/Closed/README.md"
+tickle() {
+  # tickle TITLE TICKLE PROJECT — a tickler note; an empty TICKLE or PROJECT leaves that property out
+  { printf -- '---\nid: tk-fixture-20260930\n'
+    [ -z "$2" ] || printf 'tickle: %s\n' "$2"
+    [ -z "$3" ] || printf 'project: "%s"\n' "$3"
+    printf 'created: 2026-09-30\n---\n%s, the body.\n' "$1"; } > "$TG/tickler/$1.md"
+}
+tickle "Open the accounts" 2999-01-01 "[[projects/On hold/README|On hold]]"
+tickle "Start the due work" 2000-01-01 "[[projects/Due now/README|Due now]]"
+tickle "Prepare the soon work" "$tk_soon" "[[projects/Soon/README|Soon]]"
+tickle "Reconsider the gym" "$tk_today" ""
+tickle "reconsider the GYM (2)" 2999-01-01 ""
+tickle "Points at nothing" 2999-01-01 "[[projects/Gone/README|Gone]]"
+tickle "Points at closed" 2999-01-01 "[[projects/Closed/README|Closed]]"
+tickle "Bare link form" 2999-01-01 "[[projects/On hold]]"
+tickle "Bad date" "next week" ""
+tickle "No date" "" ""
+
+tl="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" || fail "gtd_list.sh tickler failed: $tl"
+[ "$(echo "$tl" | grep -c .)" -eq 10 ] || fail "gtd_list.sh tickler listed: $tl"
+echo "$tl" | grep -q "^tk-fixture-20260930${T}tickle=2999-01-01${T}project=.*On hold.*${T}Open the accounts$" \
+  || fail "gtd_list.sh tickler columns wrong: $tl"
+[ -z "$(echo "$tl" | awk -F'\t' '$NF == "README"')" ] || fail "gtd_list.sh tickler listed README.md"
+tl_due="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_list.sh" tickler --due)"
+[ "$(echo "$tl_due" | grep -c .)" -eq 2 ] && echo "$tl_due" | grep -q 'Start the due work$' && echo "$tl_due" | grep -q 'Reconsider the gym$' \
+  || fail "gtd_list.sh tickler --due returned: $tl_due"
+tl_soon="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_list.sh" tickler --within 14)"
+[ "$(echo "$tl_soon" | grep -c .)" -eq 1 ] && echo "$tl_soon" | grep -q 'Prepare the soon work$' \
+  || fail "gtd_list.sh tickler --within 14 returned (want only the today+3 tickle, nothing due): $tl_soon"
+[ -z "$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_list.sh" tickler --within 2)" ] || fail "gtd_list.sh tickler --within 2 included a today+3 tickle"
+[ "$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_list.sh" tickler --project "On hold" | grep -c .)" -eq 2 ] || fail "gtd_list.sh tickler --project did not filter"
+
+chk="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_check.sh")"
+for want in "stalled${T}projects/Nothing/README.md" "tickler-due${T}tickler/Start the due work.md" \
+  "tickler-due${T}tickler/Reconsider the gym.md" "orphan${T}tickler/Points at nothing.md" \
+  "orphan-closed${T}tickler/Points at closed.md" "link-form${T}tickler/Bare link form.md" \
+  "tickler-date${T}tickler/Bad date.md" "tickler-date${T}tickler/No date.md" "duplicate${T}tickler/"; do
+  echo "$chk" | grep -qF "$want" || fail "gtd_check.sh missed: $want"
+done
+for p in "On hold" "Due now" "Soon"; do
+  ! echo "$chk" | grep -qF "stalled${T}projects/$p/" || fail "gtd_check.sh called a tickled project stalled: $p"
+done
+! echo "$chk" | grep -qE "^tickler-due${T}tickler/(Open the accounts|Prepare the soon work)" || fail "gtd_check.sh called a future tickle due"
+! echo "$chk" | grep -qF "tickler/README.md" || fail "gtd_check.sh treated tickler/README.md as a tickle"
+! echo "$chk" | grep -F "tickler-due${T}tickler/Reconsider the gym.md" | grep -q 'queued in inbox' || fail "gtd_check.sh says queued in inbox with no inbox line"
+printf -- '- Tickle due: Reconsider the gym → [[tickler/Reconsider the gym]] · Captured: 20260930\n' >> "$TG/inbox.md"
+chk="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_check.sh")"
+echo "$chk" | grep -F "tickler-due${T}tickler/Reconsider the gym.md" | grep -q 'queued in inbox' || fail "gtd_check.sh missed the inbox pointer (queued in inbox)"
+! echo "$chk" | grep -F "tickler-due${T}tickler/Start the due work.md" | grep -q 'queued in inbox' || fail "gtd_check.sh called an unqueued tickle queued"
+
+st="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_status.sh" 2>&1 || true)"
+echo "$st" | grep -qE "Tickler +: 10 \(2 due\)" || fail "gtd_status.sh lacks 'Tickler: 10 (2 due)': $st"
+echo "$st" | grep -q "Projects *: 4 (stalled[^0-9]* 1)" || fail "gtd_status.sh stalled count ignores tickles: $st"
+echo "$st" | grep -qE "Calendar \(hard\) +: 0" || fail "gtd_status.sh calendar count changed: $st"
+
+rp="$(LLM_GTD_ROOT="$TK" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 || true)"
+# part_of TEXT START END — the lines after the first line matching START, up to the next line matching END
+part_of() { printf '%s\n' "$1" | awk -v s="$2" -v e="$3" 'f && $0 ~ e { exit } f { print } $0 ~ s { f = 1 }'; }
+rp_tk="$(part_of "$rp" '^## Tickler' '^## ')"
+[ -n "$rp_tk" ] || fail "gtd_review_prep.sh has no Tickler section: $rp"
+rp_due="$(part_of "$rp_tk" '^Due now' '^(Next 14 days|Projects on hold)')"
+rp_next="$(part_of "$rp_tk" '^Next 14 days' '^Projects on hold')"
+rp_hold="$(part_of "$rp_tk" '^Projects on hold' '^$')"
+echo "$rp_due" | grep -q 'Start the due work' && echo "$rp_due" | grep -q 'Reconsider the gym' || fail "review prep 'Due now' wrong: $rp_tk"
+echo "$rp_next" | grep -q 'Prepare the soon work' && ! echo "$rp_next" | grep -q '2999-01-01' || fail "review prep 'Next 14 days' wrong: $rp_tk"
+echo "$rp_hold" | grep -q 'On hold.*2999-01-01' || fail "review prep 'Projects on hold' lacks On hold with its date: $rp_tk"
+! part_of "$rp" '^## Hygiene findings' '^## ' | grep -q 'tickler-due' || fail "review prep repeats tickler-due under Hygiene findings"
+rp_stalled="$(part_of "$rp" '^## Stalled Projects' '^## ')"
+echo "$rp_stalled" | grep -q 'Nothing' && ! echo "$rp_stalled" | grep -qE 'On hold|Due now|Soon' || fail "review prep Stalled Projects wrong: $rp_stalled"
+part_of "$rp" '^## Confirmation queue' '^## ' | grep -q 'Tickler:' || fail "review prep confirmation queue lacks the tickler line"
+
+NT="$fixture/notick"
+mkdir -p "$NT"
+LLM_GTD_ROOT="$NT" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create --layout notes >/dev/null || fail "gtd_init.sh failed (no-tickler fixture)"
+rm -rf "$NT/memory/gtd/tickler"
+out="$(LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -z "$out" ] || fail "gtd_list.sh tickler with no tickler/ folder: $out"
+LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_status.sh" >/dev/null 2>&1 || fail "gtd_status.sh failed with no tickler/ folder"
+out="$(LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -z "$out" ] || fail "gtd_list.sh tickler in the single-file layout: $out"
+! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_status.sh" 2>&1 | grep -q 'Tickler' || fail "gtd_status.sh shows a Tickler line in the single-file layout"
+! LLM_GTD_ROOT="$fixture/files" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 | grep -q '^## Tickler' || fail "gtd_review_prep.sh shows a Tickler section in the single-file layout"
+ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep; none in single-file"
+
 # Migration (E23 mechanically): a single-file workspace -> per-item. Dry run writes nothing; apply
 # refuses a dirty git tree; counts match; every non-item line of each line-item list is in its
 # README; links are rewritten except inside code; nothing is orphaned; old lists kept in _migrated/.
@@ -259,7 +363,8 @@ EOF
   done
   for l in next-actions waiting-for someday-maybe; do
     awk '!/^- \[ \] / && !/^[ \t]+[^ \t]/ && NF' "$MG/_migrated/$l.md" | while IFS= read -r line; do
-      grep -qF -- "$line" "$MG/$l/README.md" || { echo "missing"; break; }
+      # Byte comparison: GNU grep 3.0 (Git Bash) misses 4-byte emoji (e.g. 💭) under a UTF-8 locale.
+      LC_ALL=C grep -qF -- "$line" "$MG/$l/README.md" || { echo "missing"; break; }
     done | grep -q missing && fail "migration dropped a header line from $l (E23)"
   done
   sam="$(LLM_GTD_ROOT="$M" bash "$ROOT/scripts/gtd_list.sh" next-actions --context phone)"
@@ -269,6 +374,7 @@ EOF
   grep -q '^due: 2026-10-01$' "$MG/next-actions/Buy printer paper, the cheap kind.md" || fail "migration did not convert Due"
   [ -f "$MG/projects/Teeth fixed/Dentist contacts.md" ] || fail "migration did not move a one-project reference entry into the project folder"
   [ -f "$M/reference/Wifi password.md" ] || fail "migration did not put general reference in reference/"
+  [ -f "$MG/tickler/README.md" ] || fail "migration did not create tickler/ (init after apply)"
   grep -qF '[[next-actions/Call the dentist to book a cleaning|the call]]' "$M/elsewhere.md" || fail "migration did not rewrite a next-actions block link: $(cat "$M/elsewhere.md")"
   grep -qF '[[projects/README|projects]]' "$M/elsewhere.md" || fail "migration did not rewrite a bare list link"
   grep -qF '`[[next-actions#^na-dentist-20260901|code]]`' "$M/elsewhere.md" || fail "migration rewrote a link inside code"

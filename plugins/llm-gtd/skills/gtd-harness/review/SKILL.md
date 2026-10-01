@@ -38,11 +38,11 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 
 ## 0. AI review prep pack (always first)
 
-- Run `scripts/gtd_review_prep.sh --since <last review date>` to generate a read-only review prep pack in either layout: overall counts, done since last review, inbox summary, hygiene findings (per-item: from `gtd_check.sh`, including finished projects still missing an after-action review), stalled projects, waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue. Open individual notes only for items that need a decision; `_done/` is never part of the active lists.
+- Run `scripts/gtd_review_prep.sh --since <last review date>` to generate a read-only review prep pack in either layout: overall counts, done since last review, inbox summary, hygiene findings (per-item: from `gtd_check.sh`, including finished projects still missing an after-action review), stalled projects, the tickler (per-item: due now, next 14 days, projects on hold with their dates), waiting-for, vague next actions, someday candidates, product ideas visibility audit, confirmation queue. Open individual notes only for items that need a decision; `_done/` is never part of the active lists.
 - Read the external calendar provider (preferred if reachable); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete.
-- Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment).
+- Do a capacity scan of next week's hard landscape: which days are already full of hard appointments, which focus items lack an available time window; only suggest renegotiating commitments — never automatically cram next-actions into the calendar. Read each event's availability, not just its title or length, before counting it as filling a day (`references/capability-map.md`'s conflict and capacity judgment). Count tickles coming due next week (`gtd_list.sh tickler --within 7`) as work landing on those days, and flag any that fall on a blocked day (`capability-map.md` "Tickle date conflicts").
 - **Done since last review** (in the prep pack; `gtd_list.sh done --since <date>` for more detail): lead with the wins, then each problem solved; for those, Get Current offers one choice per item: file its how-to to reference now, or leave it for its project's after-action review. Offered, never required.
-- Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision.
+- Call the mechanical hygiene flow in `organize/SKILL.md`: fix what can be fixed automatically; batch-list what needs a decision. Organize handles due tickles (a concrete project tickle becomes a next action; anything else is queued in the inbox), so report what each due tickle **became**, not that it is due. **A scheduled (unattended) review never edits lists** (`references/automation-profiles.md`): there, due tickles are reported as candidates, not converted.
 - Compress the review into 3 kinds of output:
   - **Handled automatically**: mechanical cleanup, dedupe, drafts, filing.
   - **Suggested for confirmation**: delete / activate / cut project / add next action / follow up.
@@ -59,12 +59,13 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 - Go through `next-actions.md`: move what's done to the done record (`update/SKILL.md`'s "Done record"); delete what's no longer relevant; is each one still a valid next action?
 - Go through the **calendar (hard landscape)**: leftovers from last week / hard appointments coming this week. Read the external calendar provider first (preferred if reachable, see `references/capability-map.md`); only if all are unreachable, read the `calendar.md` fallback and note it may be incomplete. **Never copy the external calendar into calendar.md** (single fallback). Next week's 3 things must be checked against available time windows; if focus exceeds capacity, suggest deleting, deferring, delegating, or downgrading.
 - Go through `waiting-for.md`: which ones need a follow-up? Check each delegated date.
-- Go through `projects.md`: first ask **whether the project outcome has already been achieved**; if so, close it with `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, then the done record; never "Next actions: none"). For unfinished projects, ask whether each has at least one valid next-actions / waiting-for block link; keep only current actions that can run in parallel; fix stalled ones on the spot. Is the project outcome still wanted?
+- **Go through the tickler** (per-item; the prep pack's Tickler section): what came due and what organize turned it into; what comes due in the next 14 days and needs preparing now (a prep step is itself a next action); for each project on hold, ask once whether its date still holds and whether it's still committed (if not: re-date it, move it to someday-maybe, or cut it — on confirmation); any calendar conflicts organize flagged.
+- Go through `projects.md`: first ask **whether the project outcome has already been achieved**; if so, close it with `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, then the done record; never "Next actions: none"). For unfinished projects, ask whether each has at least one valid next-actions / waiting-for / tickle link (`references/list-definitions.md` "Stalled projects"; a tickled project is on hold, not stalled); keep only current actions that can run in parallel; fix stalled ones on the spot. Is the project outcome still wanted?
 - Go through `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? If missing, add a project or next action on the spot; don't let product opportunities sit as a cold-storage backlog.
 - Per-item layout: for each finished project `gtd_check.sh` reports as `done-no-aar`, offer once to draft its after-action review now or mark it skipped (`organize/SKILL.md`'s "Per-item layout").
 
 ### ③ Get Creative
-- Go through `someday-maybe.md`: has anything ripened enough to pull into active?
+- Go through `someday-maybe.md`: has anything ripened enough to pull into active? One you now commit to that can't start until a date becomes a tickle (per-item), not an active project with nothing to do yet.
 - Go through `product-ideas.md`: which product opportunities need more evidence, deletion, downgrading, or advancing to a PRD? This is product trade-off work, not the structural "is it visible" check.
 - Any new ideas / projects this week to add?
 
@@ -91,7 +92,8 @@ Principle: **preprocessing can be automatic; commitment decisions are not.** Wha
 ## Quality check
 - [ ] Inbox emptied to zero
 - [ ] "Done since last review" shown; problem-and-fix items offered for filing once
-- [ ] Completed projects closed with an AAR into the done record; every remaining project has at least one valid next-action block link (no stalled leftovers)
+- [ ] Completed projects closed with an AAR into the done record; every remaining project has at least one valid next action, waiting-for or tickle (no stalled leftovers)
+- [ ] Tickler reviewed (per-item): what came due reported as what it became; the next 14 days checked for prep; each on-hold project's date confirmed once
 - [ ] Every product idea has `GTD visibility` pointing to a project / next action
 - [ ] Waiting-for items due for a follow-up flagged
 - [ ] Did the Horizons check, not just horizontal clarifying

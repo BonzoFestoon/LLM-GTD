@@ -40,7 +40,7 @@ The state files in memory/gtd/ are plain markdown, shared by all three platforms
 <constraints>
 - memory/gtd/ is the user's operational state; never publish it to a public repo or knowledge index.
 - Don't touch the old memory/open loops.md / open-loops skill (legacy stays in place).
-- calendar.md holds only the hard landscape, never ordinary to-dos.
+- calendar.md holds only the hard landscape, never ordinary to-dos. The per-item tickler/ (committed work dated for when it becomes actionable) is local and never written to the calendar; a tickled project is on hold, not stalled.
 - Never skip the Weekly Review — without Reflect it isn't GTD.
 - Ask before destructive operations (deleting files / bulk moves).
 </constraints>

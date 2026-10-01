@@ -6,6 +6,7 @@
 # Usage:
 #   bash gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project SUBSTRING]
 #   bash gtd_list.sh done [--since YYYY-MM-DD] [--project SUBSTRING] [--problems]
+#   bash gtd_list.sh tickler [--due | --within N] [--project SUBSTRING]
 #
 # <list> is a bare list name: next-actions, waiting-for, projects, someday-maybe,
 # product-ideas, or reference (the folder-backed lists in per-item mode; reference/ sits at the
@@ -26,10 +27,16 @@
 #   projects       id  project=  name -- outcome
 #   reference      id  title
 #   done           id  completed=  result=  list=  project=  problems=  title
+#   tickler        id  tickle=  project=  title
 # Only `done` reads the done record (memory/gtd/_done/, or done.md in the single-file layout);
 # no active list ever includes a finished item. For done: --since keeps completed >= DATE,
 # --project matches the project link (or a finished project's own name), and --problems keeps
 # only items whose "Problems and fixes" records a real problem (problems=yes).
+# The tickler (memory/gtd/tickler/, per-item layout only) holds committed things that can't be
+# acted on until their tickle date. --due keeps tickles dated on or before today; --within N keeps
+# tickles dated after today and on or before today + N days (the two never overlap); a tickle with
+# no valid date matches neither. In the single-file layout, or with no tickler/ folder, it lists
+# nothing.
 #
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile) — see gtd_init.sh's note.
 
@@ -53,6 +60,8 @@ CONTEXT=""
 PROJECT=""
 SINCE=""
 PROBLEMS=0
+DUE=0
+WITHIN=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --max-time) MAX_TIME="$2"; shift 2 ;;
@@ -61,6 +70,8 @@ while [ $# -gt 0 ]; do
     --project) PROJECT="$2"; shift 2 ;;
     --since) SINCE="$2"; shift 2 ;;
     --problems) PROBLEMS=1; shift ;;
+    --due) DUE=1; shift ;;
+    --within) WITHIN="$2"; shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -130,6 +141,7 @@ case "$LIST" in
   product-ideas) COLUMNS="evidence" ;;
   projects) COLUMNS="project" ;;
   done) COLUMNS="completed result list project problems" ;;
+  tickler) COLUMNS="tickle project" ;;
   *) COLUMNS="" ;;
 esac
 
@@ -218,6 +230,42 @@ list_done_single() {
 
 if [ "$LIST" = "done" ]; then
   if [ -d "$GTD_DIR/_done" ]; then list_done_per_item; else list_done_single; fi
+  exit 0
+fi
+
+# --- tickler (per-item layout only) -------------------------------------------
+
+list_tickler() {
+  local dir="$GTD_DIR/tickler" f base id tickle project key val today until
+  [ "$GTD_LAYOUT" = "notes" ] && [ -d "$dir" ] || return 0
+  today="$(date +%Y-%m-%d)"
+  [ -z "$WITHIN" ] || until="$(gtd_days_ahead "$WITHIN")"
+  for f in "$dir"/*.md; do
+    [ -e "$f" ] || continue
+    base="$(basename "$f" .md)"
+    [ "$base" = "README" ] && continue
+    id="" tickle="" project=""
+    while IFS="$SEP" read -r key val; do
+      case "$key" in
+        id) id="$val" ;;
+        tickle) tickle="$val" ;;
+        project) project="$val" ;;
+      esac
+    done < <(frontmatter_kv "$f")
+    # YYYY-MM-DD compares as text.
+    if [ "$DUE" -eq 1 ]; then
+      gtd_is_date "$tickle" && [ ! "$tickle" \> "$today" ] || continue
+    fi
+    if [ -n "$WITHIN" ]; then
+      gtd_is_date "$tickle" && [ "$tickle" \> "$today" ] && [ ! "$tickle" \> "$until" ] || continue
+    fi
+    [ -z "$PROJECT" ] || echo "$project" | grep -qi -- "$PROJECT" || continue
+    emit "$id" "$base" "$tickle" "$project"
+  done
+}
+
+if [ "$LIST" = "tickler" ]; then
+  list_tickler
   exit 0
 fi
 

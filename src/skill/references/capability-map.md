@@ -21,6 +21,7 @@
 | Run the dashboard / init / review prep scripts | shell/script execution | If scripts are unavailable, read the lists manually |
 | Schedule the GTD automation cadence | Platform automation/reminder capability | Never hand-write unknown platform state; only output a handoff |
 | Read the hard landscape (calendar) | calendar provider adapter | If all providers are unreachable, read the `calendar.md` fallback |
+| Read the tickler | `scripts/gtd_list.sh tickler [--due \| --within N]` (per-item only) | Local only — never a calendar provider, never part of the calendar fallback chain |
 | Write a calendar event | calendar provider adapter create/update | Never claim done before the tool succeeds; on failure write the fallback |
 | Read approval radar | approval provider read-only adapter | If the provider is unreachable, state the gap and continue Engage |
 | Send messages / follow up / delegate to others | messaging provider | Draft only; confirmation required before sending |
@@ -37,6 +38,7 @@ The intent verbs above stay the same in both layouts; only the capability behind
 | Delete / minimally replace an item | Edit or remove the matching line | Edit or delete the matching note file |
 | Complete an item | Move the line under `done.md`'s completion date with its outcome sub-bullets | Move the note into `memory/gtd/_done/` with `completed`, `result`, `list`, and its outcome added to the frontmatter/body |
 | Close a project | Delete the block from `projects.md`; add a `- [x] Project: …` line with its AAR to `done.md` | AAR in the README, then move the whole folder to `memory/gtd/_done/<Project name>/` and rewrite links to it |
+| Read the tickler | — (no tickler in the single-file layout) | `gtd_list.sh tickler [--due \| --within N] [--project P]` |
 | Read the done record | Read `done.md` | `gtd_list.sh done [--since DATE] [--project P] [--problems]` (both layouts) |
 | Scan a list for stalled / orphaned / malformed items | `awk`/`grep` over the one file | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, stalled, field, duplicate, filename, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
 | Read a list's local rules before writing | Read the top of `memory/gtd/<list>.md` | Read `memory/gtd/<list>/README.md` |
@@ -62,6 +64,9 @@ When the hard landscape is needed (engage: today / review: this week):
 - `engage` before choosing a next action: read today's hard landscape and compute the free time window until the next hard appointment; filter next-actions by that window.
 - `review` before choosing next week's focus: scan next week's hard landscape and identify obvious overcommitment; give only renegotiation suggestions, never auto-schedule ordinary next-actions.
 - **Read each event's availability, not just its title or length.** When checking whether an event blocks time (any of the three judgments above), read that event's availability field (free/busy, "Show as" / transparency). An event marked free never blocks time, whatever its length or title. An event marked busy, or with no availability field at all, counts as a conflict. Never infer availability from a title, a guess, or a length alone.
+- **Tickle date conflicts** (organize, for tickles due in the next 30 days; review's capacity scan, for next week): a tickle has a date but no time, so it conflicts only when the hard landscape shows that **day** as blocked — an all-day event, or events spanning the working day, that count as busy under the rule above (travel, out of office, a full-day commitment). A busy one-hour meeting, or an all-day event marked free, is not a conflict. Flag it with a suggested date; never re-date it automatically. If all providers are unreachable, check the `calendar.md` fallback and say the check may be incomplete.
+
+**The tickler is never part of this contract.** `memory/gtd/tickler/` is a local list of when committed work becomes actionable, not appointments: it is never written to a calendar provider, never treated as fallback items, and never touched by organize's `calendar.md` reconcile.
 
 **Auto-write contract**:
 

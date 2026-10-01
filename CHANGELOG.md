@@ -2,6 +2,47 @@
 
 All notable changes.
 
+## v1.17.0 — Tickler for committed work that waits on a date (per-item layout)
+**New list: `memory/gtd/tickler/`.** Allen's tickler, one note per tickle, dated
+with `tickle:` for when it becomes actionable. It's for committed work that
+can't start until a date, which is neither someday/maybe (not committed) nor
+waiting-for (nobody owes it). Clarify gains the branch "committed, but can't
+act until a date → tickler"; a project that can't start yet keeps its folder
+and gets a tickle.
+
+**Stalled, defined once.** A project is in play when an open next action,
+waiting-for item, or tickle links to it; `list-definitions.md` now defines
+"stalled" explicitly and every other statement points to it. A tickled project
+is on hold on purpose: `gtd_check.sh`, the dashboard, and the review prep never
+call it stalled, organize never drafts a next action for it, and it isn't
+closed while a tickle still links it.
+
+**When the date arrives.** Organize moves a concrete project tickle into
+`next-actions/` and queues anything else in the inbox as a line linking the
+note (the note stays, so nothing is lost; clarify works on the note). It never
+queues the same tickle twice. Engage lists what came due first, whatever the
+calendar's reachability. The Weekly Review prep pack gains a Tickler section
+(due now, next 14 days, projects on hold), and Get Current asks once whether
+each on-hold date still holds; scheduled reviews only report.
+
+**Always local.** The tickler is never written to the external calendar and is
+never touched by organize's `calendar.md` reconcile; `calendar.md`'s contract is
+unchanged. Organize flags a tickle whose day the calendar shows as blocked
+(all-day or whole-workday busy) and suggests another date, never re-dating it.
+
+**Scripts.** `gtd_list.sh tickler [--due | --within N] [--project P]`;
+`gtd_check.sh` gives tickles the actions' project-link checks and adds
+`tickler-due` (with "queued in inbox") and `tickler-date`; `gtd_status.sh` shows
+`Tickler: N (M due)`; init creates `tickler/README.md` and, with `--with-bases`,
+`tickler.base`; new `templates/tickler-note.md`, and project READMEs embed the
+project's tickles.
+
+**Per-item only.** The single-file layout is unchanged and has no tickler.
+
+New evals E29-E35; the static gate gained a tickler fixture. The gate's
+migration E23 header check now compares bytes: under a UTF-8 locale, Git Bash's
+grep 3.0 missed lines containing 4-byte emoji.
+
 ## v1.16.0 — One note per item (opt-in), done record, after-action reviews
 **Opt-in per-item layout.** Next actions, waiting-for, projects, someday/maybe,
 and product ideas can each be a folder of one note per item, with the same
