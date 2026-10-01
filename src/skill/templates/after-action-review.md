@@ -4,7 +4,7 @@
 What the project set out to achieve, in one or two sentences.
 
 **What happened**
-Dated milestones, drawn from the project's `_done/` notes (or `done.md` lines, in single-file mode).
+Dated milestones, drawn from the project's `_done/` notes.
 
 **Problems and how they were overcome**
 Each real obstacle hit along the way, and the fix that worked — from the done notes' "Problems and fixes".

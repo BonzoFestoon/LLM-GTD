@@ -1,6 +1,6 @@
 ---
 name: gtd-init
-description: GTD skill scenario command · Set up / self-check the trusted system. Idempotently creates the memory/gtd/ eight core lists + adapter-layer self-check + read-only check / explicit install of the automation cadence + optional import of old open loops. First-run entry point.
+description: GTD skill scenario command · Set up / self-check the trusted system. Idempotently creates the memory/gtd/ eight core lists + adapter-layer self-check + read-only check / explicit install of the automation cadence. First-run entry point.
 parent: gtd-harness
 model-tier: balanced
 example: "Set up my GTD trusted system"
@@ -45,16 +45,10 @@ GTD only works with exactly one inbox per person. The canonical GTD folder is wh
    ```
    bash <this-skill>/scripts/gtd_init.sh --confirm-create
    ```
-   It creates the full set of `memory/gtd/` eight core lists (including the next-actions action pool compatibility skeleton and the Horizons template), self-checks the adapter layer, and does a read-only check of the automation cadence install status.
+   It creates `inbox.md`, `calendar.md` and `horizons.md` as files; `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, `tickler/` (committed work dated for when it becomes actionable) and `_done/` as folders, each with a `README.md` holding that list's rules and note format; and a `reference/` folder at the workspace root for general reference. Then it self-checks the adapter layer and does a read-only check of the automation cadence install status. Add `--with-bases` for starter Obsidian lens views (`next-actions.base`, `done.base`, `tickler.base`) — optional, nothing depends on them.
+   - **Single-file lists are refused.** If `memory/gtd/` still holds LLM-GTD 1.x single-file lists (`next-actions.md`, `projects.md`, …), every script, init included, refuses with exit 4 so no items become invisible. Those need the migration script from LLM-GTD 1.17.x (`gtd_migrate_to_notes.sh`, dry run first) — tell the user that, don't work around it.
 
-   **Per-item layout (opt-in)** — only when the user asks for one note per item (for example to filter by time / energy / context in Obsidian):
-   ```
-   bash <this-skill>/scripts/gtd_init.sh --confirm-create --layout notes [--with-bases]
-   ```
-   Creates `inbox.md`, `calendar.md` and `horizons.md` as files; `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, `tickler/` (per-item only: committed work dated for when it becomes actionable) and `_done/` as folders, each with a `README.md` holding that list's rules and note format; and a `reference/` folder at the workspace root for general reference. `--with-bases` adds starter Obsidian lens views (`next-actions.base`, `done.base`, `tickler.base`) — optional, nothing depends on them. Once created, later runs detect the layout by themselves; no flag needed.
-   - **Init never switches layouts.** If the folder already holds single-file lists (or per-item folders, for `--layout files`), the script refuses with exit 4 so no items become invisible. Switching an existing system needs the migration script from LLM-GTD 1.17.x (`gtd_migrate_to_notes.sh`, dry run first) — tell the user that, don't work around it.
-
-2. **Self-check only, no file writes**: `bash …/scripts/gtd_init.sh --status` (also prints the live layout, and warns if both layouts are present)
+2. **Self-check only, no file writes**: `bash …/scripts/gtd_init.sh --status`
 
    `--status` checks:
    - Whether the GTD skill source of truth and the three platform entry points are reachable.
@@ -70,20 +64,13 @@ GTD only works with exactly one inbox per person. The canonical GTD folder is wh
    - Install Session Clarify only when the user explicitly wants Codex sessions scanned automatically.
    - After installing, run `bash …/scripts/gtd_init.sh --status` to verify.
 
-4. **Optional one-time import of legacy data** (not run by default; the old `open loops.md` is read-only and never modified):
-   ```
-   bash <this-skill>/scripts/gtd_init.sh --import-legacy
-   ```
-   Maps the old self list → next-actions, waiting list → waiting-for, projects list → projects, and adds a marker to prevent duplicate imports. Imported items land in the "Needs light fields" section; clarify each one to add Time / Energy / Constraint.
-
-5. **Read the readiness report**: confirm the created / skipped counts, adapter self-check results, and automation cadence status, then guide the user to run their first `capture`.
+4. **Read the readiness report**: confirm the created / skipped counts, adapter self-check results, and automation cadence status, then guide the user to run their first `capture`.
 
 ## Quality check
-- [ ] Eight core lists all present (`bash …/scripts/gtd_status.sh` produces a dashboard); in the per-item layout, every list folder (including `tickler/`) and `_done/` has its `README.md`
-- [ ] Per-item layout only created when the user asked for it; an existing system in the other layout was left alone (exit 4) and pointed at the migration
+- [ ] Eight core lists all present (`bash …/scripts/gtd_status.sh` produces a dashboard); every list folder (including `tickler/`) and `_done/` has its `README.md`
+- [ ] A memory/gtd/ with 1.x single-file lists was left alone (exit 4) and the user pointed at the 1.17.x migration
 - [ ] Re-running only skips, never overwrites (idempotent)
 - [ ] `--status` gives a read-only report of Weekly Review / Monthly Reflect / Daily Engage install status
 - [ ] Automation created or modified only when the user explicitly requests `--install-cron` / initializing cron
 - [ ] In Codex, created / updated via `automation_update`, no hand-written automation files
-- [ ] If imported: the old `open loops.md` is byte-for-byte unchanged (compare `md5` before and after)
 - [ ] If the self-check reports "source of truth / entry point missing" → prompt to confirm the skill install path or that the plugin entry point is reachable

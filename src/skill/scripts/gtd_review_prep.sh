@@ -2,8 +2,8 @@
 # gtd_review_prep.sh — build a read-only weekly review prep pack; never modifies any list.
 # Usage: bash gtd_review_prep.sh [--since YYYY-MM-DD]
 #   --since: start of "Done since last review" (default: 7 days ago — pass the last review's date)
-# Works in both layouts: the per-item layout is read through gtd_list.sh / gtd_check.sh, never
-# by counting _done/ or README.md as open work.
+# Lists are read through gtd_list.sh / gtd_check.sh, never by counting _done/ or README.md as
+# open work.
 
 set -euo pipefail
 
@@ -25,15 +25,13 @@ if [ ! -d "$GTD_DIR" ]; then
   echo "memory/gtd/ does not exist. Run this skill's scripts/gtd_init.sh first"
   exit 1
 fi
+gtd_refuse_single_file
 
 list() {
   bash "$SCRIPT_DIR/gtd_list.sh" "$@"
 }
 
-NOTES=0
-[ "$GTD_LAYOUT" = "notes" ] && NOTES=1
-CHECK=""
-[ "$NOTES" -eq 1 ] && CHECK="$(bash "$SCRIPT_DIR/gtd_check.sh")"
+CHECK="$(bash "$SCRIPT_DIR/gtd_check.sh")"
 
 file() {
   printf "%s/%s" "$GTD_DIR" "$1"
@@ -44,60 +42,19 @@ section() {
   echo "## $1"
 }
 
+# Inbox lines to clarify.
 open_items() {
   local path="$1"
   if [ -f "$path" ]; then
-    grep -nE '^- \[ \] |^- ' "$path" 2>/dev/null || true
+    grep -nE '^- ' "$path" 2>/dev/null || true
   fi
 }
 
 stalled_projects() {
-  local f
-  if [ "$NOTES" -eq 1 ]; then
-    printf '%s\n' "$CHECK" | awk -F'\t' '$1 == "stalled" { p = $2; sub(/^projects\//, "", p); sub(/\/README\.md$/, "", p); print p }'
-    return 0
-  fi
-  f="$(file projects.md)"
-  [ -f "$f" ] || return 0
-  awk '
-    function has_action_link(line) {
-      return line ~ /\[\[(next-actions|waiting-for)#\^/
-    }
-    function invalid_next_heading(line) {
-      return line ~ /Next actions:([[:space:]]*)?(none|None|nothing|not needed|done|Done|completed|confirmed|N\/A)/
-    }
-    /^## / {
-      if (in_project && !has_valid_next) print project
-      in_project=1
-      has_valid_next=0
-      in_next_section=0
-      project=$0
-      sub(/^## /, "", project)
-      next
-    }
-    in_project && /^- Next actions:/ {
-      in_next_section=1
-      if (has_action_link($0)) {
-        has_valid_next=1
-      }
-      if (invalid_next_heading($0)) {
-        in_next_section=0
-      }
-      next
-    }
-    in_project && in_next_section && /^- / {
-      in_next_section=0
-    }
-    in_project && in_next_section && has_action_link($0) {
-      has_valid_next=1
-    }
-    END {
-      if (in_project && !has_valid_next) print project
-    }
-  ' "$f"
+  printf '%s\n' "$CHECK" | awk -F'\t' '$1 == "stalled" { p = $2; sub(/^projects\//, "", p); sub(/\/README\.md$/, "", p); print p }'
 }
 
-# Tickler (per-item only): "- title · date · project" lines from gtd_list.sh tickler [flags].
+# Tickler: "- title · date · project" lines from gtd_list.sh tickler [flags].
 tickle_lines() {
   list tickler "$@" | awk -F'\t' '{
     t = $2; sub(/^tickle=/, "", t)
@@ -129,17 +86,10 @@ projects_on_hold() {
 VAGUE_VERBS='(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)'
 
 vague_next_actions() {
-  local f
-  if [ "$NOTES" -eq 1 ]; then
-    list next-actions | awk -F'\t' '{ print $NF }' | grep -iE "$VAGUE_VERBS" | sed 's/^/- /' || true
-    return 0
-  fi
-  f="$(file next-actions.md)"
-  [ -f "$f" ] || return 0
-  grep -inE "^- \[ \] .*$VAGUE_VERBS" "$f" 2>/dev/null || true
+  list next-actions | awk -F'\t' '{ print $NF }' | grep -iE "$VAGUE_VERBS" | sed 's/^/- /' || true
 }
 
-# Per-item: open items of a folder list as "- title" lines (plus its key=value columns).
+# Open items of a list as "- title" lines (plus its key=value columns).
 list_items() {
   list "$1" | awk -F'\t' '{ line = "- " $NF; for (i = 2; i < NF; i++) if ($i !~ /=-$/) line = line " · " $i; print line }'
 }
@@ -181,15 +131,13 @@ else
   echo "None."
 fi
 
-if [ "$NOTES" -eq 1 ]; then
-  section "Hygiene findings (gtd_check.sh)"
-  # Stalled projects and due tickles have their own sections below.
-  findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' | grep -v '^tickler-due' || true)"
-  if [ -n "$findings" ]; then
-    echo "$findings" | awk -F'\t' '{ print "- " $1 ": " $2 " — " $3 }'
-  else
-    echo "None."
-  fi
+section "Hygiene findings (gtd_check.sh)"
+# Stalled projects and due tickles have their own sections below.
+findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' | grep -v '^tickler-due' || true)"
+if [ -n "$findings" ]; then
+  echo "$findings" | awk -F'\t' '{ print "- " $1 ": " $2 " — " $3 }'
+else
+  echo "None."
 fi
 
 section "Stalled Projects"
@@ -201,22 +149,20 @@ else
 fi
 
 section "Waiting For"
-if [ "$NOTES" -eq 1 ]; then waiting_items="$(list_items waiting-for)"; else waiting_items="$(open_items "$(file waiting-for.md)")"; fi
+waiting_items="$(list_items waiting-for)"
 if [ -n "$waiting_items" ]; then
   echo "$waiting_items"
 else
   echo "None."
 fi
 
-if [ "$NOTES" -eq 1 ]; then
-  section "Tickler"
-  echo "Due now (organize turns each into a next action, or queues it in the inbox for clarify):"
-  out="$(tickle_lines --due)"; echo "${out:-None.}"
-  echo "Next 14 days (anything to prepare now?):"
-  out="$(tickle_lines --within 14)"; echo "${out:-None.}"
-  echo "Projects on hold (does each date still hold?):"
-  out="$(projects_on_hold)"; echo "${out:-None.}"
-fi
+section "Tickler"
+echo "Due now (organize turns each into a next action, or queues it in the inbox for clarify):"
+out="$(tickle_lines --due)"; echo "${out:-None.}"
+echo "Next 14 days (anything to prepare now?):"
+out="$(tickle_lines --within 14)"; echo "${out:-None.}"
+echo "Projects on hold (does each date still hold?):"
+out="$(projects_on_hold)"; echo "${out:-None.}"
 
 section "Next Action hygiene"
 vague="$(vague_next_actions)"
@@ -228,7 +174,7 @@ else
 fi
 
 section "Someday/Maybe candidates"
-if [ "$NOTES" -eq 1 ]; then someday_items="$(list_items someday-maybe)"; else someday_items="$(open_items "$(file someday-maybe.md)")"; fi
+someday_items="$(list_items someday-maybe)"
 if [ -n "$someday_items" ]; then
   echo "$someday_items"
 else
@@ -240,8 +186,6 @@ echo "- Empty the inbox: clarify item by item to zero."
 echo "- Done since last review: for each problem solved, file its how-to to reference now or leave it for the project's after-action review."
 echo "- Stalled projects: add at least one concrete next action per project; attach several parallel actions if needed, or confirm cutting it."
 echo "- Waiting for: confirm which items to follow up on; AI can draft a neutral message first."
-if [ "$NOTES" -eq 1 ]; then
-  echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
-fi
+echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
 echo "- Next week's 3 things: AI proposes candidates; the user confirms."

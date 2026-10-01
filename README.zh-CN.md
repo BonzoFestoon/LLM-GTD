@@ -74,36 +74,37 @@ David Allen 给了我们管理承诺的操作系统。LLM-GTD 把这套操作系
 
 ## 可信状态
 
-LLM-GTD 的运行状态存在八个纯 Markdown 文件里：
+LLM-GTD 的运行状态以纯 Markdown 存在 `memory/gtd/` 里。存放事项的清单都是文件夹，每个事项一条笔记，字段写成 YAML 属性；inbox、calendar 兜底和 horizons 是单个文件：
 
-| 文件 | GTD 清单 | 用途 |
+| 路径 | GTD 清单 | 用途 |
 |---|---|---|
-| `memory/gtd/inbox.md` | Inbox | 零摩擦收集入口 |
-| `memory/gtd/next-actions.md` | Next Actions | 行动池中的具体单步行动，带预计时长 / 精力档 / 真实约束 |
-| `memory/gtd/projects.md` | Projects | 需要多步完成的成果，每个项目必须有当前下一步 |
-| `memory/gtd/waiting-for.md` | Waiting For | 委派或等待中的事项，记录人和约定 |
-| `memory/gtd/someday-maybe.md` | Someday/Maybe | 暂不承诺但不想忘掉的事 |
+| `memory/gtd/inbox.md` | Inbox | 零摩擦收集入口，每个事项一行 |
+| `memory/gtd/next-actions/` | Next Actions | 行动池中的具体单步行动，带预计时长 / 精力档 / 真实约束 |
+| `memory/gtd/projects/` | Projects | 每个需要多步完成的成果一个文件夹：README 加支持材料 |
+| `memory/gtd/waiting-for/` | Waiting For | 委派或等待中的事项，记录人和约定 |
+| `memory/gtd/tickler/` | Tickler | 已承诺、但要等到某个日期才能开始的事 |
+| `memory/gtd/someday-maybe/` | Someday/Maybe | 暂不承诺但不想忘掉的事 |
 | `memory/gtd/calendar.md` | Calendar fallback | 只放 hard landscape；外部 calendar provider不可达时才兜底 |
-| `memory/gtd/reference.md` | Reference | 无需行动的支持材料 |
+| `reference/`（工作区根目录） | Reference | 无需行动的知识，每个主题一条笔记 |
 | `memory/gtd/horizons.md` | Horizons | 目的、愿景、目标、责任领域、项目和跑道 |
 
-完成的事不会被删掉，而是带着简短的结果移到完成记录（`memory/gtd/done.md`）：做了什么、遇到了什么问题、怎么解决的。项目完成时先做一次简短的复盘（after-action review）。每周回顾会读完成记录；任何活跃清单和仪表盘计数都不会读它。
+每个清单文件夹里有一个 `README.md`，写着该清单的规则和笔记格式。你不需要手动打标签：clarify 填写属性，organize 修复属性。每个事项一条笔记，也意味着你可以在 Obsidian 里（桌面或手机）按时长、精力、情境筛选清单。
+
+完成的事不会被删掉，而是带着简短的结果移到完成记录（`memory/gtd/_done/`）：做了什么、遇到了什么问题、怎么解决的。项目完成时先做一次简短的复盘（after-action review），然后整个项目文件夹移过去。每周回顾会读完成记录；任何活跃清单和仪表盘计数都不会读它。
 
 没有数据库。没有隐藏状态。没有 vendor lock-in。文件就是文件。
 
-### 可选：每个事项一条笔记
-
-如果你想在 Obsidian 里（桌面或手机）按时长、精力、情境筛选清单，LLM-GTD 也可以把每个事项存成单独的笔记。Next actions、waiting-for、projects 和 someday/maybe 变成 `memory/gtd/` 下的文件夹，每个事项一条笔记，字段写成 YAML 属性。每个项目是一个文件夹，里面放它的 README 和支持材料。完成的事进入 `memory/gtd/_done/`，通用参考资料变成工作区根目录下的 `reference/` 文件夹。Inbox、calendar 和 horizons 仍是单个文件，收集方式不变。你不需要手动打标签：clarify 填写属性，organize 修复属性。
-
-所有命令都支持两种布局，并自动识别当前使用的是哪一种。从零开始使用笔记布局：
+初始化：
 
 ```bash
-bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
+bash <skill>/scripts/gtd_init.sh --confirm-create --with-bases
 ```
 
 `--with-bases` 会额外生成可选的 Obsidian Bases 视图（"15 min or less"、"Low energy"、"Errands"、"Done this week"），没有任何功能依赖它们。
 
-**Tickler（仅限每事项一条笔记的布局）。** 有些已承诺的事要等到某个日期才能开始：比如交易交割后才能开的账户，或者三月才决定的续约。它既不是 someday/maybe（你已经承诺了），也不是 waiting-for（没人欠你什么）。Clarify 把它放进 `memory/gtd/tickler/`，每条 tickle 一条笔记，带 `tickle:` 日期。被 tickle 链接的项目是有意搁置，不会被报告为停滞。到了日期，organize 把具体的项目 tickle 变成下一步行动，其余的放进 inbox 交给 clarify；engage 优先列出到期的事项，每周回顾会显示到期的、未来 14 天内的，以及每个搁置中的项目。Tickler 始终是本地的，从不写入外部日历。如果日历显示某个 tickle 的日期整天被占用，organize 会提示并建议另一个日期。
+**还在用 LLM-GTD 1.x 的单文件清单？** 2.0.0 只支持每个事项一条笔记。如果 `memory/gtd/` 里还有 `next-actions.md`、`projects.md` 这类文件，每个命令都会停下来提示。先安装 1.17.x，运行它的 `scripts/gtd_migrate_to_notes.sh`（先预演，再在干净的 git 工作区里加 `--apply`），然后再升级。
+
+**Tickler。** 有些已承诺的事要等到某个日期才能开始：比如交易交割后才能开的账户，或者三月才决定的续约。它既不是 someday/maybe（你已经承诺了），也不是 waiting-for（没人欠你什么）。Clarify 把它放进 `memory/gtd/tickler/`，每条 tickle 一条笔记，带 `tickle:` 日期。被 tickle 链接的项目是有意搁置，不会被报告为停滞。到了日期，organize 把具体的项目 tickle 变成下一步行动，其余的放进 inbox 交给 clarify；engage 优先列出到期的事项，每周回顾会显示到期的、未来 14 天内的，以及每个搁置中的项目。Tickler 始终是本地的，从不写入外部日历。如果日历显示某个 tickle 的日期整天被占用，organize 会提示并建议另一个日期。
 
 ## 它怎么工作
 
@@ -137,7 +138,7 @@ Capture、Clarify、Organize、Engage、Review 都是一等公民。
 agent 可以替换，状态和工作流留下来。
 
 **它把知识和行动分开。**
-行动进 GTD 的行动清单。不可执行的知识和想法默认进 `reference.md`——如果你自己维护一套笔记系统（比如 Zettelkasten），可以在 `personalized.md` 里把知识交接指向那里。
+行动进 GTD 的行动清单。不可执行的知识和想法默认进 `reference/`——如果你自己维护一套笔记系统（比如 Zettelkasten），可以在 `personalized.md` 里把知识交接指向那里。
 
 **它只在 AI 真有帮助的地方使用 AI。**
 起草具体下一步、发现停滞项目、清理清单结构，是好的 AI 任务。
@@ -303,11 +304,11 @@ CHANGELOG.md          项目更新日志
 
 - **Inbox 不是系统。** 它只是收集入口。
 - **下一步行动必须具体、可见。** “处理税务”不是 next action；“把 W-2 PDF 发给 CPA”才是。
-- **项目必须有正在推进的东西。** 当前下一步、waiting-for，或（每事项一条笔记的布局中）一个带日期的 tickle。三者都没有的项目就是停滞承诺。
+- **项目必须有正在推进的东西。** 当前下一步、waiting-for，或一个带日期的 tickle。三者都没有的项目就是停滞承诺。
 - **日历是神圣的。** 只有特定日期/时间才有意义的承诺放日历。
 - **每周回顾不能跳过。** 没有 review，GTD 会退化成任务堆。
 - **没有隐藏写入。** 日历写入和其它高后果动作必须确认。
-- **知识不是行动。** 笔记、洞察和研究属于知识系统，不属于 `next-actions.md`。
+- **知识不是行动。** 笔记、洞察和研究属于知识系统，不属于 `next-actions/`。
 
 ## 相关项目
 

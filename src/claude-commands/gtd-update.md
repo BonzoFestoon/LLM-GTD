@@ -26,10 +26,10 @@ $ARGUMENTS
 
 <process>
 Follow update/SKILL.md:
-1. First read the relevant lists: next-actions / projects / waiting-for (files or per-item folders); for scheduling, check the external calendar provider first.
-2. A next action that's clearly done → move it to the done record (done.md / _done/) with its outcome, and advance the related project, or close it with an after-action review.
+1. First read the relevant lists: next-actions / projects / waiting-for (via scripts/gtd_list.sh); for scheduling, check the external calendar provider first.
+2. A next action that's clearly done → move it to the done record (_done/) with its outcome, and advance the related project, or close it with an after-action review.
 3. A waiting-for reply → move the waiting item to the done record with what arrived, and clarify the reply into a next action, support material, or project closure.
 4. Changed event details → update the external calendar provider when uniquely identifiable; create an event if details are complete but none exists; ask one question if unsure.
-5. Cancellation / correction → project-linked work goes to the done record as cancelled; a standalone item or a tickle is deleted; corrections minimally replace the corresponding state. A tickle's date moved (per-item) → change its `tickle:`; a project with an open tickle isn't closed over it.
+5. Cancellation / correction → project-linked work goes to the done record as cancelled; a standalone item or a tickle is deleted; corrections minimally replace the corresponding state. A tickle's date moved → change its `tickle:`; a project with an open tickle isn't closed over it.
 6. After changing, always search or read back to verify, then report briefly.
 </process>

@@ -5,7 +5,7 @@ description: |
   Eight scenario commands: init (set up / self-check) · capture · clarify · update (status update) · organize · engage · review (Weekly Review) · help.
   Use when: GTD, task management, capture, clarify, updating task status, finishing a to-do, next actions, weekly review, organizing projects, mind sweep, closing out a session, mind like water, horizons of focus, gtd-harness.
   Also triggers on: "help me sort through these to-dos", "what should I do this week", "my head is a mess, help me empty it", "set up a GTD system".
-  Does not trigger on: pure knowledge / idea digestion (goes to reference.md, not an action list); ad-hoc notes about a single open loop (the old open-loops skill still works).
+  Does not trigger on: pure knowledge / idea digestion (goes to reference/, not an action list); ad-hoc notes about a single open loop (the old open-loops skill still works).
 model-tier: balanced
 example: "sort out my inbox"
 ---
@@ -19,18 +19,19 @@ example: "sort out my inbox"
 
 Core lists live in `memory/gtd/` as plain markdown; they are not bundled into the plugin and not added to the knowledge index.
 
-| File | Purpose |
+| List | Purpose |
 |---|---|
 | `inbox.md` | The single entry point for unclarified input |
-| `next-actions.md` | Action pool of clarified single-step actions |
-| `projects.md` | Desired outcomes that take >1 step |
-| `waiting-for.md` | Delegated / waiting on others |
+| `next-actions/` | Action pool of clarified single-step actions |
+| `projects/` | Desired outcomes that take >1 step; one folder per project |
+| `waiting-for/` | Delegated / waiting on others |
 | `calendar.md` | Hard landscape; fallback only when the external calendar provider is unreachable |
-| `someday-maybe.md` | Not committed yet, but not to be forgotten |
-| `reference.md` | Non-actionable reference / project support material / knowledge |
+| `tickler/` | Committed work dated for when it becomes actionable (a tickled project is on hold, not stalled) |
+| `someday-maybe/` | Not committed yet, but not to be forgotten |
+| `reference/` (workspace root) | Non-actionable reference / knowledge |
 | `horizons.md` | Six-horizon direction calibration |
 
-**Per-item layout (opt-in)**: if `memory/gtd/next-actions/` is a folder, next-actions / waiting-for / projects / someday-maybe are folders of one note per item (each with a `README.md` of rules), projects are folders, `tickler/` holds committed work dated for when it becomes actionable (per-item only; a tickled project is on hold, not stalled), finished work goes to `_done/`, and general reference is `reference/` at the workspace root. Inbox, calendar and horizons stay files. See `references/list-definitions.md` "Layouts".
+Each list folder holds one note per item plus a `README.md` of rules; finished work goes to `_done/`. See `references/list-definitions.md` "Layout".
 
 ## Routing
 
@@ -63,11 +64,11 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 - **One inbox per human.** GTD only works with exactly one inbox per person — never create or initialize a second `memory/gtd/`, including inside a project's own memory folder, just because the current project doesn't have one. If `memory/gtd/` can't be found here, that is not "not set up": ask the user whether GTD already exists somewhere else before ever running init. See `init/SKILL.md`'s "One inbox per human" rule.
 - Single input defaults to capture → clarify; a batch mind sweep captures everything first, then clarifies in bulk.
 - A product / feature idea is ordinary input: clarify it like anything else (committed → project + next action; not → someday-maybe).
-- `next-actions.md` is an action pool, not primarily grouped by `@computer/@calls`; new actions state Time / Energy / Constraint.
-- User declares something done → move it to the done record (`done.md` / `_done/`) with its outcome; project outcome achieved → after-action review, then move the project to the done record (`update/SKILL.md`).
+- `next-actions/` is an action pool, not grouped by context; new actions state time / energy / context.
+- User declares something done → move it to the done record (`_done/`) with its outcome; project outcome achieved → after-action review, then move the project to the done record (`update/SKILL.md`).
 - User reports a change in reality (done, reply, rescheduled, cancelled, correction) → use update, don't re-capture it as a new inbox item.
 - The calendar is hard landscape; ordinary to-dos must not go into `calendar.md`.
-- Knowledge / ideas with no commitment → file to `reference.md`; don't write to GTD action lists.
+- Knowledge / ideas with no commitment → file to `reference/`; don't write to GTD action lists.
 - `memory/gtd/personalized.md` may hold local preferences and private mappings (including redirecting the knowledge hand-off to a different system); the general skill does not depend on it.
 - **Model check**: before a command's own work, compare the session's current model against its `model-tier` frontmatter using `references/model-guidance.md`; below tier, say so in one line and ask once whether to continue (capture is the exception — it always writes to the inbox first, see `capture/SKILL.md`). Skip silently if the model is unknown. See `references/model-guidance.md` for the full rule.
 

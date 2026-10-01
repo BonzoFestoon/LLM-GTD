@@ -40,6 +40,6 @@ $ARGUMENTS
    - When the user reports a change that already happened, prefer update; don't re-capture.
    - When the sentence itself is new input / a new commitment, prefer capture → clarify; don't lecture on GTD theory first.
    - For `/gtd help me empty my head` or an empty `/gtd`, enter capture's mind-sweep flow and first ask the user to dump everything line by line.
-   - Pure knowledge / ideas with no commitment are filed to reference.md via the clarify gate and not written to GTD action lists.
+   - Pure knowledge / ideas with no commitment are filed to reference/ via the clarify gate and not written to GTD action lists.
 4. Ask one short question only when "action vs knowledge" or the "desired outcome" can't be determined; don't make the user pick a specific subcommand.
 </process>

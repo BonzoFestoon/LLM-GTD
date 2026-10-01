@@ -4,7 +4,7 @@
 
 ## 0. AI review prep pack (let the system do the grunt work first)
 - [ ] Run `scripts/gtd_review_prep.sh` to get overall counts + risk items + confirmation queue
-- [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection (per-item layout: from `gtd_check.sh`, including finished projects still missing an after-action review), and due tickles (per-item: a concrete project tickle becomes a next action, anything else is queued in the inbox; a scheduled review only reports them)
+- [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection (from `gtd_check.sh`, including finished projects still missing an after-action review), and due tickles (a concrete project tickle becomes a next action, anything else is queued in the inbox; a scheduled review only reports them)
 - [ ] Generate candidates: to delete / needing a next action / needing a follow-up / someday items that could be activated / next week's 3 things
 - [ ] Mark which items the AI already handled and which must be confirmed by the user
 
@@ -13,15 +13,15 @@
 - [ ] Empty `inbox.md`: clarify item by item to zero
 
 ## ② Get Current
-- [ ] `next-actions.md`: move what's done to the done record; delete what's no longer relevant; is each still a valid next action?
+- [ ] `next-actions/`: move what's done to the done record; delete what's no longer relevant; is each still a valid next action?
 - [ ] `calendar.md`: look back at last week (any loose ends?) + look ahead at this week (are hard appointments prepared?)
-- [ ] `waiting-for.md`: check each delegated date — which ones need a follow-up?
-- [ ] Tickler (per-item): what came due and what it became; the next 14 days (anything to prepare now?); each project on hold — does its date still hold, is it still committed?; calendar conflicts organize flagged
+- [ ] `waiting-for/`: check each delegated date — which ones need a follow-up?
+- [ ] Tickler: what came due and what it became; the next 14 days (anything to prepare now?); each project on hold — does its date still hold, is it still committed?; calendar conflicts organize flagged
 - [ ] Done since last review (`gtd_list.sh done --since <last review date>`): wins first, then each item whose outcome records a problem: file its how-to to reference now, or leave it for the project's after-action review
-- [ ] `projects.md`: first close projects whose outcome is achieved (AAR, then the done record: update's "Project close"); confirm each remaining project has at least one valid next action, waiting-for or tickle (a tickled project is on hold, not stalled); keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
+- [ ] `projects/`: first close projects whose outcome is achieved (AAR, then the done record: update's "Project close"); confirm each remaining project has at least one valid next action, waiting-for or tickle (a tickled project is on hold, not stalled); keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
 
 ## ③ Get Creative
-- [ ] `someday-maybe.md`: has anything ripened to pull into active? Delete what's outdated
+- [ ] `someday-maybe/`: has anything ripened to pull into active? Delete what's outdated
 - [ ] Any new ideas / projects to add this week?
 
 ## ④ Horizons check (vertical focus)

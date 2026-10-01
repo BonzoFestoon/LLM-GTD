@@ -83,36 +83,37 @@ engage and review stay human-led.**
 
 ## The Trusted State
 
-LLM-GTD stores its operating state in eight plain Markdown files:
+LLM-GTD stores its operating state as plain Markdown in `memory/gtd/`. Each list that holds items is a folder with one note per item, its fields as YAML properties; the inbox, calendar fallback, and horizons are single files:
 
-| File | GTD list | Purpose |
+| Path | GTD list | Purpose |
 |---|---|---|
-| `memory/gtd/inbox.md` | Inbox | zero-friction capture sink |
-| `memory/gtd/next-actions.md` | Next Actions | concrete single-step actions in an action pool, with time, energy, and real constraints |
-| `memory/gtd/projects.md` | Projects | outcomes that require more than one action, each with a current next action |
-| `memory/gtd/waiting-for.md` | Waiting For | delegated or pending items, with person and agreement |
-| `memory/gtd/someday-maybe.md` | Someday/Maybe | things you do not commit to now but do not want to lose |
+| `memory/gtd/inbox.md` | Inbox | zero-friction capture sink, one line per item |
+| `memory/gtd/next-actions/` | Next Actions | concrete single-step actions in an action pool, with time, energy, and real constraints |
+| `memory/gtd/projects/` | Projects | one folder per outcome that needs more than one action: its README plus its support material |
+| `memory/gtd/waiting-for/` | Waiting For | delegated or pending items, with person and agreement |
+| `memory/gtd/tickler/` | Tickler | committed work that can't start until a date |
+| `memory/gtd/someday-maybe/` | Someday/Maybe | things you do not commit to now but do not want to lose |
 | `memory/gtd/calendar.md` | Calendar fallback | hard landscape only, used only when the real calendar is unavailable |
-| `memory/gtd/reference.md` | Reference | non-actionable support material |
+| `reference/` (workspace root) | Reference | non-actionable knowledge, one note per topic |
 | `memory/gtd/horizons.md` | Horizons | purpose, vision, goals, areas, projects, and runway |
 
-Finished work isn't deleted. It moves to a done record (`memory/gtd/done.md`) with a short outcome: what was done, what got in the way, and how you got past it. A finished project gets a brief after-action review first. The Weekly Review reads the done record, and no active list or dashboard count ever does.
+Each list folder has a `README.md` with its rules and note format. You never tag anything by hand: clarify fills the properties and organize repairs them. One note per item also means you can filter the lists in Obsidian, by time, energy, or context, on desktop or phone.
+
+Finished work isn't deleted. It moves to a done record (`memory/gtd/_done/`) with a short outcome: what was done, what got in the way, and how you got past it. A finished project gets a brief after-action review first, then its whole folder moves there. The Weekly Review reads the done record, and no active list or dashboard count ever does.
 
 No database. No hidden app state. No vendor lock-in. A file is a file.
 
-### Optional: one note per item
-
-If you'd rather filter your lists in Obsidian (by time, energy, or context, on desktop or phone), LLM-GTD can keep each item as its own note instead. Next actions, waiting-for, projects, and someday/maybe become folders under `memory/gtd/`, one note per item, with the same fields as YAML properties. Each project is a folder that holds its README and support material. Finished work goes to `memory/gtd/_done/`, and general reference becomes a `reference/` folder at the workspace root. The inbox, calendar, and horizons stay single files, so capture is unchanged. You never tag anything by hand: clarify fills the properties and organize repairs them.
-
-Every command works in both layouts and detects which one is live. To start fresh with notes:
+To set it up:
 
 ```bash
-bash <skill>/scripts/gtd_init.sh --confirm-create --layout notes --with-bases
+bash <skill>/scripts/gtd_init.sh --confirm-create --with-bases
 ```
 
 `--with-bases` adds optional Obsidian Bases lens views ("15 min or less", "Low energy", "Errands", "Done this week"). Nothing depends on them.
 
-**The tickler (per-item layout only).** Some committed work can't start until a date: an account you can open only after a trade settles, a renewal you'll decide in March. That is neither someday/maybe (you've committed) nor waiting-for (nobody owes it to you). Clarify files it in `memory/gtd/tickler/`, one note per tickle with a `tickle:` date. A project linked from a tickle is on hold on purpose, so it is never reported as stalled. When the date arrives, organize turns a concrete project tickle into a next action and queues anything else in the inbox for clarify; engage lists what came due first, and the Weekly Review shows what's due, what's coming in the next 14 days, and each project on hold. The tickler is always local: it is never written to your external calendar. Organize flags a tickle whose date the calendar shows as blocked, and suggests another date.
+**Coming from LLM-GTD 1.x single-file lists?** Version 2.0.0 keeps one note per item only. If `memory/gtd/` still holds `next-actions.md`, `projects.md` and friends, every command stops and says so. Install 1.17.x, run its `scripts/gtd_migrate_to_notes.sh` (dry run, then `--apply` on a clean git tree), then upgrade.
+
+**The tickler.** Some committed work can't start until a date: an account you can open only after a trade settles, a renewal you'll decide in March. That is neither someday/maybe (you've committed) nor waiting-for (nobody owes it to you). Clarify files it in `memory/gtd/tickler/`, one note per tickle with a `tickle:` date. A project linked from a tickle is on hold on purpose, so it is never reported as stalled. When the date arrives, organize turns a concrete project tickle into a next action and queues anything else in the inbox for clarify; engage lists what came due first, and the Weekly Review shows what's due, what's coming in the next 14 days, and each project on hold. The tickler is always local: it is never written to your external calendar. Organize flags a tickle whose date the calendar shows as blocked, and suggests another date.
 
 ## How It Works
 
@@ -146,7 +147,7 @@ Capture, clarify, update, organize, engage, and review are all first-class.
 The agent can be replaced. The state and workflow remain.
 
 **It keeps knowledge and action separate.**
-Actions go to GTD's action lists. Non-actionable knowledge and ideas go to `reference.md` by default — point `personalized.md` at a separate note system (such as a Zettelkasten) instead if you run one.
+Actions go to GTD's action lists. Non-actionable knowledge and ideas go to `reference/` by default — point `personalized.md` at a separate note system (such as a Zettelkasten) instead if you run one.
 
 **It uses AI where AI actually helps.**
 Drafting a concrete next action, finding stale projects, and cleaning list structure are good AI jobs.
@@ -343,11 +344,11 @@ CHANGELOG.md          project changelog
 
 - **The inbox is not the system.** It is only the capture sink.
 - **A next action must be physical and concrete.** "Handle taxes" is not a next action. "Email CPA the W-2 PDF" is.
-- **Projects must have something in play.** A current next action, a waiting-for, or (per-item layout) a dated tickle. A project with none of them is a stalled promise.
+- **Projects must have something in play.** A current next action, a waiting-for, or a dated tickle. A project with none of them is a stalled promise.
 - **Calendar is sacred.** Only time-specific commitments belong there.
 - **Weekly review is not optional.** Without review, GTD decays into a task pile.
 - **No hidden writes.** Calendar writes and other high-consequence actions need confirmation.
-- **Knowledge is not action.** Notes, insights, and research belong in your knowledge system, not in `next-actions.md`.
+- **Knowledge is not action.** Notes, insights, and research belong in your knowledge system, not in `next-actions/`.
 
 ## Related Work
 

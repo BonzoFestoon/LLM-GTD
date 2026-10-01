@@ -12,37 +12,36 @@ such a system; this repo implements it as a portable, AI-native harness.
 
 ### Layer 0 — State (the trusted system)
 `memory/gtd/` holds eight plain-markdown lists. Plain files = **zero adaptation** across platforms;
-a file is a file. Lists are physically separated (Allen's rule) so each stays single-purpose. Two
-layouts hold the same lists and the same rules — only the storage shape differs:
+a file is a file. Lists are physically separated (Allen's rule) so each stays single-purpose:
 
-| file | list | note |
+| path | list | note |
 |---|---|---|
 | `inbox.md` | Inbox | capture sink, zero judgment |
-| `next-actions.md` | Next Actions | **kept in an action pool with lightweight context signals** (time / energy / real constraint lenses, with legacy @context compatibility) |
-| `projects.md` | Projects | outcome (>1 step) + a current next action; closed project blocks are deleted |
-| `waiting-for.md` | Waiting For | delegated/pending, with person + agreement |
-| `someday-maybe.md` | Someday/Maybe | incubating; monthly re-eval |
+| `next-actions/` | Next Actions | **an action pool with lightweight context signals** (time / energy / real constraint lenses) |
+| `projects/` | Projects | one folder per outcome (>1 step): README + support material; a current next action links to it |
+| `waiting-for/` | Waiting For | delegated/pending, with person + agreement |
+| `someday-maybe/` | Someday/Maybe | incubating; monthly re-eval |
 | `calendar.md` | Calendar | hard landscape only; an available calendar provider wins when connected |
-| `reference.md` | Reference | non-actionable + project support material |
+| `reference/` | Reference | non-actionable knowledge, at the workspace root |
 | `horizons.md` | Horizons | the six Horizons of Focus (purpose → runway) |
 
-**Single-file (default)** is the table above: one list, one file. **Per-item (opt-in)** turns
-`next-actions`, `waiting-for`, `projects`, and `someday-maybe` into folders of
-one-commitment-per-note files with the same fields as YAML frontmatter (a project is itself a folder,
-holding its README and its support material), plus a `_done/` record folder for finished work with
-its outcome — nothing here is deleted outright anymore, so an after-action review has raw material to
-draw on. `reference.md` becomes a `reference/` folder at the workspace root, outside `memory/gtd/`:
-general knowledge that GTD files into but that isn't GTD state. `inbox.md`, `calendar.md`,
-`horizons.md`, and `personalized.md` always stay single files. The per-item layout also has a
-`tickler/` folder (Allen's tickler): committed work that can't be acted on until a date, one note per
-tickle; a project linked from a tickle is on hold, not stalled, and on the date organize turns the
-tickle into a next action or queues it in the inbox. It is always local, never on the external calendar. `gtd_init.sh --layout notes` sets it up. Layout is auto-detected from whether `next-actions/`
-exists as a directory; a new read-only script, `gtd_list.sh`, gives the rest of the harness one
-compact-line-per-item view regardless of which layout is live, so nothing else has to special-case
-storage shape; its sibling `gtd_check.sh` reports organize's mechanical findings (orphans, stalled
-projects, bad properties, duplicates, unsafe filenames, `_done/` gaps) without fixing anything. The
-dashboard and review prep scripts read either layout. Full folder structure, note formats, and the done/AAR record are in
-`references/list-definitions.md`.
+Every list that holds items is a folder of one-commitment-per-note files with their fields as YAML
+frontmatter (a project is itself a folder, holding its README and its support material), plus a
+`_done/` record folder for finished work with its outcome — nothing is deleted outright, so an
+after-action review has raw material to draw on. `reference/` sits at the workspace root, outside
+`memory/gtd/`: general knowledge that GTD files into but that isn't GTD state. `inbox.md`,
+`calendar.md`, `horizons.md`, and `personalized.md` are single files. There is also a `tickler/`
+folder (Allen's tickler): committed work that can't be acted on until a date, one note per tickle; a
+project linked from a tickle is on hold, not stalled, and on the date organize turns the tickle into
+a next action or queues it in the inbox. It is always local, never on the external calendar.
+`gtd_init.sh --confirm-create` sets it all up. A read-only script, `gtd_list.sh`, gives the rest of
+the harness one compact line per item, so nothing else has to open every note; its sibling
+`gtd_check.sh` reports organize's mechanical findings (orphans, stalled projects, bad properties,
+duplicates, unsafe filenames, tickler dates, `_done/` gaps) without fixing anything. LLM-GTD 1.x also
+had a single-file layout (one `.md` per list); 2.0.0 dropped it, and every script refuses a
+`memory/gtd/` that still holds those files rather than half-read it. Full folder structure, note
+formats, and the done/AAR record are in `references/list-definitions.md`.
+
 
 ### Layer 1 — Logic (the workflow)
 `skill/SKILL.md` (navigation) + eight sub-command `SKILL.md` files. Written in **intent language**
@@ -77,5 +76,5 @@ It updates existing state and advances the project; it is not another inbox.
 ## Self-initialization
 
 `init` is a first-class command: `gtd_init.sh` idempotently creates the eight lists, self-checks the
-adapter wiring, and (optionally, `--import-legacy`) imports from a pre-existing todo file read-only.
+adapter wiring, and refuses to run over a 1.x single-file system rather than hide its items.
 A harness that can't bootstrap itself isn't a harness.

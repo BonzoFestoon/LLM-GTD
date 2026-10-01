@@ -28,7 +28,7 @@ Daily Engage is Allen's Engage, not Review. It answers only "how to use the next
 Must do:
 - Read the hard landscape: prefer the preferred calendar provider; if unreachable, fall back along the fallback provider chain; if all are unreachable, read `calendar.md` and state the limitation.
 - Compute the current / first available time window; if it conflicts with the time the user states, use the smaller one.
-- Per-item layout: list due tickles first (`gtd_list.sh tickler --due`), as `engage/SKILL.md` does, whatever the calendar's reachability.
+- List due tickles first (`gtd_list.sh tickler --due`), as `engage/SKILL.md` does, whatever the calendar's reachability.
 - Filter the action pool by the four criteria: context / time / energy / priority.
 - Scan Approval Radar: keep only approval items needing action or with status changes; if none, write "no approval actions today".
 - Output a capacity judgment: green / yellow / red; when overloaded, only suggest delete, defer, delegate, downgrade.
@@ -44,7 +44,7 @@ Must not do:
 When the runtime has an approval provider capability, Daily Engage reads the corresponding approval provider adapter and does a read-only scan:
 
 1. First check whether the approval provider adapter is available; never output tokens or secrets.
-2. Scan approvals submitted by the current user, focusing on in-progress instances and approval ids recorded in GTD `waiting-for.md` / `reference.md`.
+2. Scan approvals submitted by the current user, focusing on in-progress instances and approval ids recorded in GTD `waiting-for/` / `reference/`.
 3. Scan approvals submitted by others that need the current user's confirmation; if read-only permission is missing, report the gap only and never attempt to authorize automatically.
 4. If an approval status change affects GTD truth, you may conservatively update waiting-for/reference: e.g. from "waiting for approval" to "check payment received on the agreed date"; but never treat an intermediate state as done.
 

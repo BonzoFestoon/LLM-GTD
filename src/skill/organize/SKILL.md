@@ -16,7 +16,7 @@ example: "Clean up my GTD lists"
 - Automatically before engage, so stalled projects don't slip through.
 - Automatically during review's Get Current stage.
 - After the external calendar provider comes back from unreachable to reachable, to reconcile `calendar.md` fallback items.
-- When a tickle has come due (per-item layout; `gtd_status.sh` says "tickle(s) now actionable").
+- When a tickle has come due (`gtd_status.sh` says "tickle(s) now actionable").
 - Monthly re-evaluation of someday-maybe.
 - When the user asks for `/gtd-organize` directly, or for cleaning up structure, stuck projects, duplicates, or re-filing contexts / constraints.
 
@@ -30,27 +30,27 @@ example: "Clean up my GTD lists"
 
 | Category | Can do automatically | Needs user confirmation |
 |---|---|---|
-| Orphans | Detect next-action / project broken links; add the block link when there's a unique match | Several possible owners or unclear result |
+| Orphans | Detect actions / tickles whose `project:` link is broken; re-link when there's a unique match | Several possible owners or unclear result |
 | Completed projects | Outcome clearly achieved and no next action or tickle still links it → close it through `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, done record) | Unsure whether the outcome is achieved; whether to cut the project; a tickle still links it |
 | Stalled projects | Draft one concrete next action and attach it to the project. Stalled = no open next action, waiting-for or tickle links it (`references/list-definitions.md` "Stalled projects"); a project on hold (a tickle links it) is never given a drafted next action | Can't draft one; the commitment needs to change |
-| Tickler (per-item) | A due tickle linked to a project whose body is a concrete action → move the note to `next-actions/` (drop `tickle`, fill time / energy / context, keep `project:`). Any other due tickle (standalone, or too vague to be an action) → one inbox pointer, `- Tickle due: <title> → [[tickler/<title>]] · Captured: YYYYMMDD`, the note left in place for clarify; never a second pointer while one exists | A tickle's project is closed or missing; its date is malformed; its date conflicts with the calendar (flag + suggested date, never re-date) |
-| Constraint / lens hygiene | Fill clearly missing Time / Energy / Constraint; treat legacy @ groups as compatibility signals | Needs the user to judge setting or priority |
+| Tickler | A due tickle linked to a project whose body is a concrete action → move the note to `next-actions/` (drop `tickle`, fill time / energy / context, keep `project:`). Any other due tickle (standalone, or too vague to be an action) → one inbox pointer, `- Tickle due: <title> → [[tickler/<title>]] · Captured: YYYYMMDD`, the note left in place for clarify; never a second pointer while one exists | A tickle's project is closed or missing; its date is malformed; its date conflicts with the calendar (flag + suggested date, never re-date) |
+| Constraint / lens hygiene | Fill clearly missing time / energy / context | Needs the user to judge setting or priority |
 | Stale checkmarks / duplicates | Clean up completed leftovers and obvious duplicates | Looks duplicated but means something different |
 | Calendar fallback | Delete fallback items confirmed in the external calendar; move ordinary to-dos back to next-actions | External calendar unreachable, expired with unclear status, conflict / possible duplicate |
 | Someday-maybe | Flag ripe candidates | Whether to activate / delete |
 
 ## Workflow
 
-1. Scan the `memory/gtd/` core lists. **Per-item layout**: run `scripts/gtd_check.sh` for the mechanical findings and `scripts/gtd_list.sh <list>` for the contents; open individual notes only to fix them (see "Per-item layout" below).
+1. Scan the `memory/gtd/` core lists: run `scripts/gtd_check.sh` for the mechanical findings and `scripts/gtd_list.sh <list>` for the contents; open individual notes only to fix them (see "Fixing gtd_check.sh findings" below).
 2. Use `list-definitions.md` to check whether each item is in the right list; move mechanical misfilings directly and collect unclear ones.
-3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (per-item: `gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it) is in play: never draft a next action for it or call it stalled.
-4. Fill light fields on next-actions: Time / Energy / Constraint; keep legacy `@computer/@calls` only as tool-constraint signals.
-5. **Tickler** (per-item): handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox"; then check tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
+3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (`gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it) is in play: never draft a next action for it or call it stalled.
+4. Fill light fields on next-actions: time / energy / context.
+5. **Tickler**: handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox"; then check tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
 6. Reconcile `calendar.md` fallback items against external calendar provider reachability; delete the local copy once successfully externalized, otherwise keep it and surface it. This covers `calendar.md` only: the tickler is never reconciled, exported or deleted here.
 7. Do the monthly re-evaluation of someday-maybe.
 8. Output a one-line summary of what was handled automatically + one batch of questions needing confirmation; don't interrupt item by item. Name each tickler result, e.g. "Tickler: 2 now actionable → 1 next action for <Project>, 1 queued in the inbox; 1 date conflict to confirm".
 
-## Per-item layout
+## Fixing gtd_check.sh findings
 
 `gtd_check.sh` finds; organize fixes. Before changing notes in a list, read that list's `README.md`. Each finding maps to a row of the table above:
 
@@ -69,15 +69,15 @@ example: "Clean up my GTD lists"
 | `done-no-aar` | — | List once for the next Weekly Review: draft the AAR, or write `Skipped (YYYY-MM-DD).` under the heading so it isn't listed again |
 | `done-link` | Rewrite `project:` to `"[[_done/<Name>/README\|<Name>]]"` | — |
 
-Never move a note into `_done/` from organize (that's `update/SKILL.md`), and never count `_done/` notes as open work. The single-file checks above still apply to `inbox.md` and `calendar.md`, which stay files in both layouts.
+Never move a note into `_done/` from organize (that's `update/SKILL.md`), and never count `_done/` notes as open work. `inbox.md` and `calendar.md` are files, checked by reading them directly.
 
 ## Quality check
 
 - [ ] Read `references/list-definitions.md` first and did not duplicate another set of list definitions in this file
 - [ ] Mechanical issues (orphans, missing light fields, stale checkmarks, obvious duplicates) fixed automatically and summarized
-- [ ] Completed projects closed through update's Project close (AAR + done record); unfinished projects have a valid next-action / waiting-for block link or are listed for confirmation
+- [ ] Completed projects closed through update's Project close (AAR + done record); unfinished projects have a linked next action, waiting-for item or tickle, or are listed for confirmation
 - [ ] `calendar.md` reconciled: synced items removed, ordinary to-dos re-filed, unconfirmed hard appointments kept and surfaced
-- [ ] Tickler (per-item): due tickles moved to `next-actions/` or queued in the inbox once; no project with a tickle given a drafted next action or called stalled; no tickle exported or touched by the calendar reconcile; date conflicts surfaced, never re-dated
-- [ ] Per-item layout: every `gtd_check.sh` finding either fixed or in the confirmation batch; `README.md` never treated as an item
+- [ ] Tickler: due tickles moved to `next-actions/` or queued in the inbox once; no project with a tickle given a drafted next action or called stalled; no tickle exported or touched by the calendar reconcile; date conflicts surfaced, never re-dated
+- [ ] Every `gtd_check.sh` finding either fixed or in the confirmation batch; `README.md` never treated as an item
 - [ ] Judgment calls asked in a batch; no commitment decisions made for the user
 - [ ] No high-consequence actions taken such as sending messages, automatic approvals, or unconfirmed external writes

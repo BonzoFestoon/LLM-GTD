@@ -25,26 +25,26 @@ else
   fi
 fi
 
-# Layout (see references/list-definitions.md "Layouts"):
-#   notes — per-item: one folder of notes per list (memory/gtd/next-actions/ exists)
-#   files — single-file: one .md file per list (the default)
-# GTD_LAYOUT=notes|files overrides detection, for testing or forcing a mode.
-case "${GTD_LAYOUT:-}" in
-  notes|files) ;;
-  "")
-    if [ -d "$GTD_WORKSPACE_ROOT/memory/gtd/next-actions" ]; then
-      GTD_LAYOUT=notes
-    else
-      GTD_LAYOUT=files
-    fi
-    ;;
-  *) echo "GTD_LAYOUT must be 'notes' or 'files' (got: $GTD_LAYOUT)" >&2; exit 2 ;;
-esac
+# Layout (see references/list-definitions.md "Layout"): one folder of notes per list under
+# memory/gtd/, plus the inbox, calendar and horizons as files. This is the only layout since 2.0.0.
 
 # Per-item lists: one folder each under memory/gtd/. General reference is not one of them —
-# in the per-item layout it lives at the workspace root (reference/), outside memory/gtd/.
-# The tickler exists only in the per-item layout (no single-file tickler.md).
+# it lives at the workspace root (reference/), outside memory/gtd/.
 GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe tickler"
+
+# gtd_refuse_single_file — stop if memory/gtd/ still holds LLM-GTD 1.x single-file lists. Every
+# command would silently miss their items, so refuse with the way out instead of half-reading them.
+gtd_refuse_single_file() {
+  local l found=""
+  for l in next-actions waiting-for projects someday-maybe reference done; do
+    [ -f "$GTD_WORKSPACE_ROOT/memory/gtd/$l.md" ] && found="$found $l.md"
+  done
+  [ -z "$found" ] && return 0
+  echo "LLM-GTD: memory/gtd/ holds single-file lists (${found# })." >&2
+  echo "  Since 2.0.0 LLM-GTD keeps one note per item only. Migrate first with LLM-GTD 1.17.x's" >&2
+  echo "  scripts/gtd_migrate_to_notes.sh (dry run, then --apply), then run this again." >&2
+  exit 4
+}
 
 # gtd_days_ago N — the date N days before today as YYYY-MM-DD (GNU date, then BSD/macOS date).
 gtd_days_ago() {
