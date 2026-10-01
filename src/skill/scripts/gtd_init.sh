@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# gtd_init.sh — idempotently build the GTD trusted system (memory/gtd/ eight core lists + product-ideas extension list) + adapter self-check + read-only automation cadence check
+# gtd_init.sh — idempotently build the GTD trusted system (memory/gtd/ eight core lists) + adapter self-check + read-only automation cadence check
 #
 # Usage:
 #   bash gtd_init.sh                  # REFUSES to create anything without --confirm-create (exit 3); prints where it would create the lists so the agent can ask the user first
-#   bash gtd_init.sh --confirm-create # after the user has confirmed: idempotently create the eight core lists + product-ideas extension list + self-check + read-only automation check (existing files are never overwritten)
+#   bash gtd_init.sh --confirm-create # after the user has confirmed: idempotently create the eight core lists + self-check + read-only automation check (existing files are never overwritten)
 #   bash gtd_init.sh --import-legacy  # combine with --confirm-create: also do a one-time import from the old memory/open loops.md (old file is not modified)
 #   bash gtd_init.sh --status         # self-check, read-only automation check, and readiness report only; writes no files, never requires --confirm-create
 #   bash gtd_init.sh --install-cron   # explicitly request installing the GTD automation cadence; plain shell only prints an agent handoff — the gtd-init skill creates it via the platform automation tool
 #   bash gtd_init.sh --confirm-create --layout notes [--with-bases]
 #                                     # opt-in per-item layout: inbox/calendar/horizons stay files; next-actions, waiting-for,
-#                                     # projects, someday-maybe, product-ideas, tickler become folders, plus _done/, each with a README.md;
+#                                     # projects, someday-maybe, tickler become folders, plus _done/, each with a README.md;
 #                                     # general reference is a workspace-root reference/ folder. --with-bases also writes starter
 #                                     # Obsidian .base lens views. Without --layout, init keeps whatever layout is already there
 #                                     # (single-file for a fresh folder). It never switches an existing layout — that is migration.
@@ -401,23 +401,10 @@ header_someday_maybe() {
 EOF
 }
 
-header_product_ideas() {
-  cat <<'EOF'
-# Product Ideas / Product Work Intake
-
-> Inputs that clearly belong to a product, feature, scenario, or opportunity space go here, keeping the original opportunity, assumptions, and evidence status.
-> This file is not cold storage: product / requirements planning is core work, so by default every idea is also synced to `projects.md` / `next-actions.md` to enter the daily visible system.
-> Only when the user explicitly says "store it, don't process it / capture only" is it left un-promoted.
-> Teresa Torres' framing: keep the opportunity first and don't rush to a solution — but the GTD layer must still give a next validation action.
-> Format: one subsection per idea; use `- [ ] Opportunity: ...` as the counted line, and include `GTD visibility`.
-EOF
-}
-
 file_next_actions() { header_next_actions; echo ""; legacy_groups_next_actions; echo ""; }
 file_projects()     { header_projects; echo ""; }
 file_waiting_for()  { header_waiting_for; printf '\n## Waiting\n\n'; }
 file_someday_maybe() { header_someday_maybe; printf '\n## Incubating\n\n'; }
-file_product_ideas() { header_product_ideas; printf '\n## Opportunity pool\n\n'; }
 # The single-file done record; update also creates it from this same template when it's missing.
 file_done()         { cat "$SKILL_DIR/templates/done-log.md"; echo ""; }
 
@@ -572,11 +559,6 @@ readme_tickler() {
 readme_someday_maybe() {
   header_someday_maybe | annotate_format
   note_format_section someday-maybe-note.md "${NOTE_RULES//<list>/someday-maybe}"
-}
-
-readme_product_ideas() {
-  header_product_ideas | annotate_format
-  note_format_section product-idea-note.md "${NOTE_RULES//<list>/product-ideas} The \"GTD visibility\" rule is unchanged: by default each idea also gets a project folder and a next validation action."
 }
 
 readme_done() {
@@ -740,7 +722,6 @@ build_files_layout() {
   seed "$GTD_DIR/projects.md" < <(file_projects)
   seed "$GTD_DIR/waiting-for.md" < <(file_waiting_for)
   seed "$GTD_DIR/someday-maybe.md" < <(file_someday_maybe)
-  seed "$GTD_DIR/product-ideas.md" < <(file_product_ideas)
   seed "$GTD_DIR/calendar.md" < <(file_calendar)
   seed "$GTD_DIR/reference.md" < <(file_reference)
   seed "$GTD_DIR/horizons.md" < <(file_horizons)
@@ -758,7 +739,6 @@ build_notes_layout() {
   seed "$GTD_DIR/projects/README.md" < <(readme_projects)
   seed "$GTD_DIR/waiting-for/README.md" < <(readme_waiting_for)
   seed "$GTD_DIR/someday-maybe/README.md" < <(readme_someday_maybe)
-  seed "$GTD_DIR/product-ideas/README.md" < <(readme_product_ideas)
   seed "$GTD_DIR/tickler/README.md" < <(readme_tickler)
   seed "$GTD_DIR/_done/README.md" < <(readme_done)
   seed "$GTD_DIR/calendar.md" < <(file_calendar)
@@ -802,10 +782,10 @@ fi
 mkdir -p "$GTD_DIR"
 echo ""
 if [ "$LAYOUT" = "notes" ]; then
-  echo "── Building memory/gtd/ per-item layout: inbox, calendar, horizons + 6 list folders (incl. tickler) + _done/, and reference/ (existing files skipped) ──"
+  echo "── Building memory/gtd/ per-item layout: inbox, calendar, horizons + 5 list folders (incl. tickler) + _done/, and reference/ (existing files skipped) ──"
   build_notes_layout
 else
-  echo "── Building memory/gtd/ eight core lists + product-ideas extension list (existing files skipped) ──"
+  echo "── Building memory/gtd/ eight core lists (existing files skipped) ──"
   build_files_layout
 fi
 

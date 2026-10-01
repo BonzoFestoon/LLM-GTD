@@ -9,7 +9,7 @@
 #   bash gtd_list.sh tickler [--due | --within N] [--project SUBSTRING]
 #
 # <list> is a bare list name: next-actions, waiting-for, projects, someday-maybe,
-# product-ideas, or reference (the folder-backed lists in per-item mode; reference/ sits at the
+# or reference (the folder-backed lists in per-item mode; reference/ sits at the
 # workspace root, not under memory/gtd/).
 #
 # Per-item mode (memory/gtd/<list>/ is a directory): reads each note's YAML frontmatter,
@@ -23,7 +23,6 @@
 #   next-actions   id  time=  energy=  context=  project=  due=  title
 #   waiting-for    id  person=  delegated=  follow-up=  project=  title
 #   someday-maybe  id  trigger=  title
-#   product-ideas  id  evidence=  title
 #   projects       id  project=  name -- outcome
 #   reference      id  title
 #   done           id  completed=  result=  list=  project=  problems=  title
@@ -138,7 +137,6 @@ case "$LIST" in
   next-actions) COLUMNS="time energy context project due" ;;
   waiting-for) COLUMNS="person delegated follow-up project" ;;
   someday-maybe) COLUMNS="trigger" ;;
-  product-ideas) COLUMNS="evidence" ;;
   projects) COLUMNS="project" ;;
   done) COLUMNS="completed result list project problems" ;;
   tickler) COLUMNS="tickle project" ;;
@@ -275,7 +273,7 @@ fi
 
 list_per_item() {
   local dir="$LIST_DIR" f base id time energy context project outcome title key val
-  local due person delegated followup trigger evidence
+  local due person delegated followup trigger
   local -a notes
   # A project is a folder (projects/<Project name>/README.md); every other list is flat notes.
   # The list's own README.md is never an item in either shape. An unmatched glob stays literal
@@ -290,7 +288,7 @@ list_per_item() {
       [ "$base" = "README" ] && continue
     fi
     id="" time="" energy="" context="" project="" outcome="" due="" person="" delegated=""
-    followup="" trigger="" evidence=""
+    followup="" trigger=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
@@ -304,7 +302,6 @@ list_per_item() {
         delegated) delegated="$val" ;;
         follow-up) followup="$val" ;;
         trigger) trigger="$val" ;;
-        evidence) evidence="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
     title="$base"
@@ -318,7 +315,6 @@ list_per_item() {
       next-actions) emit "$id" "$title" "$time" "$energy" "$context" "$project" "$due" ;;
       waiting-for) emit "$id" "$title" "$person" "$delegated" "$followup" "$project" ;;
       someday-maybe) emit "$id" "$title" "$trigger" ;;
-      product-ideas) emit "$id" "$title" "$evidence" ;;
       projects) emit "$id" "$title" "$project" ;;
       *) emit "$id" "$title" ;;
     esac
@@ -399,26 +395,6 @@ list_projects_single() {
   done
 }
 
-# product-ideas.md: one line per "### Idea title" block, with its opportunity line.
-list_product_ideas_single() {
-  local file="$GTD_DIR/product-ideas.md"
-  [ -f "$file" ] || return 0
-  [ -n "$MAX_TIME$ENERGY$CONTEXT" ] && return 0
-  awk -v SEP="$SEP" '
-    /^### / { title = $0; sub(/^### /, "", title); next }
-    title != "" && /Opportunity:/ {
-      opp = $0
-      sub(/^-[[:space:]]*\[[ x]\][[:space:]]*Opportunity:[[:space:]]*/, "", opp)
-      printf "%s%s%s\n", title, SEP, opp
-      title = ""
-    }
-  ' "$file" | while IFS="$SEP" read -r title opp; do
-    if [ -z "$PROJECT" ] || echo "$title" | grep -qi "$PROJECT"; then
-      emit "-" "$title -- $opp"
-    fi
-  done
-}
-
 LIST_DIR="$GTD_DIR/$LIST"
 if [ "$LIST" = "reference" ] && [ "$GTD_LAYOUT" = "notes" ]; then
   LIST_DIR="$GTD_WORKSPACE_ROOT/reference"
@@ -438,6 +414,5 @@ case "$LIST" in
   next-actions) list_single_bullets_with_lenses "$FILE" ;;
   waiting-for|someday-maybe) list_single_bullets_plain "$FILE" ;;
   projects) list_projects_single ;;
-  product-ideas) list_product_ideas_single ;;
   *) echo "No item listing for '$LIST' in single-file mode (not a per-item-eligible list)." >&2; exit 2 ;;
 esac

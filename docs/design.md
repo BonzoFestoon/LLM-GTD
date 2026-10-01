@@ -27,7 +27,7 @@ layouts hold the same lists and the same rules — only the storage shape differ
 | `horizons.md` | Horizons | the six Horizons of Focus (purpose → runway) |
 
 **Single-file (default)** is the table above: one list, one file. **Per-item (opt-in)** turns
-`next-actions`, `waiting-for`, `projects`, `someday-maybe`, and `product-ideas` into folders of
+`next-actions`, `waiting-for`, `projects`, and `someday-maybe` into folders of
 one-commitment-per-note files with the same fields as YAML frontmatter (a project is itself a folder,
 holding its README and its support material), plus a `_done/` record folder for finished work with
 its outcome — nothing here is deleted outright anymore, so an after-action review has raw material to

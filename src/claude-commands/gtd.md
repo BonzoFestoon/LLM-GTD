@@ -32,7 +32,7 @@ $ARGUMENTS
    - Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`
    - Clarify the inbox / process item by item / where do these to-dos go / clear out the inbox → `clarify/SKILL.md`
    - Done / finished / bought it / sent it / confirmed / they replied / the schedule changed / cancelled or dropped → `update/SKILL.md`
-   - Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday / product ideas hygiene → `organize/SKILL.md`
+   - Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday hygiene → `organize/SKILL.md`
    - What now / what today / for a bit / I have 30 minutes / filter by energy or context → `engage/SKILL.md`
    - Weekly review / weekly retro / review / the system is a mess / don't trust the lists → `review/SKILL.md`
 3. Conflict handling:

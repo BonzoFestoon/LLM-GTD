@@ -9,7 +9,6 @@ What is it?
 │
 ├── No ──┬── Useless / expired ────────────→ 🗑️ Trash
 │        ├── Not now, but don't forget ─────→ 💭 someday-maybe.md (incubate)
-│        ├── Product / feature / scenario opportunity → 💡 product-ideas.md + 🎯 project + ✅ next-action
 │        └── Look up later / support material, or knowledge / insight → 📚 reference.md
 │
 └── Yes ──→ What's the next concrete physical action?

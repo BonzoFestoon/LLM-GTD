@@ -17,8 +17,8 @@
 | Profile | Recommendation | Example id | Purpose | Boundary |
 |---|---|---|---|---|
 | Weekly Review | Recommended | `gtd-ai` | A true AI-judged review once a week: system trustworthiness, structural issues, next week's 3 things, capacity conflicts (including tickles coming due next week), follow-up messages; due tickles reported as candidates | Never auto-delete, cut projects, send messages, write to the calendar, or make high-consequence commitments for the user |
-| Monthly Reflect | Recommended | `gtd-2` | Monthly review of someday-maybe, product-ideas, horizons, and the next 30 days' capacity (including tickles coming due, and any that fall on a blocked day) | Uses Reflect vocabulary, not organize; only suggests activate / keep / delete / add information |
-| Daily Engage + Approval Radar | Installed / updated with `--install-cron` | `gtd` / `gtd-engage` | A light daily choice of "how to use the first block of time now / tonight / tomorrow morning", with Approval Radar | Not a daily review; never fully re-scans projects/someday/product-ideas/horizons |
+| Monthly Reflect | Recommended | `gtd-2` | Monthly review of someday-maybe, horizons, and the next 30 days' capacity (including tickles coming due, and any that fall on a blocked day) | Uses Reflect vocabulary, not organize; only suggests activate / keep / delete / add information |
+| Daily Engage + Approval Radar | Installed / updated with `--install-cron` | `gtd` / `gtd-engage` | A light daily choice of "how to use the first block of time now / tonight / tomorrow morning", with Approval Radar | Not a daily review; never fully re-scans projects/someday/horizons |
 | Session Clarify | Advanced, optional | `gtd-session-clarify` | Scan sessions for real commitments and clarify / file them | Session-provider specific; high frequency and wide scan surface, not part of init's default suggestions |
 
 ## Daily Engage + Approval Radar standard boundary

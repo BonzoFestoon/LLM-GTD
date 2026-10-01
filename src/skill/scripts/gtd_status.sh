@@ -100,7 +100,6 @@ if [ "$GTD_LAYOUT" = "notes" ]; then
   n_projects="$(bash "$SCRIPT_DIR/gtd_list.sh" projects | count_lines)"
   n_waiting="$(bash "$SCRIPT_DIR/gtd_list.sh" waiting-for | count_lines)"
   n_someday="$(bash "$SCRIPT_DIR/gtd_list.sh" someday-maybe | count_lines)"
-  n_ideas="$(bash "$SCRIPT_DIR/gtd_list.sh" product-ideas | count_lines)"
   stalled_n="$(bash "$SCRIPT_DIR/gtd_check.sh" | awk -F'\t' '$1 == "stalled"' | count_lines)"
   # The tickler is per-item only; a tickled project is on hold, so gtd_check.sh never calls it stalled.
   n_tickler="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler | count_lines)"
@@ -111,7 +110,6 @@ else
   n_projects="$(count_projects)"
   n_waiting="$(count_open waiting-for.md)"
   n_someday="$(count_open someday-maybe.md)"
-  n_ideas="$(count_open product-ideas.md)"
   stalled_n="$(count_stalled)"
   layout_label="single-file"
 fi
@@ -129,7 +127,6 @@ if [ "$GTD_LAYOUT" = "notes" ]; then
   printf "  🗂️  Tickler            : %s (%s due)\n" "$n_tickler" "$n_tickler_due"
 fi
 printf "  💭 Someday/Maybe      : %s\n" "$n_someday"
-printf "  💡 Product Ideas      : %s\n" "$n_ideas"
 printf "  🏁 Done, last 7 days  : %s\n" "$n_done_week"
 echo "────────────────────────────────────"
 

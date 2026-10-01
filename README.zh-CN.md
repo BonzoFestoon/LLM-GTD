@@ -93,7 +93,7 @@ LLM-GTD 的运行状态存在八个纯 Markdown 文件里：
 
 ### 可选：每个事项一条笔记
 
-如果你想在 Obsidian 里（桌面或手机）按时长、精力、情境筛选清单，LLM-GTD 也可以把每个事项存成单独的笔记。Next actions、waiting-for、projects、someday/maybe 和 product ideas 变成 `memory/gtd/` 下的文件夹，每个事项一条笔记，字段写成 YAML 属性。每个项目是一个文件夹，里面放它的 README 和支持材料。完成的事进入 `memory/gtd/_done/`，通用参考资料变成工作区根目录下的 `reference/` 文件夹。Inbox、calendar 和 horizons 仍是单个文件，收集方式不变。你不需要手动打标签：clarify 填写属性，organize 修复属性。
+如果你想在 Obsidian 里（桌面或手机）按时长、精力、情境筛选清单，LLM-GTD 也可以把每个事项存成单独的笔记。Next actions、waiting-for、projects 和 someday/maybe 变成 `memory/gtd/` 下的文件夹，每个事项一条笔记，字段写成 YAML 属性。每个项目是一个文件夹，里面放它的 README 和支持材料。完成的事进入 `memory/gtd/_done/`，通用参考资料变成工作区根目录下的 `reference/` 文件夹。Inbox、calendar 和 horizons 仍是单个文件，收集方式不变。你不需要手动打标签：clarify 填写属性，organize 修复属性。
 
 所有命令都支持两种布局，并自动识别当前使用的是哪一种。从零开始使用笔记布局：
 

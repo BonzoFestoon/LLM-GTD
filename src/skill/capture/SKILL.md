@@ -40,7 +40,6 @@ example: "Note this: confirm the contract version with Colleague A"
 
 5. **Human-judgment guard (stop and ask one question only in these cases; otherwise don't interrupt)**:
    - Can't tell "action vs knowledge / idea" (knowledge goes to `reference.md`, not GTD action lists);
-   - Clearly a product / feature / scenario opportunity → automatically file it in `product-ideas.md` keeping the original opportunity, and by default also create visible items in `projects.md` + `next-actions.md`; don't mix it into `someday-maybe.md`. Only when the user explicitly says "store it, don't process it / capture only" is it left un-promoted;
    - No concrete next action can be derived (not enough information);
    - It implies a commitment "you may not want to make" (whether to do it at all is your call);
    - It's a >1-step project but the desired outcome is unclear.

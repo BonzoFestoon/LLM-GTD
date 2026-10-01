@@ -5,7 +5,7 @@
 ## 0. AI review prep pack (let the system do the grunt work first)
 - [ ] Run `scripts/gtd_review_prep.sh` to get overall counts + risk items + confirmation queue
 - [ ] Automatically run organize's mechanical hygiene: wrong contexts, duplicates, stale checkmarks, obvious orphans, stalled detection (per-item layout: from `gtd_check.sh`, including finished projects still missing an after-action review), and due tickles (per-item: a concrete project tickle becomes a next action, anything else is queued in the inbox; a scheduled review only reports them)
-- [ ] Generate candidates: to delete / needing a next action / needing a follow-up / someday items that could be activated / product ideas visibility gaps / next week's 3 things
+- [ ] Generate candidates: to delete / needing a next action / needing a follow-up / someday items that could be activated / next week's 3 things
 - [ ] Mark which items the AI already handled and which must be confirmed by the user
 
 ## ① Get Clear
@@ -19,11 +19,9 @@
 - [ ] Tickler (per-item): what came due and what it became; the next 14 days (anything to prepare now?); each project on hold — does its date still hold, is it still committed?; calendar conflicts organize flagged
 - [ ] Done since last review (`gtd_list.sh done --since <last review date>`): wins first, then each item whose outcome records a problem: file its how-to to reference now, or leave it for the project's after-action review
 - [ ] `projects.md`: first close projects whose outcome is achieved (AAR, then the done record: update's "Project close"); confirm each remaining project has at least one valid next action, waiting-for or tickle (a tickled project is on hold, not stalled); keep only parallel actions (fix stalled ones on the spot); is the outcome still wanted?
-- [ ] `product-ideas.md`: does every product opportunity have `GTD visibility` pointing to a project / next action? Fill any gaps on the spot.
 
 ## ③ Get Creative
 - [ ] `someday-maybe.md`: has anything ripened to pull into active? Delete what's outdated
-- [ ] `product-ideas.md`: which product opportunities need more evidence, deletion, downgrading, or advancing to a PRD? This is product trade-off work, not the structural visibility check.
 - [ ] Any new ideas / projects to add this week?
 
 ## ④ Horizons check (vertical focus)
@@ -37,7 +35,7 @@
 ## Close
 - [ ] Record a snapshot with `templates/weekly-review-template.md` (save it in your daily-notes folder)
 - [ ] Give the **3 things** most worth pushing next week; translate what didn't make it in as "I don't have time = it's not a priority"; give the high-value one a same-week back-up slot; for recurring things, "three times a week is a habit"
-- [ ] Write to file only after confirmation: clear the inbox, cross off, add next actions, move someday items, fill product ideas visibility, advance / downgrade / delete product ideas, update waiting-for / projects
+- [ ] Write to file only after confirmation: clear the inbox, cross off, add next actions, move someday items, update waiting-for / projects
 
 ## Suggested trigger cadence
 - v1.1: run `/gtd-review` at a fixed weekly time; the AI builds the review prep pack first, and the user only confirms a few decision points.

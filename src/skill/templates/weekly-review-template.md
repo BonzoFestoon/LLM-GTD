@@ -8,7 +8,7 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 # Weekly Review · YYYY-MM-DD (Week N)
 
 ## System status (pre-review dashboard)
-- 📥 Inbox: __ · ✅ Next Actions: __ · 🎯 Projects: __ (stalled __) · ⏳ Waiting: __ · 🗂️ Tickler: __ (due __) · 💭 Someday: __ · 💡 Product Ideas: __
+- 📥 Inbox: __ · ✅ Next Actions: __ · 🎯 Projects: __ (stalled __) · ⏳ Waiting: __ · 🗂️ Tickler: __ (due __) · 💭 Someday: __
 
 ## 0. AI review prep pack
 - Handled automatically:
@@ -30,11 +30,9 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 - Tickles now actionable (became):
 - On-hold projects re-dated / released:
 - Stalled projects given a next action:
-- Product Ideas visibility gaps:
 
 ## ③ Get Creative
 - Pulled from someday into active:
-- Product ideas advanced to PRD / evidence gathered / downgraded / deleted:
 - New ideas this week:
 
 ## ④ Horizons check
@@ -45,7 +43,6 @@ description: Week N GTD Weekly Review snapshot — system status + next week's f
 - Inbox cleared:
 - Moved to the done record / deleted:
 - Added / moved:
-- Product Ideas visibility filled:
 - Waiting / follow-ups:
 
 ## Next week's 3 focus items

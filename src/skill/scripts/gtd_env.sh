@@ -44,7 +44,7 @@ esac
 # Per-item lists: one folder each under memory/gtd/. General reference is not one of them —
 # in the per-item layout it lives at the workspace root (reference/), outside memory/gtd/.
 # The tickler exists only in the per-item layout (no single-file tickler.md).
-GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe product-ideas tickler"
+GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe tickler"
 
 # gtd_days_ago N — the date N days before today as YYYY-MM-DD (GNU date, then BSD/macOS date).
 gtd_days_ago() {

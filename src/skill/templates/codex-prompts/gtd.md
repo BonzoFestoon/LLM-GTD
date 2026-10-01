@@ -10,7 +10,7 @@ This command: after reading the package navigation, treat the user input as a na
 3. Empty input / mind sweep / note one thing / new commitment / hard date / session close / a single natural-language task → `capture/SKILL.md`
 4. Clarify the inbox / process item by item / where do these to-dos go / clear out the inbox → `clarify/SKILL.md`
 5. Done / finished / bought it / sent it / confirmed / they replied / the schedule changed / cancelled or dropped → `update/SKILL.md`
-6. Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday / product ideas hygiene → `organize/SKILL.md`
+6. Clean up structure / stuck projects / duplicates / re-file contexts / monthly someday hygiene → `organize/SKILL.md`
 7. What now / what today / for a bit / I have 30 minutes / filter by energy or context → `engage/SKILL.md`
 8. Weekly review / weekly retro / review / the system is a mess / don't trust the lists → `review/SKILL.md`
 

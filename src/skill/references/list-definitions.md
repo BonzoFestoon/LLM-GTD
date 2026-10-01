@@ -1,4 +1,4 @@
-# Eight Core Lists + Extension List Definitions (what it is / what it isn't)
+# Eight Core Lists Definitions (what it is / what it isn't)
 
 The boundaries of the trusted system. Each list has a single job; mixing in foreign items destroys its trustworthiness.
 
@@ -11,7 +11,6 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | `calendar.md` | **Only** hard commitments that matter on a specific day / time | Not ordinary to-dos (the calendar is sacred; clutter destroys its trustworthiness) | By date |
 | `someday-maybe.md` | Not committed yet, incubating | Not things already committed to | Trigger condition (when it becomes worth starting) |
 | `tickler/` (per-item layout only) | Committed things you can't (or don't want to) act on until a date — Allen's tickler; one note per tickle, dated `tickle:` for when it becomes actionable | Not appointments (calendar), not things someone owes you (waiting-for), not uncommitted maybes (someday-maybe); **never exported to the external calendar** | By `tickle` date |
-| `product-ideas.md` | Raw opportunities and assumptions in product, feature, scenario, and opportunity spaces; each should also have project / next-action visibility | Not ordinary life wishes, and not a cold-storage backlog with no next action | Opportunity / user scenario / assumptions / evidence status / promotion criteria / GTD visibility |
 | `reference.md` | Non-actionable reference + project support material + knowledge / insight notes | Not actionable items (those go through clarify to next-actions / projects / waiting-for) | Two sections: general reference / project support (per-item layout: workspace-root `reference/` notes + each project's own folder) |
 | `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
 | `_done/` (per-item) / `done.md` (single-file) | A record of finished commitments: completed next actions, received waiting-for items, finished projects, and cancelled project steps, each with an outcome | Not a list you act from — never read by Engage, never counted as open in the dashboard, never given a stalled/orphan check | Per-item: flat done notes plus one `_done/<Project name>/` folder per finished project; single-file: `done.md`, one `## YYYY-MM-DD` heading per completion date, newest last. See "Done record" below |
@@ -19,7 +18,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 ## The boundaries most often violated
 1. **Multi-step outcomes stuffed into next-actions** → split: the outcome goes to projects, the first step stays in next-actions.
 2. **Ordinary to-dos stuffed into the calendar** → the calendar holds only "must happen on this day / at this time"; everything else goes to next-actions.
-3. **Mixing product-ideas and someday** → product opportunities go to `product-ideas.md` and sync to project / next-action; ordinary "maybe someday" goes to `someday-maybe.md`.
+3. **Giving product ideas a list of their own** → A product / feature / scenario idea is ordinary input, not its own list: if the user is committed to building it, it is a project (keep the original opportunity, assumptions and evidence in the project README's body) with a next action; if not, someday-maybe; if it's only knowledge, reference.
 4. **Knowledge notes stuffed into actionable lists** → knowledge / insights go to `reference.md`, not `next-actions.md` / `projects.md` (overridable in `personalized.md` if you run a separate knowledge system).
 5. **A full task tree stuffed into projects** → keep only current parallel next-action / waiting-for block links; milestones, dependencies, and task trees go to `reference.md` or a project doc.
 6. **A committed project waiting on a date parked in someday-maybe or waiting-for** → it stays a project and gets a tickle: someday-maybe is for what you haven't committed to, waiting-for for what someone else owes you. (Per-item layout; in the single-file layout there is no tickler.)
@@ -33,7 +32,7 @@ A project is **in play** when at least one open next action, waiting-for item, o
 Two layouts hold the same eight lists and the same rules; only the storage shape differs. The one exception is the tickler, which exists only in the per-item layout.
 
 - **Single-file (default).** One list = one `.md` file, as the table above describes. Every skill in this package works this way unless per-item mode is detected.
-- **Per-item (opt-in).** One list = one folder of item notes, one commitment per note, with the same fields as the single-file item line moved into YAML frontmatter (see "Note formats" below). `next-actions/`, `waiting-for/`, `projects/`, `someday-maybe/`, and `product-ideas/` become folders under `memory/gtd/`, plus `_done/` and the per-item-only `tickler/`; `reference.md` is replaced by a `reference/` folder at the workspace root (see "Reference folder"); `inbox.md`, `calendar.md`, `horizons.md`, and `personalized.md` always stay single files (the inbox must stay one-line capture from anywhere, and the others are documents, not item lists). Set up with `gtd_init.sh --confirm-create --layout notes` (optionally `--with-bases`); init never switches an existing layout; moving a single-file system over needs the migration script from LLM-GTD 1.17.x.
+- **Per-item (opt-in).** One list = one folder of item notes, one commitment per note, with the same fields as the single-file item line moved into YAML frontmatter (see "Note formats" below). `next-actions/`, `waiting-for/`, `projects/`, and `someday-maybe/` become folders under `memory/gtd/`, plus `_done/` and the per-item-only `tickler/`; `reference.md` is replaced by a `reference/` folder at the workspace root (see "Reference folder"); `inbox.md`, `calendar.md`, `horizons.md`, and `personalized.md` always stay single files (the inbox must stay one-line capture from anywhere, and the others are documents, not item lists). Set up with `gtd_init.sh --confirm-create --layout notes` (optionally `--with-bases`); init never switches an existing layout; moving a single-file system over needs the migration script from LLM-GTD 1.17.x.
 - **Layout detection.** Per-item mode if `memory/gtd/next-actions/` exists as a directory, otherwise single-file. An optional `GTD_LAYOUT=notes|files` override is read by `gtd_env.sh` for testing or forcing a mode.
 - **Filenames.** A short, verb-first title, made filesystem-safe (no `: / \ ? * " < > |`), with `(2)`, `(3)`, … appended on a collision. The old block id (`^na-…`, `^wf-…`) is kept as the note's `id:` field so existing links stay traceable during migration.
 - **List README files.** Every folder-backed list, plus `_done/`, gets a `README.md` holding what used to sit at the top of the single-file list: the title, the rules for what belongs there and what doesn't, the item format, and (for `next-actions/`) a note per legacy `@computer/@calls/@errands/@home/@agenda` group and the `context` value it now maps to. **`README.md` is never an item** — `gtd_list.sh`, the status/review scripts, organize's checks (`gtd_check.sh`), and every Bases view skip it by name. Before creating, moving, or repairing a note in a list, read that list's `README.md` first, the same way earlier skills read the top of the single-file list; general rules still live in this file.
@@ -81,7 +80,6 @@ The body keeps the full concrete action text and the free-text constraint; `cont
 
 **Tickle** (`memory/gtd/tickler/Open the per-bot accounts.md`; format in `templates/tickler-note.md`): `id: tk-<short>-<created YYYYMMDD>` (the creation date, so re-dating never changes it), `tickle: YYYY-MM-DD`, optional `project:` in the same `[[projects/<Name>/README|<Name>]]` form as an action, `source`, `created`; the body says what becomes actionable, as concretely as possible.
 
-**Product idea**: adds `evidence` and `promotion` (criteria), with project and next-action links kept in the body — the "GTD visibility" rule is unchanged.
 
 **Project** (`memory/gtd/projects/Tastytrade broker service/README.md`):
 
@@ -163,7 +161,7 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 | Draft a project after-action review | Auto | Act-then-surface when the project's outcome is achieved; the user confirms, edits, or skips in one step |
 | File AAR how-tos and insights to reference (project folder or `reference/`) | Needs confirmation, once | Offered together with the AAR draft, not as a separate interruption |
 | Trim `_done/` / `done.md` | Needs confirmation | Off by default; only runs if enabled in `personalized.md` |
-| Activate someday / delete a product idea / cut a project | Needs confirmation | These are commitment decisions; don't settle them automatically |
+| Activate someday / cut a project | Needs confirmation | These are commitment decisions; don't settle them automatically |
 | Write to the external calendar provider | Conditional auto | Event details complete, no conflict in the target slot, provider reachable; never claim done before the tool succeeds |
 | Delete a `calendar.md` fallback item | Conditional auto | Confirmed written to the external calendar, or moved back to another GTD list |
 | Send messages, follow up, notify, delegate to others | Needs confirmation | May draft wording; never send automatically |

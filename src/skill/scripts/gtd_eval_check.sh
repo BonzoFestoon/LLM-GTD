@@ -112,6 +112,14 @@ bash -n "$ROOT/scripts/gtd_list.sh"
 bash -n "$ROOT/scripts/gtd_check.sh"
 ok "shell scripts pass bash -n"
 
+# product-ideas was retired in 2.0.0: product opportunities are clarified like any other input.
+# Only the history (evolution-log.md) may still name it.
+if grep -rni 'product-idea' "$ROOT" --include='*.md' --include='*.sh' --include='*.toml' --include='*.json' \
+  | grep -v '/references/evolution-log.md:' | grep -v '/scripts/gtd_eval_check.sh:'; then
+  fail "product-ideas is still mentioned (retired in 2.0.0)"
+fi
+ok "no product-ideas list anywhere"
+
 # gtd_check.sh's property vocabulary must match list-definitions.md's "Property values" table.
 for var in ENERGY_VOCAB CONTEXT_VOCAB; do
   prop="$(echo "$var" | sed 's/_VOCAB//' | tr '[:upper:]' '[:lower:]')"
@@ -133,15 +141,16 @@ LLM_GTD_ROOT="$fixture/notes" CODEX_HOME="$fixture/codex" \
   || fail "gtd_init.sh --layout notes failed"
 for f in memory/gtd/inbox.md memory/gtd/calendar.md memory/gtd/horizons.md reference/README.md \
   memory/gtd/next-actions/README.md memory/gtd/waiting-for/README.md memory/gtd/projects/README.md \
-  memory/gtd/someday-maybe/README.md memory/gtd/product-ideas/README.md memory/gtd/_done/README.md \
+  memory/gtd/someday-maybe/README.md memory/gtd/_done/README.md \
   memory/gtd/next-actions.base memory/gtd/done.base memory/gtd/tickler/README.md memory/gtd/tickler.base; do
   [ -f "$fixture/notes/$f" ] || fail "per-item init did not create $f"
 done
 grep -q '^## Note format' "$fixture/notes/memory/gtd/tickler/README.md" || fail "tickler README lacks its Note format section"
 grep -qi 'tickle' "$fixture/notes/memory/gtd/projects/README.md" || fail "projects README's stalled rule does not name the tickle"
-for f in next-actions waiting-for projects someday-maybe product-ideas reference; do
+for f in next-actions waiting-for projects someday-maybe reference; do
   [ ! -e "$fixture/notes/memory/gtd/$f.md" ] || fail "per-item init also wrote single-file $f.md"
 done
+[ ! -e "$fixture/notes/memory/gtd/product-ideas" ] || fail "per-item init created a product-ideas/ list (retired in 2.0.0)"
 grep -q '^## Note format' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Note format section"
 grep -q '^## Legacy groups' "$fixture/notes/memory/gtd/next-actions/README.md" || fail "next-actions README lacks its Legacy groups section"
 [ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" next-actions)" ] || fail "gtd_list.sh counted README.md as an item"

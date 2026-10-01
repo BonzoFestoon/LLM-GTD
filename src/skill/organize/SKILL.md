@@ -17,7 +17,7 @@ example: "Clean up my GTD lists"
 - Automatically during review's Get Current stage.
 - After the external calendar provider comes back from unreachable to reachable, to reconcile `calendar.md` fallback items.
 - When a tickle has come due (per-item layout; `gtd_status.sh` says "tickle(s) now actionable").
-- Monthly re-evaluation of someday / product ideas.
+- Monthly re-evaluation of someday-maybe.
 - When the user asks for `/gtd-organize` directly, or for cleaning up structure, stuck projects, duplicates, or re-filing contexts / constraints.
 
 ## Loading and boundaries
@@ -37,17 +37,17 @@ example: "Clean up my GTD lists"
 | Constraint / lens hygiene | Fill clearly missing Time / Energy / Constraint; treat legacy @ groups as compatibility signals | Needs the user to judge setting or priority |
 | Stale checkmarks / duplicates | Clean up completed leftovers and obvious duplicates | Looks duplicated but means something different |
 | Calendar fallback | Delete fallback items confirmed in the external calendar; move ordinary to-dos back to next-actions | External calendar unreachable, expired with unclear status, conflict / possible duplicate |
-| Someday / product ideas | Flag ripe candidates; draft a next action for product ideas missing visibility | Whether to activate / delete / downgrade |
+| Someday-maybe | Flag ripe candidates | Whether to activate / delete |
 
 ## Workflow
 
-1. Scan the `memory/gtd/` core lists and `product-ideas.md`. **Per-item layout**: run `scripts/gtd_check.sh` for the mechanical findings and `scripts/gtd_list.sh <list>` for the contents; open individual notes only to fix them (see "Per-item layout" below).
+1. Scan the `memory/gtd/` core lists. **Per-item layout**: run `scripts/gtd_check.sh` for the mechanical findings and `scripts/gtd_list.sh <list>` for the contents; open individual notes only to fix them (see "Per-item layout" below).
 2. Use `list-definitions.md` to check whether each item is in the right list; move mechanical misfilings directly and collect unclear ones.
 3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (per-item: `gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it) is in play: never draft a next action for it or call it stalled.
 4. Fill light fields on next-actions: Time / Energy / Constraint; keep legacy `@computer/@calls` only as tool-constraint signals.
 5. **Tickler** (per-item): handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox"; then check tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
 6. Reconcile `calendar.md` fallback items against external calendar provider reachability; delete the local copy once successfully externalized, otherwise keep it and surface it. This covers `calendar.md` only: the tickler is never reconciled, exported or deleted here.
-7. Do the monthly re-evaluation of someday / product ideas; draft candidates for product ideas missing project / next-action visibility.
+7. Do the monthly re-evaluation of someday-maybe.
 8. Output a one-line summary of what was handled automatically + one batch of questions needing confirmation; don't interrupt item by item. Name each tickler result, e.g. "Tickler: 2 now actionable → 1 next action for <Project>, 1 queued in the inbox; 1 date conflict to confirm".
 
 ## Per-item layout

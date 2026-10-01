@@ -144,74 +144,6 @@ list_items() {
   list "$1" | awk -F'\t' '{ line = "- " $NF; for (i = 2; i < NF; i++) if ($i !~ /=-$/) line = line " · " $i; print line }'
 }
 
-product_ideas_summary() {
-  local f
-  if [ "$NOTES" -eq 1 ]; then
-    list_items product-ideas
-    return 0
-  fi
-  f="$(file product-ideas.md)"
-  [ -f "$f" ] || return 0
-  awk '
-    function flush() {
-      if (title != "") {
-        print "- " title
-        if (opportunity != "") print "  " opportunity
-        if (visibility != "") print "  " visibility
-        else print "  ⚠️ missing GTD visibility"
-      }
-    }
-    /^### / {
-      flush()
-      title=$0
-      sub(/^### /, "", title)
-      opportunity=""
-      visibility=""
-      next
-    }
-    /^- \[ \] Opportunity:/ { opportunity=$0; next }
-    /^- GTD visibility:/ { visibility=$0; next }
-    END { flush() }
-  ' "$f"
-}
-
-product_visibility_gaps() {
-  local f vis
-  if [ "$NOTES" -eq 1 ]; then
-    for f in "$GTD_DIR"/product-ideas/*.md; do
-      [ -e "$f" ] || continue
-      [ "$(basename "$f")" = "README.md" ] && continue
-      vis="$(grep -m1 'GTD visibility:' "$f" || true)"
-      if ! echo "$vis" | grep -q '\[\[projects/'; then
-        echo "$(basename "$f" .md): missing project visibility"
-      elif ! echo "$vis" | grep -q '\[\[next-actions/'; then
-        echo "$(basename "$f" .md): missing next-actions visibility"
-      fi
-    done
-    return 0
-  fi
-  f="$(file product-ideas.md)"
-  [ -f "$f" ] || return 0
-  awk '
-    function check() {
-      if (title != "" && visibility !~ /\[\[projects#/) {
-        print title ": missing project visibility"
-      } else if (title != "" && visibility !~ /next-actions/) {
-        print title ": missing next-actions visibility"
-      }
-    }
-    /^### / {
-      check()
-      title=$0
-      sub(/^### /, "", title)
-      visibility=""
-      next
-    }
-    /^- GTD visibility:/ { visibility=$0; next }
-    END { check() }
-  ' "$f"
-}
-
 today="$(date +%Y-%m-%d)"
 
 echo "GTD Review Prep · $today"
@@ -303,22 +235,6 @@ else
   echo "None."
 fi
 
-section "Product Ideas visibility audit"
-product_gaps="$(product_visibility_gaps)"
-if [ -n "$product_gaps" ]; then
-  echo "$product_gaps" | sed 's/^/- /'
-else
-  echo "Every product opportunity has GTD visibility."
-fi
-
-section "Product Ideas work intake"
-product_items="$(product_ideas_summary)"
-if [ -n "$product_items" ]; then
-  echo "$product_items"
-else
-  echo "None."
-fi
-
 section "Confirmation queue"
 echo "- Empty the inbox: clarify item by item to zero."
 echo "- Done since last review: for each problem solved, file its how-to to reference now or leave it for the project's after-action review."
@@ -328,5 +244,4 @@ if [ "$NOTES" -eq 1 ]; then
   echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
 fi
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
-echo "- Product ideas: first fill missing project / next-action visibility; then confirm gathering evidence, advancing to PRD, downgrading, or deleting."
 echo "- Next week's 3 things: AI proposes candidates; the user confirms."

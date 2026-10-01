@@ -102,7 +102,7 @@ No database. No hidden app state. No vendor lock-in. A file is a file.
 
 ### Optional: one note per item
 
-If you'd rather filter your lists in Obsidian (by time, energy, or context, on desktop or phone), LLM-GTD can keep each item as its own note instead. Next actions, waiting-for, projects, someday/maybe, and product ideas become folders under `memory/gtd/`, one note per item, with the same fields as YAML properties. Each project is a folder that holds its README and support material. Finished work goes to `memory/gtd/_done/`, and general reference becomes a `reference/` folder at the workspace root. The inbox, calendar, and horizons stay single files, so capture is unchanged. You never tag anything by hand: clarify fills the properties and organize repairs them.
+If you'd rather filter your lists in Obsidian (by time, energy, or context, on desktop or phone), LLM-GTD can keep each item as its own note instead. Next actions, waiting-for, projects, and someday/maybe become folders under `memory/gtd/`, one note per item, with the same fields as YAML properties. Each project is a folder that holds its README and support material. Finished work goes to `memory/gtd/_done/`, and general reference becomes a `reference/` folder at the workspace root. The inbox, calendar, and horizons stay single files, so capture is unchanged. You never tag anything by hand: clarify fills the properties and organize repairs them.
 
 Every command works in both layouts and detects which one is live. To start fresh with notes:
 
