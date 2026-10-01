@@ -2,6 +2,9 @@
 
 All notable changes.
 
+## v2.0.1 — Remove Chinese-language content
+Deleted `README.zh-CN.md` and `docs/demo.zh-CN.md`, dropped the language-switch links, and removed the remaining Chinese strings from the evolution log. No behaviour change.
+
 ## v2.0.0 — One note per item only; no product-ideas list
 **Breaking.** Two things LLM-GTD 1.x had are gone.
 

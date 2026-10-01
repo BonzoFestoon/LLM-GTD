@@ -1,6 +1,6 @@
 {
   "name": "llm-gtd",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A portable GTD trusted system for Claude Code — capture, clarify, update, organize, engage, and review commitments in plain Markdown lists under memory/gtd/. Calendar writes fail closed; engage and review stay human-led.",
   "author": {
     "name": "BonzoFestoon",
