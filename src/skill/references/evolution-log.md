@@ -122,6 +122,9 @@ Design principles:
 - **Dropped with them**: `--layout`, `GTD_LAYOUT`, `--import-legacy`, the legacy `@context` groups in the next-actions README, `done.md`, and the single-file templates. Eval E23 retired, E05 rewritten, new E36.
 - This fork no longer tracks upstream (`mikonos/LLM-GTD`) as of v1.17.1.
 
+## v2.0.1 — Property links checked
+- A note filed with `source: "[[…|plan]] (Phase 4 step 5)"` showed plain text in Obsidian instead of a link. `gtd_check.sh`'s `link-form` now reports any frontmatter property whose link isn't the whole quoted value (text around it, several links, unquoted), in every note under `memory/gtd/`, with the fix; body links stay free text. Clarify and `list-definitions.md` say where extra detail goes (inside the display text). New eval E37.
+
 ---
 
 **AI automation overview**: capture → clarify automatic, clear updates automatic, organize (mechanical) automatic; review preprocesses first; engage offers candidates, and the user keeps commitment, choice, and reflection.
