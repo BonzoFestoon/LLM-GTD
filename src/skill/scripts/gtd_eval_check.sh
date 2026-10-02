@@ -306,6 +306,87 @@ out="$(LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -
 LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_status.sh" >/dev/null 2>&1 || fail "gtd_status.sh failed with no tickler/ folder"
 ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep"
 
+# Property links (E37): Obsidian renders a wikilink in a frontmatter property only when the link is
+# the property's whole value, quoted; several links are a YAML list, one quoted link per item.
+# gtd_check.sh's link-form flags any other shape in any note under memory/gtd/, and never a link
+# in the note body.
+LK="$fixture/links"
+mkdir -p "$LK"
+LLM_GTD_ROOT="$LK" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
+  || fail "gtd_init.sh failed (property-link fixture)"
+LG="$LK/memory/gtd"
+mkdir -p "$LG/projects/Alpha" "$LG/projects/Beta"
+printf -- '---\noutcome: Alpha shipped\n---\n' > "$LG/projects/Alpha/README.md"
+# lnote PATH FRONTMATTER-LINES [BODY] — a note under memory/gtd/ with that frontmatter
+lnote() {
+  { printf -- '---\n%s\n---\n' "$2"; printf '%s\n' "${3:-The body.}"; } > "$LG/$1"
+}
+P='[[projects/Alpha/README|Alpha]]'
+# bad: text after the link, before it, after the closing quote; two links; unquoted; a list
+# item with text; a project README; a [a, b] list with an unquoted link
+lnote "next-actions/Trailing text.md" "project: \"$P\"
+source: \"[[projects/Alpha/PLAN|plan]] (Phase 4 step 5)\""
+lnote "next-actions/Leading text.md" "project: \"$P\"
+source: \"see [[projects/Alpha/PLAN|plan]]\""
+lnote "next-actions/After the quote.md" "project: \"$P\"
+source: \"[[projects/Alpha/PLAN|plan]]\" (Phase 4 step 5)"
+lnote "next-actions/Two links.md" "project: \"$P\"
+related: \"[[projects/Alpha/PLAN|plan]], [[reference/Notes|Notes]]\""
+lnote "next-actions/Unquoted.md" "project: \"$P\"
+source: [[projects/Alpha/PLAN|plan]]"
+lnote "someday-maybe/List item text.md" "related:
+  - \"[[reference/Notes|Notes]]\"
+  - \"[[projects/Alpha/PLAN|plan]] and more\""
+lnote "projects/Beta/README.md" "outcome: Beta shipped
+source: \"[[reference/Notes|Notes]] (section 2)\""
+lnote "waiting-for/Flow list.md" "person: Sam
+delegated: 2026-09-01
+related: [\"[[reference/Notes|Notes]]\", [[projects/Alpha/PLAN|plan]]]"
+# a project: link in the wrong form is reported once, by the project-form check, not twice
+lnote "next-actions/Bare project.md" "project: [[projects/Alpha]]"
+# good: whole quoted value (with a YAML comment, single quotes), a YAML list, a [a, b] list of
+# quoted links, detail inside the display text, and bad-looking links only in the body
+lnote "next-actions/Whole link.md" "project: \"$P\"   # optional
+source: '[[projects/Alpha/PLAN|plan]]'"
+lnote "next-actions/Link list.md" "project: \"$P\"
+related:
+  - \"[[projects/Alpha/PLAN|plan]]\"
+  - \"[[reference/Notes|Notes]]\""
+lnote "next-actions/Flow list ok.md" "project: \"$P\"
+related: [\"[[projects/Alpha/PLAN|plan]]\", \"[[reference/Notes|Notes]]\"]"
+lnote "next-actions/Detail inside.md" "project: \"$P\"
+source: \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\""
+lnote "next-actions/Body links.md" "project: \"$P\"" "Project: [[projects/Alpha/README|Alpha]] · Date: 20260925
+source: \"[[projects/Alpha/PLAN|plan]] (Phase 4 step 5)\"
+
+---
+related: \"see [[reference/Notes|Notes]]\""
+printf 'No frontmatter here.\n\n---\nsource: "[[reference/Notes|Notes]] (x)"\n---\n' > "$LG/next-actions/No frontmatter.md"
+
+chk="$(LLM_GTD_ROOT="$LK" bash "$ROOT/scripts/gtd_check.sh")"
+lf="link-form${T}"
+for want in \
+  "${lf}next-actions/Trailing text.md${T}source: \"[[projects/Alpha/PLAN|plan]] (Phase 4 step 5)\" — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
+  "${lf}next-actions/Leading text.md${T}source: \"see [[projects/Alpha/PLAN|plan]]\" — text outside the link -> \"[[projects/Alpha/PLAN|see plan]]\"" \
+  "${lf}next-actions/After the quote.md${T}source: \"[[projects/Alpha/PLAN|plan]]\" (Phase 4 step 5) — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
+  "${lf}next-actions/Two links.md${T}related: \"[[projects/Alpha/PLAN|plan]], [[reference/Notes|Notes]]\" — 2 links in one value -> a YAML list, one quoted link per item" \
+  "${lf}next-actions/Unquoted.md${T}source: [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\"" \
+  "${lf}someday-maybe/List item text.md${T}related (item 2): \"[[projects/Alpha/PLAN|plan]] and more\" — text outside the link -> \"[[projects/Alpha/PLAN|plan and more]]\"" \
+  "${lf}projects/Beta/README.md${T}source: \"[[reference/Notes|Notes]] (section 2)\" — text outside the link -> \"[[reference/Notes|Notes (section 2)]]\"" \
+  "${lf}waiting-for/Flow list.md${T}related (item 2): [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\""; do
+  echo "$chk" | grep -qxF "$want" || fail "gtd_check.sh missed: $want"
+done
+[ "$(echo "$chk" | grep -c "^${lf}next-actions/Bare project.md${T}")" -eq 1 ] \
+  || fail "gtd_check.sh reported a bare project: link other than once: $(echo "$chk" | grep "Bare project")"
+[ "$(echo "$chk" | grep -c "^${lf}waiting-for/Flow list.md${T}")" -eq 1 ] || fail "gtd_check.sh flagged a quoted link in a [a, b] list"
+[ "$(echo "$chk" | grep -c "^${lf}someday-maybe/List item text.md${T}")" -eq 1 ] || fail "gtd_check.sh flagged a whole-link list item"
+for clean in "Whole link" "Link list" "Flow list ok" "Detail inside" "Body links" "No frontmatter"; do
+  ! echo "$chk" | grep -qF "${lf}next-actions/$clean.md${T}" || fail "gtd_check.sh flagged a good property link: $clean"
+done
+[ -z "$(echo "$chk" | grep "^${lf}" | grep -vF "projects/Beta/README.md${T}" | grep -F "README.md${T}")" ] \
+  || fail "gtd_check.sh flagged a list README's links: $chk"
+ok "property links: text around a link, several links, unquoted and [a, b] lists flagged; whole links, YAML lists and the body left alone"
+
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then
     fail "privacy denylist matched under skill root"
