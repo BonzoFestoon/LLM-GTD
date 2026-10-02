@@ -56,7 +56,7 @@ example: "Clean up my GTD lists"
 
 | Finding | Automatic | Surface for confirmation |
 |---|---|---|
-| `link-form` | (action, waiting-for or tickle) Rewrite `project:` to `"[[projects/<Name>/README\|<Name>]]"` | — |
+| `link-form` | (action, waiting-for or tickle) Rewrite `project:` to `"[[projects/<Name>/README\|<Name>]]"`. (Any note, any property) Apply the finding's `->` fix: quote a bare link; move text around a link into its display text (`"[[…\|plan (Phase 4 step 5)]]"`); split several links into a YAML list, one quoted link per item | Several links with text between them whose meaning would be lost in a list |
 | `orphan` | Re-link when exactly one project folder is a clear match (renamed / typo) | No match or several; whether it's now standalone (then drop `project:`) |
 | `orphan-closed` | — | The project is already in `_done/`: finish this action, drop it, or re-link it to a live project (a tickle: drop it, or re-link it) |
 | `stalled` | Draft one next-action note linked to the project (act-then-surface) | Can't draft one; the outcome may be achieved (closing it is `update/SKILL.md`'s job) |

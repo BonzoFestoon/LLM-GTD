@@ -171,4 +171,7 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 - A project is linked from an action's `project:` frontmatter field (and from anywhere else) as `[[projects/<Project name>/README|<Project name>]]`; a general reference note as `[[reference/<Title>|<Title>]]`; a project's own support doc, from inside its folder, as a bare `[[filename]]`.
 - A list itself is linked through its README, e.g. `[[projects/README|projects]]` in `horizons.md` — Obsidian resolves the path, so having several `README` files across folders is not ambiguous.
 - Pointing to a heading inside a file: use `[[filename#Heading|Heading]]`. Don't write a heading as a bare `[[Heading]]`, or Obsidian will treat it as a new file to be created.
-- A wikilink in a frontmatter property must be the property's whole value, quoted: `project: "[[projects/<Name>/README|<Name>]]"`.
+- A wikilink in a frontmatter property must be the property's whole value, quoted: `project: "[[projects/<Name>/README|<Name>]]"`. Anything else is plain text in Obsidian, not a link: text before or after the link (inside or outside the quotes), two links in one value, or an unquoted `[[…]]` (YAML reads it as a nested list).
+  - Extra detail goes inside the link's display text: `source: "[[projects/<Name>/PLAN|plan (Phase 4 step 5)]]"`, not `source: "[[projects/<Name>/PLAN|plan]] (Phase 4 step 5)"`.
+  - Several links are a YAML list, one quoted link per item: `related:` then `  - "[[reference/A|A]]"` and `  - "[[reference/B|B]]"` on their own lines.
+  - `gtd_check.sh` reports any other shape as `link-form`, in any note under `memory/gtd/`; links in a note's body are free text and never checked.
