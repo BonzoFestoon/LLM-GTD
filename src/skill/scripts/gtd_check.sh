@@ -6,15 +6,21 @@
 # Usage:
 #   bash gtd_check.sh
 #
-# Output: one tab-separated line per finding — check, path (relative to memory/gtd/), detail —
+# Output: one tab-separated line per finding — check, path (relative to memory/gtd/, or
+# reference/<Title>.md for the workspace-root reference/ folder), detail —
 # then a "# N finding(s)" line. Checks:
 #   orphan          an open action / waiting-for / tickle whose project: link resolves to no project
 #   orphan-closed   ...whose project has already moved to _done/ (surface: close or re-link)
 #   link-form       project: points at the project but not as [[projects/<Name>/README|<Name>]];
-#                   or, in any note under memory/gtd/, a frontmatter property whose wikilink isn't
-#                   the whole quoted value — text before or after it (inside or outside the
-#                   quotes), several links in one value, or an unquoted link. Obsidian shows
-#                   those as plain text. Links in the note body are never checked.
+#                   or any frontmatter link written from the vault root ([[memory/gtd/…]])
+#                   instead of relative to memory/gtd/ ([[projects/…]], [[next-actions/…]])
+#   property-link   a frontmatter property whose wikilink isn't the whole quoted value — text
+#                   before or after it (inside or outside the quotes), several links in one value,
+#                   or an unquoted link — so Obsidian shows plain text; a whole "![[…]]" embed is
+#                   fine. Links in the note body are never checked.
+# property-link and the vault-root link-form also read the workspace-root reference/ folder; its
+# notes are reported as reference/<Title>.md. A project: link the first link-form line already
+# covers gets no second finding.
 #   stalled         a project folder with no open next action, waiting-for or tickle linked to it
 #                   (list-definitions.md "Stalled": a tickle means on hold on purpose)
 #   tickler-due     a tickle dated today or earlier (organize turns it into a next action, or adds
@@ -77,21 +83,25 @@ fm_get() {
 # project_name LINK — the project name a project: value refers to, and how it's written:
 # prints "<form><SEP><name>" where form is "readme" ([[projects/<Name>/README|…]]) or "other".
 project_name() {
-  local v="$1" target
+  local v="$1" target readme=readme
   target="$v"
   # text before the link is a property-link finding (below), not a different project
   case "$target" in *\[\[*) target="${target#*\[\[}"; target="${target%%]]*}"; target="${target%%|*}"; target="${target%%#*}" ;; esac
+  # written from the vault root: the same project, but not the README form
+  case "$target" in memory/gtd/*) target="${target#memory/gtd/}"; readme=other ;; esac
   case "$target" in
-    projects/*/README) target="${target#projects/}"; printf 'readme%s%s\n' "$SEP" "${target%/README}" ;;
+    projects/*/README) target="${target#projects/}"; printf '%s%s%s\n' "$readme" "$SEP" "${target%/README}" ;;
     projects/*) printf 'other%s%s\n' "$SEP" "${target#projects/}" ;;
     *) printf 'other%s%s\n' "$SEP" "$target" ;;
   esac
 }
 
-# fm_link_problems FILE — "key<SEP>message" for each frontmatter property (or list item) whose
-# wikilink Obsidian won't render: the link must be the whole value, quoted ("[[Note|Label]]");
-# several links are a YAML list, one quoted link per item. Reads only a frontmatter block that
-# opens on line 1, so links in the body are never seen. Plain awk (no gawk extensions).
+# fm_link_problems FILE — "kind<SEP>key<SEP>message" for each frontmatter property (or list item)
+# whose wikilink Obsidian won't render (property-link): the link (or an "![[…]]" embed) must be
+# the whole value, quoted ("[[Note|Label]]"); several links are a YAML list, one quoted link per
+# item. A well-shaped link written from the vault root ([[memory/gtd/…]]) is link-form; with a
+# shape problem too, the one property-link fix already uses the short path. Reads only a
+# frontmatter block that opens on line 1, so links in the body are never seen. Plain awk.
 fm_link_problems() {
   awk -v SEP="$SEP" -v SQ="'" '
     function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
@@ -105,8 +115,9 @@ fm_link_problems() {
       }
       return n
     }
+    function out(kind, key, msg) { printf "%s%s%s%s%s\n", kind, SEP, key, SEP, msg }
     # check LABEL KEY V — one scalar value (or one [a, b] list, item by item)
-    function check(label, key, v,   q, rest, inner, c, shown, after, all, p, e, link, lead, trail, inside, bar, tgt, lbl, n, depth, item, items) {
+    function check(label, key, v,   q, rest, inner, c, shown, after, all, p, e, link, lead, trail, bang, inside, short, why, bar, tgt, lbl, n, depth, item, items) {
       v = trim(v)
       if (index(v, "[[") == 0) return
       if (substr(v, 1, 1) == "[" && substr(v, 1, 2) != "[[") {
@@ -151,22 +162,38 @@ fm_link_problems() {
       n = count_links(all)
       if (n == 0) return
       if (n > 1) {
-        printf "%s%s%s: %s — %d links in one value -> a YAML list, one quoted link per item\n", key, SEP, label, shown, n
+        out("property-link", key, label ": " shown " — " n " links in one value -> a YAML list, one quoted link per item")
         return
       }
       p = index(all, "[["); e = index(substr(all, p + 2), "]]")
       link = substr(all, p, e + 3)
-      lead = trim(substr(all, 1, p - 1)); trail = trim(substr(all, p + e + 3))
+      lead = substr(all, 1, p - 1); trail = trim(substr(all, p + e + 3))
+      # "!" right before the link makes it an embed: valid as the whole value, like a link
+      bang = ""
+      if (substr(lead, length(lead), 1) == "!") { bang = "!"; lead = substr(lead, 1, length(lead) - 1) }
+      lead = trim(lead)
+      # links inside memory/gtd/ are written relative to it: projects/..., next-actions/...
+      inside = substr(link, 3, length(link) - 4)
+      short = inside
+      if (substr(short, 1, 11) == "memory/gtd/") short = substr(short, 12)
       if (lead == "" && trail == "") {
-        if (q == "") printf "%s%s%s: %s — unquoted (YAML reads it as a nested list) -> \"%s\"\n", key, SEP, label, shown, link
+        if (q == "") {
+          why = (bang == "") ? "YAML reads it as a nested list" : "YAML reads ! as a tag"
+          out("property-link", key, label ": " shown " — unquoted (" why ") -> \"" bang "[[" short "]]\"")
+        } else if (short != inside) {
+          out("link-form", key, label ": " shown " — path from the vault root -> \"" bang "[[" short "]]\"")
+        }
         return
       }
-      inside = substr(link, 3, length(link) - 4)
-      if ((bar = index(inside, "|")) > 0) { tgt = substr(inside, 1, bar - 1); lbl = substr(inside, bar + 1) }
-      else { tgt = inside; lbl = inside }
+      if (bang != "") {
+        out("property-link", key, label ": " shown " — text outside the embed -> \"![[" short "]]\" (the rest in another property)")
+        return
+      }
+      if ((bar = index(short, "|")) > 0) { tgt = substr(short, 1, bar - 1); lbl = substr(short, bar + 1) }
+      else { tgt = short; lbl = short }
       if (lead != "") lbl = lead " " lbl
       if (trail != "") lbl = lbl " " trail
-      printf "%s%s%s: %s — text outside the link -> \"[[%s|%s]]\"\n", key, SEP, label, shown, tgt, lbl
+      out("property-link", key, label ": " shown " — text outside the link -> \"[[" tgt "|" lbl "]]\"")
     }
     { sub(/\r$/, "") }
     NR == 1 { if ($0 ~ /^---[[:space:]]*$/) next; exit }
@@ -339,18 +366,28 @@ if [ -d "$GTD_DIR/_done" ]; then
   done
 fi
 
-# --- wikilinks in frontmatter properties, every note under memory/gtd/ ---------
+# --- wikilinks in frontmatter properties: memory/gtd/ and the root reference/ ---
 
+# md_files DIR — every .md under DIR, hidden folders skipped, sorted
+md_files() {
+  [ -d "$1" ] || return 0
+  find "$1" -mindepth 1 -name '.*' -prune -o -type f -name '*.md' -print | LC_ALL=C sort
+}
+
+REF_DIR="$GTD_WORKSPACE_ROOT/reference"
 while IFS= read -r f; do
-  rel="${f#"$GTD_DIR"/}"
-  while IFS="$SEP" read -r key msg; do
-    [ -n "$key" ] || continue
-    # a project: link already flagged above gets one finding, not two
+  case "$f" in
+    "$GTD_DIR"/*) rel="${f#"$GTD_DIR"/}" ;;
+    *) rel="reference/${f#"$REF_DIR"/}" ;;
+  esac
+  while IFS="$SEP" read -r kind key msg; do
+    [ -n "$kind" ] || continue
+    # a project: link the project-form check already flagged gets one finding, not two
     if [ "$key" = "project" ]; then
       case $'\n'"$PROJECT_FORM" in *$'\n'"$rel"$'\n'*) continue ;; esac
     fi
-    finding link-form "$rel" "$msg"
+    finding "$kind" "$rel" "$msg"
   done < <(fm_link_problems "$f")
-done < <(find "$GTD_DIR" -mindepth 1 -name '.*' -prune -o -type f -name '*.md' -print | LC_ALL=C sort)
+done < <(md_files "$GTD_DIR"; md_files "$REF_DIR")
 
 echo "# $FINDINGS finding(s)"
