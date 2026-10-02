@@ -308,8 +308,9 @@ ok "tickler: tickled projects in play, due / within split, link checks, inbox gu
 
 # Property links (E37): Obsidian renders a wikilink in a frontmatter property only when the link is
 # the property's whole value, quoted; several links are a YAML list, one quoted link per item.
-# gtd_check.sh's link-form flags any other shape in any note under memory/gtd/, and never a link
-# in the note body.
+# gtd_check.sh's property-link flags any other shape in any note under memory/gtd/ or the
+# workspace-root reference/, and never a link in the note body; link-form flags a link written
+# from the vault root (memory/gtd/...) instead of relative to memory/gtd/.
 LK="$fixture/links"
 mkdir -p "$LK"
 LLM_GTD_ROOT="$LK" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
@@ -342,8 +343,21 @@ source: \"[[reference/Notes|Notes]] (section 2)\""
 lnote "waiting-for/Flow list.md" "person: Sam
 delegated: 2026-09-01
 related: [\"[[reference/Notes|Notes]]\", [[projects/Alpha/PLAN|plan]]]"
-# a project: link in the wrong form is reported once, by the project-form check, not twice
+# an embed with text; a general reference note at the workspace root
+lnote "next-actions/Embed text.md" "cover: \"![[img.png]] (old)\""
+mkdir -p "$LK/reference"
+printf -- '---\nrelated: "[[projects/Alpha/README|Alpha]] (see notes)"\n---\nx\n' > "$LK/reference/Bad ref.md"
+printf -- '---\nrelated:\n  - "[[projects/Alpha/README|Alpha]]"\n---\nx\n' > "$LK/reference/Good ref.md"
+# long-form paths (from the vault root): link-form, with the short form; text around one too is
+# one property-link finding whose fix already uses the short form
+lnote "next-actions/Long path.md" "project: \"$P\"
+source: \"[[memory/gtd/projects/Alpha/PLAN|plan]]\""
+lnote "next-actions/Long text.md" "project: \"$P\"
+source: \"[[memory/gtd/projects/Alpha/PLAN|plan]] (step 5)\""
+# a project: link in the wrong form (bare, unquoted; long-form) is reported once, by the
+# project-form check, not again by the property checks — and the long form isn't an orphan
 lnote "next-actions/Bare project.md" "project: [[projects/Alpha]]"
+lnote "next-actions/Long project.md" "project: \"[[memory/gtd/projects/Alpha/README|Alpha]]\""
 # good: whole quoted value (with a YAML comment, single quotes), a YAML list, a [a, b] list of
 # quoted links, detail inside the display text, and bad-looking links only in the body
 lnote "next-actions/Whole link.md" "project: \"$P\"   # optional
@@ -352,6 +366,10 @@ lnote "next-actions/Link list.md" "project: \"$P\"
 related:
   - \"[[projects/Alpha/PLAN|plan]]\"
   - \"[[reference/Notes|Notes]]\""
+lnote "next-actions/Embed ok.md" "cover: \"![[img.png]]\"
+images:
+  - \"![[a.png]]\"
+  - '![[b.png|200]]'"
 lnote "next-actions/Flow list ok.md" "project: \"$P\"
 related: [\"[[projects/Alpha/PLAN|plan]]\", \"[[reference/Notes|Notes]]\"]"
 lnote "next-actions/Detail inside.md" "project: \"$P\"
@@ -364,28 +382,39 @@ related: \"see [[reference/Notes|Notes]]\""
 printf 'No frontmatter here.\n\n---\nsource: "[[reference/Notes|Notes]] (x)"\n---\n' > "$LG/next-actions/No frontmatter.md"
 
 chk="$(LLM_GTD_ROOT="$LK" bash "$ROOT/scripts/gtd_check.sh")"
+pl="property-link${T}"
 lf="link-form${T}"
 for want in \
-  "${lf}next-actions/Trailing text.md${T}source: \"[[projects/Alpha/PLAN|plan]] (Phase 4 step 5)\" — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
-  "${lf}next-actions/Leading text.md${T}source: \"see [[projects/Alpha/PLAN|plan]]\" — text outside the link -> \"[[projects/Alpha/PLAN|see plan]]\"" \
-  "${lf}next-actions/After the quote.md${T}source: \"[[projects/Alpha/PLAN|plan]]\" (Phase 4 step 5) — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
-  "${lf}next-actions/Two links.md${T}related: \"[[projects/Alpha/PLAN|plan]], [[reference/Notes|Notes]]\" — 2 links in one value -> a YAML list, one quoted link per item" \
-  "${lf}next-actions/Unquoted.md${T}source: [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\"" \
-  "${lf}someday-maybe/List item text.md${T}related (item 2): \"[[projects/Alpha/PLAN|plan]] and more\" — text outside the link -> \"[[projects/Alpha/PLAN|plan and more]]\"" \
-  "${lf}projects/Beta/README.md${T}source: \"[[reference/Notes|Notes]] (section 2)\" — text outside the link -> \"[[reference/Notes|Notes (section 2)]]\"" \
-  "${lf}waiting-for/Flow list.md${T}related (item 2): [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\""; do
+  "${pl}next-actions/Trailing text.md${T}source: \"[[projects/Alpha/PLAN|plan]] (Phase 4 step 5)\" — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
+  "${pl}next-actions/Leading text.md${T}source: \"see [[projects/Alpha/PLAN|plan]]\" — text outside the link -> \"[[projects/Alpha/PLAN|see plan]]\"" \
+  "${pl}next-actions/After the quote.md${T}source: \"[[projects/Alpha/PLAN|plan]]\" (Phase 4 step 5) — text outside the link -> \"[[projects/Alpha/PLAN|plan (Phase 4 step 5)]]\"" \
+  "${pl}next-actions/Two links.md${T}related: \"[[projects/Alpha/PLAN|plan]], [[reference/Notes|Notes]]\" — 2 links in one value -> a YAML list, one quoted link per item" \
+  "${pl}next-actions/Unquoted.md${T}source: [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\"" \
+  "${pl}someday-maybe/List item text.md${T}related (item 2): \"[[projects/Alpha/PLAN|plan]] and more\" — text outside the link -> \"[[projects/Alpha/PLAN|plan and more]]\"" \
+  "${pl}projects/Beta/README.md${T}source: \"[[reference/Notes|Notes]] (section 2)\" — text outside the link -> \"[[reference/Notes|Notes (section 2)]]\"" \
+  "${pl}waiting-for/Flow list.md${T}related (item 2): [[projects/Alpha/PLAN|plan]] — unquoted (YAML reads it as a nested list) -> \"[[projects/Alpha/PLAN|plan]]\"" \
+  "${pl}next-actions/Embed text.md${T}cover: \"![[img.png]] (old)\" — text outside the embed -> \"![[img.png]]\" (the rest in another property)" \
+  "${pl}reference/Bad ref.md${T}related: \"[[projects/Alpha/README|Alpha]] (see notes)\" — text outside the link -> \"[[projects/Alpha/README|Alpha (see notes)]]\"" \
+  "${lf}next-actions/Long path.md${T}source: \"[[memory/gtd/projects/Alpha/PLAN|plan]]\" — path from the vault root -> \"[[projects/Alpha/PLAN|plan]]\"" \
+  "${pl}next-actions/Long text.md${T}source: \"[[memory/gtd/projects/Alpha/PLAN|plan]] (step 5)\" — text outside the link -> \"[[projects/Alpha/PLAN|plan (step 5)]]\"" \
+  "${lf}next-actions/Long project.md${T}project: [[memory/gtd/projects/Alpha/README|Alpha]] -> [[projects/Alpha/README|Alpha]]"; do
   echo "$chk" | grep -qxF "$want" || fail "gtd_check.sh missed: $want"
 done
-[ "$(echo "$chk" | grep -c "^${lf}next-actions/Bare project.md${T}")" -eq 1 ] \
-  || fail "gtd_check.sh reported a bare project: link other than once: $(echo "$chk" | grep "Bare project")"
-[ "$(echo "$chk" | grep -c "^${lf}waiting-for/Flow list.md${T}")" -eq 1 ] || fail "gtd_check.sh flagged a quoted link in a [a, b] list"
-[ "$(echo "$chk" | grep -c "^${lf}someday-maybe/List item text.md${T}")" -eq 1 ] || fail "gtd_check.sh flagged a whole-link list item"
-for clean in "Whole link" "Link list" "Flow list ok" "Detail inside" "Body links" "No frontmatter"; do
-  ! echo "$chk" | grep -qF "${lf}next-actions/$clean.md${T}" || fail "gtd_check.sh flagged a good property link: $clean"
+# links_in PATH — the link-form and property-link findings for one note
+links_in() { echo "$chk" | grep -E "^(link-form|property-link)${T}" | grep -F "${T}$1${T}" || true; }
+for once in "next-actions/Bare project.md" "next-actions/Long project.md" "next-actions/Long text.md" \
+  "next-actions/Long path.md" "waiting-for/Flow list.md" "someday-maybe/List item text.md" "reference/Bad ref.md"; do
+  [ "$(links_in "$once" | grep -c .)" -eq 1 ] || fail "gtd_check.sh reported $once other than once: $(links_in "$once")"
 done
-[ -z "$(echo "$chk" | grep "^${lf}" | grep -vF "projects/Beta/README.md${T}" | grep -F "README.md${T}")" ] \
+links_in "next-actions/Bare project.md" | grep -q "^${lf}" || fail "a bare project: link is not link-form"
+! echo "$chk" | grep -qF "orphan${T}next-actions/Long project.md" || fail "gtd_check.sh called a long-form project: link an orphan"
+for clean in next-actions/"Whole link" next-actions/"Link list" next-actions/"Flow list ok" next-actions/"Detail inside" \
+  next-actions/"Body links" next-actions/"No frontmatter" next-actions/"Embed ok" reference/"Good ref"; do
+  [ -z "$(links_in "$clean.md")" ] || fail "gtd_check.sh flagged a good property link: $(links_in "$clean.md")"
+done
+[ -z "$(echo "$chk" | grep -E "^(link-form|property-link)${T}" | grep -vF "projects/Beta/README.md${T}" | grep -F "README.md${T}")" ] \
   || fail "gtd_check.sh flagged a list README's links: $chk"
-ok "property links: text around a link, several links, unquoted and [a, b] lists flagged; whole links, YAML lists and the body left alone"
+ok "property links: text around a link or embed, several links, unquoted and [a, b] lists flagged (memory/gtd/ and reference/); long paths are link-form; one finding per property; whole links, embeds, YAML lists and the body left alone"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then

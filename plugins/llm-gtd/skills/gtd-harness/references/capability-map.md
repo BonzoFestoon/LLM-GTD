@@ -40,7 +40,7 @@ The intent verbs above, as the concrete capability behind each one. See `referen
 | Close a project | AAR in the README, then move the whole folder to `memory/gtd/_done/<Project name>/` and rewrite links to it |
 | Read the tickler | `gtd_list.sh tickler [--due \| --within N] [--project P]` |
 | Read the done record | `gtd_list.sh done [--since DATE] [--project P] [--problems]` |
-| Scan a list for stalled / orphaned / malformed items | `scripts/gtd_check.sh`: one line per finding (orphan, link-form (including a frontmatter link that isn't its property's whole quoted value), stalled, field, duplicate, filename, tickler, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
+| Scan a list for stalled / orphaned / malformed items | `scripts/gtd_check.sh`: one line per finding (orphan, link-form, property-link (a frontmatter link that isn't its property's whole quoted value, also checked in `reference/`), stalled, field, duplicate, filename, tickler, plus `_done/`'s missing `completed` / missing AAR); `_done/` never counts as open work |
 | Read a list's local rules before writing | Read `memory/gtd/<list>/README.md` |
 
 ## Calendar source adapter + auto-write contract
