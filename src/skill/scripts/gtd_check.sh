@@ -10,7 +10,11 @@
 # then a "# N finding(s)" line. Checks:
 #   orphan          an open action / waiting-for / tickle whose project: link resolves to no project
 #   orphan-closed   ...whose project has already moved to _done/ (surface: close or re-link)
-#   link-form       project: points at the project but not as [[projects/<Name>/README|<Name>]]
+#   link-form       project: points at the project but not as [[projects/<Name>/README|<Name>]];
+#                   or, in any note under memory/gtd/, a frontmatter property whose wikilink isn't
+#                   the whole quoted value — text before or after it (inside or outside the
+#                   quotes), several links in one value, or an unquoted link. Obsidian shows
+#                   those as plain text. Links in the note body are never checked.
 #   stalled         a project folder with no open next action, waiting-for or tickle linked to it
 #                   (list-definitions.md "Stalled": a tickle means on hold on purpose)
 #   tickler-due     a tickle dated today or earlier (organize turns it into a next action, or adds
@@ -75,7 +79,8 @@ fm_get() {
 project_name() {
   local v="$1" target
   target="$v"
-  case "$target" in \[\[*) target="${target#\[\[}"; target="${target%%]]*}"; target="${target%%|*}"; target="${target%%#*}" ;; esac
+  # text before the link is a property-link finding (below), not a different project
+  case "$target" in *\[\[*) target="${target#*\[\[}"; target="${target%%]]*}"; target="${target%%|*}"; target="${target%%#*}" ;; esac
   case "$target" in
     projects/*/README) target="${target#projects/}"; printf 'readme%s%s\n' "$SEP" "${target%/README}" ;;
     projects/*) printf 'other%s%s\n' "$SEP" "${target#projects/}" ;;
@@ -83,9 +88,106 @@ project_name() {
   esac
 }
 
+# fm_link_problems FILE — "key<SEP>message" for each frontmatter property (or list item) whose
+# wikilink Obsidian won't render: the link must be the whole value, quoted ("[[Note|Label]]");
+# several links are a YAML list, one quoted link per item. Reads only a frontmatter block that
+# opens on line 1, so links in the body are never seen. Plain awk (no gawk extensions).
+fm_link_problems() {
+  awk -v SEP="$SEP" -v SQ="'" '
+    function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+    # count_links S — how many [[...]] links S holds
+    function count_links(s,   n, p, e) {
+      n = 0
+      while ((p = index(s, "[[")) > 0) {
+        s = substr(s, p + 2)
+        if ((e = index(s, "]]")) == 0) break
+        n++; s = substr(s, e + 2)
+      }
+      return n
+    }
+    # check LABEL KEY V — one scalar value (or one [a, b] list, item by item)
+    function check(label, key, v,   q, rest, inner, c, shown, after, all, p, e, link, lead, trail, inside, bar, tgt, lbl, n, depth, item, items) {
+      v = trim(v)
+      if (index(v, "[[") == 0) return
+      if (substr(v, 1, 1) == "[" && substr(v, 1, 2) != "[[") {
+        # a [a, b] flow list: split on commas outside quotes and brackets, check each item
+        rest = substr(v, 2); items = 0; item = ""; depth = 0; q = ""
+        while (rest != "") {
+          c = substr(rest, 1, 1); rest = substr(rest, 2)
+          if (q != "") { item = item c; if (c == q) q = ""; continue }
+          if (c == "\"" || c == SQ) { q = c; item = item c; continue }
+          if (c == "[") depth++
+          if (c == "]") { if (depth == 0) break; depth-- }
+          if (c == "," && depth == 0) { items++; check(label " (item " items ")", key, item); item = ""; continue }
+          item = item c
+        }
+        items++; check(label " (item " items ")", key, item)
+        return
+      }
+      q = substr(v, 1, 1)
+      if (q == "\"" || q == SQ) {
+        rest = substr(v, 2); inner = ""
+        while (rest != "") {
+          c = substr(rest, 1, 1)
+          if (q == "\"" && c == "\\") { inner = inner substr(rest, 1, 2); rest = substr(rest, 3); continue }
+          if (c == q) {
+            if (q == SQ && substr(rest, 2, 1) == q) { inner = inner q; rest = substr(rest, 3); continue }
+            rest = substr(rest, 2); break
+          }
+          inner = inner c; rest = substr(rest, 2)
+        }
+        shown = substr(v, 1, length(v) - length(rest))
+        after = rest
+        if (after ~ /^[[:space:]]*#/) after = ""
+        sub(/[[:space:]]+#.*$/, "", after)
+        after = trim(after)
+        if (after != "") shown = shown " " after
+        all = trim(inner " " after)
+      } else {
+        q = ""
+        sub(/[[:space:]]+#.*$/, "", v)
+        shown = v; all = v
+      }
+      n = count_links(all)
+      if (n == 0) return
+      if (n > 1) {
+        printf "%s%s%s: %s — %d links in one value -> a YAML list, one quoted link per item\n", key, SEP, label, shown, n
+        return
+      }
+      p = index(all, "[["); e = index(substr(all, p + 2), "]]")
+      link = substr(all, p, e + 3)
+      lead = trim(substr(all, 1, p - 1)); trail = trim(substr(all, p + e + 3))
+      if (lead == "" && trail == "") {
+        if (q == "") printf "%s%s%s: %s — unquoted (YAML reads it as a nested list) -> \"%s\"\n", key, SEP, label, shown, link
+        return
+      }
+      inside = substr(link, 3, length(link) - 4)
+      if ((bar = index(inside, "|")) > 0) { tgt = substr(inside, 1, bar - 1); lbl = substr(inside, bar + 1) }
+      else { tgt = inside; lbl = inside }
+      if (lead != "") lbl = lead " " lbl
+      if (trail != "") lbl = lbl " " trail
+      printf "%s%s%s: %s — text outside the link -> \"[[%s|%s]]\"\n", key, SEP, label, shown, tgt, lbl
+    }
+    { sub(/\r$/, "") }
+    NR == 1 { if ($0 ~ /^---[[:space:]]*$/) next; exit }
+    /^(---|\.\.\.)[[:space:]]*$/ { exit }
+    match($0, /^[A-Za-z_][A-Za-z0-9_ .-]*:/) {
+      key = substr($0, 1, RLENGTH - 1); items = 0
+      check(key, key, substr($0, RLENGTH + 1))
+      next
+    }
+    /^[[:space:]]*-[[:space:]]/ && key != "" {
+      items++
+      v = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", v)
+      check(key " (item " items ")", key, v)
+    }
+  ' "$1"
+}
+
 # --- open actions and waiting-for: project links + fields --------------------
 
 LINKED=""   # newline-separated project names that have at least one open action / waiting-for / tickle
+PROJECT_FORM=""   # notes already given a project: link-form finding (property links skip their project:)
 TODAY="$(date +%Y-%m-%d)"
 INBOX="$GTD_DIR/inbox.md"
 
@@ -103,7 +205,10 @@ for list in next-actions waiting-for tickler; do
       IFS="$SEP" read -r form name < <(project_name "$project")
       if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
         LINKED="$LINKED$name"$'\n'
-        [ "$form" = "readme" ] || finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
+        if [ "$form" != "readme" ]; then
+          finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
+          PROJECT_FORM="$PROJECT_FORM$rel"$'\n'
+        fi
       elif [ -f "$GTD_DIR/_done/$name/README.md" ]; then
         finding orphan-closed "$rel" "project '$name' is already in _done/"
       else
@@ -233,5 +338,19 @@ if [ -d "$GTD_DIR/_done" ]; then
     fi
   done
 fi
+
+# --- wikilinks in frontmatter properties, every note under memory/gtd/ ---------
+
+while IFS= read -r f; do
+  rel="${f#"$GTD_DIR"/}"
+  while IFS="$SEP" read -r key msg; do
+    [ -n "$key" ] || continue
+    # a project: link already flagged above gets one finding, not two
+    if [ "$key" = "project" ]; then
+      case $'\n'"$PROJECT_FORM" in *$'\n'"$rel"$'\n'*) continue ;; esac
+    fi
+    finding link-form "$rel" "$msg"
+  done < <(fm_link_problems "$f")
+done < <(find "$GTD_DIR" -mindepth 1 -name '.*' -prune -o -type f -name '*.md' -print | LC_ALL=C sort)
 
 echo "# $FINDINGS finding(s)"
