@@ -123,7 +123,7 @@ Design principles:
 - This fork no longer tracks upstream (`mikonos/LLM-GTD`) as of v1.17.1.
 
 ## v2.0.1 — Property links checked
-- A note filed with `source: "[[…|plan]] (Phase 4 step 5)"` showed plain text in Obsidian instead of a link. `gtd_check.sh`'s `link-form` now reports any frontmatter property whose link isn't the whole quoted value (text around it, several links, unquoted), in every note under `memory/gtd/`, with the fix; body links stay free text. Clarify and `list-definitions.md` say where extra detail goes (inside the display text). New eval E37.
+- A note filed with `source: "[[…|plan]] (Phase 4 step 5)"` showed plain text in Obsidian instead of a link. `gtd_check.sh` gains `property-link`: any frontmatter property whose link (or embed) isn't the whole quoted value (text around it, several links, unquoted), in every note under `memory/gtd/` and the workspace-root `reference/`, with the fix; body links stay free text. It is its own kind so organize can tell "Obsidian shows plain text" from `link-form`'s "points at the right note in the wrong form", which now also covers links written from the vault root (`[[memory/gtd/…]]`). Clarify and `list-definitions.md` say where extra detail goes (inside the display text) and that links into `memory/gtd/` are relative to it. New eval E37.
 
 ---
 

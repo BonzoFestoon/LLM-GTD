@@ -5,18 +5,28 @@ All notable changes.
 ## v2.0.1 — Property links that Obsidian shows as plain text
 Obsidian renders a wikilink in a frontmatter property only when the link is
 the property's whole value, quoted (`source: "[[Note|Label]]"`).
-`gtd_check.sh`'s `link-form` now also reports, in any note under
-`memory/gtd/`, a property or list item whose link has text before or after it
-(inside or outside the quotes), holds several links, or is unquoted (YAML reads
-`[[…]]` as a nested list). Each finding gives the fix after `->`, e.g.
+`gtd_check.sh` has a new finding, `property-link`: in any note under
+`memory/gtd/` or the workspace-root `reference/` (reported as
+`reference/<Title>.md`), a property or list item whose link has text before or
+after it (inside or outside the quotes), holds several links, or is unquoted
+(YAML reads `[[…]]` as a nested list). Each finding gives the fix after `->`,
+e.g.
 `source: "[[X|plan]] (Phase 4 step 5)" — text outside the link -> "[[X|plan (Phase 4 step 5)]]"`.
-Links in a note's body are never checked, and a `project:` link the existing
-check already flags is reported once.
+A whole quoted embed (`cover: "![[image.png]]"`) is fine; an embed with text
+is flagged. Links in a note's body are never checked.
+
+`link-form` now also reports a frontmatter link written from the vault root
+(`[[memory/gtd/projects/…]]`), with the short form relative to `memory/gtd/`
+(`[[projects/…]]`); a long-form `project:` link is no longer a false
+`orphan`. A property gets one finding: a `project:` link `link-form` already
+flags gets no `property-link` line, and a long path with text around it is one
+`property-link` whose fix already uses the short path.
 
 Clarify's filing rules and `list-definitions.md` "Obsidian link rules" now say
-extra detail goes inside the link's display text and several links go in a
-YAML list; organize's `link-form` row says how to apply the new fixes. New
-eval E37-property-link, with a static-gate fixture.
+extra detail goes inside the link's display text, several links go in a YAML
+list, and links into `memory/gtd/` use paths relative to it; organize's fix
+table gains a `property-link` row. New eval E37-property-link, with a
+static-gate fixture.
 
 ## v2.0.0 — One note per item only; no product-ideas list
 **Breaking.** Two things LLM-GTD 1.x had are gone.
