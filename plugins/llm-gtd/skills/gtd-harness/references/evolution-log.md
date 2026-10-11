@@ -78,9 +78,8 @@ Design principles:
 - **Boundary**: new input still goes to capture; structural drift still goes to organize; for risky project deletion, multiple matches, or a non-unique calendar event, ask only one question.
 
 ## v1.13 — English translation
-- All skill prompts, templates, and script output translated from Chinese to English using David Allen's GTD terminology.
-- **Parsed labels changed**: `- 下一步行动：` → `- Next actions:`, `- [ ] 机会：` → `- [ ] Opportunity:`, `- GTD 可见性：` → `- GTD visibility:`; eval-check headings and the vague-verb list are now English. Existing `memory/gtd/` files written in the old Chinese format need these labels updated for the stalled / visibility checks to work.
-- **Kept**: `--import-legacy` still reads the Chinese `@自己` / `@等待` / `@项目` sections of a legacy `open loops.md`.
+- All skill prompts, templates, and script output translated to English using David Allen's GTD terminology.
+- **Parsed labels changed**: scripts now parse `- Next actions:`, `- [ ] Opportunity:`, `- GTD visibility:`; eval-check headings and the vague-verb list are now English. Existing `memory/gtd/` files using the pre-1.13 labels need these labels updated for the stalled / visibility checks to work.
 
 ## v1.14.1 — Calendar checks read event availability
 - **Bug the general skill now fixes**: `clarify`, `engage`, and `review` previously had no way to tell a free-marked event (an informational all-day block, say) from a real busy conflict — they'd have had to guess from title or length. Fixed once in `capability-map.md`'s conflict and capacity judgment, pointed to from all three call sites instead of being copied three times.

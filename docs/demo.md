@@ -1,7 +1,5 @@
 # Demo — a day with LLM-GTD
 
-[中文](demo.zh-CN.md) | English
-
 A realistic transcript of the five steps. Examples are illustrative; your wording can be natural.
 
 ---
