@@ -27,7 +27,7 @@ example: "Which GTD command should I use?"
 
 1. **No arguments — the default view**, built entirely from `scripts/gtd_help.sh` (no argument):
    1. **Commands table**: all nine commands (`gtd`, `gtd-init`, `gtd-capture`, `gtd-clarify`, `gtd-update`, `gtd-organize`, `gtd-engage`, `gtd-review`, `gtd-help`), each with its `description`, `## When to run`, `example`, and a **Model** column from `references/model-guidance.md`'s tier table plus this session's current model (or "unknown" if it can't be determined).
-   2. **The rhythm**: capture any time → clarify when the inbox has items (usually automatic) → engage when choosing what to do → update when something changes → organize runs by itself before engage and review → Weekly Review once a week.
+   2. **The rhythm**: capture any time → clarify when the inbox has items (usually automatic) → engage when choosing what to do → update when something changes (said in chat, or written into a note tagged `gtd-update` from anywhere, the phone included) → organize runs by itself before engage and review → Weekly Review once a week.
    3. **Right now**: run `scripts/gtd_status.sh` and turn its top finding into one suggestion, e.g. "3 items in the inbox → `/gtd-clarify`", "2 stalled projects → `/gtd-organize`", or "nothing pending → `/gtd-engage`". If the status script can't run, skip this section and say so in one line — never block the rest of the output on it.
    4. **Where things live**: the resolved GTD folder (from `gtd_init.sh --status`'s `Vault:` line or equivalent), the list folders (each with its `README.md`), `tickler/` and `_done/`, and `reference/` at the workspace root.
 

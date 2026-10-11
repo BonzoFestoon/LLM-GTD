@@ -1,6 +1,6 @@
 ---
 name: gtd-update
-description: GTD skill scenario command · Update. Handles changes in reality the user reports — done, progress, a waiting-for reply, changed event details, a cancelled project, or a correction — and syncs the trusted lists forward.
+description: GTD skill scenario command · Update. Handles changes in reality the user reports — done, progress, a waiting-for reply, changed event details, a cancelled project, or a correction, typed in chat or written into a note tagged gtd-update — and syncs the trusted lists forward.
 parent: gtd-harness
 model-tier: balanced
 example: "The dentist appointment got moved to Friday"
@@ -25,6 +25,7 @@ example: "The dentist appointment got moved to Friday"
 - The user reports project progress: "I talked it over with my family and we've settled the arrangement."
 - The user corrects an existing state: "Not Wednesday evening — the flight leaves Wednesday at 13:30."
 - The user cancels or downgrades a commitment: "Skip this for now / no need to follow up / close this project."
+- Notes tagged `gtd-update` are waiting (`gtd_status.sh` says "tagged note(s) to apply"), or the user says "apply my tagged notes" — see "Tagged notes".
 
 ## Boundaries with other commands
 
@@ -37,6 +38,8 @@ example: "The dentist appointment got moved to Friday"
 Update does one thing: sync the change in reality the user just reported into `memory/gtd/` and the real hard landscape.
 
 ## Workflow
+
+0. **Tagged notes**: run `scripts/gtd_tagged.sh` on every invocation. Handle what the user reported in chat first (steps 1-6), then each listed note as in "Tagged notes" below. With nothing reported in chat, the tagged notes are the job.
 
 1. **Read the relevant lists before changing anything**:
    - By default scan next-actions, projects, and waiting-for first (`scripts/gtd_list.sh <list>`; read the list's `README.md` before moving a note out of it).
@@ -53,6 +56,9 @@ Update does one thing: sync the change in reality the user just reported into `m
    | Event details changed | Date / time / place / departure window changed | Update the external calendar provider event; if no clear event is found and details are complete, create one; ask one question if unsure |
    | Commitment cancelled / dropped | The user explicitly cancels | A project-linked action or waiting-for → done record with `result: cancelled` and the reason; a standalone action or a someday item → delete it; a tickle → delete it (no done record); a whole project → ask once, then close it as cancelled (the AAR is optional), removing its tickles too. If merely paused but still wanted, move it to someday-maybe |
    | Tickle date moved | "That can't start until X now" / "push it to December" for a tickle | Change the note's `tickle:` (the `id` stays); if the project's whole timeline moved, say so in its README's Decisions |
+   | Routine cycle done | The completed action has `from:` (or exactly matches a recurring tickle's title; ask once if unsure) | Done record as `_done/<Title> YYYY-MM-DD.md`, keeping `from:`; then, in one edit, the tickle gets `last_completed: <completed>` and `tickle:` = `scripts/gtd_next_date.sh next <every> <tickle> <completed>` (add `floating` when the tickle has `cadence: floating`). `<completed>` is today unless the user names the day. Never work the date out by hand. A dangling `from:` → complete the action, skip the tickle step, say so |
+   | Routine cycle skipped | "Skip it this quarter" | The action → done record with `result: skipped` and the reason; `last_completed` unchanged; `tickle:` = `gtd_next_date.sh next <every> <tickle> <today>` |
+   | Routine paused / ended / rule changed | "Pause the backups until January" / "stop doing this" / "make it monthly" | Pause: cancel the open action (done record, `result: cancelled`), re-date `tickle`; no end date → move the tickle to `someday-maybe/` keeping `every`. End: cancel the open action, move the tickle to `_done/<Title>.md` with `completed`, `result: ended`, `list: tickler`. Rule change: edit `every` / `lead` / `cadence`, recompute `tickle` from `last_completed` (or `created`) with `gtd_next_date.sh next`, never earlier than today, and update `due:` on the open action |
    | Text correction | The user corrects an existing fact or wording | Minimally edit the corresponding note, or project support material |
 
 3. **Matching rules**:
@@ -61,7 +67,7 @@ Update does one thing: sync the change in reality the user just reported into `m
    - Moving a finished item to the done record closes the GTD loop; live lists hold only commitments that still need attention, never checked-off history.
 
 4. **Advance projects**:
-   - When a completed action belongs to a project, read that project's `README.md` and its remaining open actions / waiting-for / tickles (`gtd_list.sh next-actions --project "<Name>"`, same for waiting-for and tickler). A tickle still linking it means the project is on hold until that date, not stalled: don't draft a new next action for it.
+   - When a completed action belongs to a project, read that project's `README.md` and its remaining open actions / waiting-for / tickles (`gtd_list.sh next-actions --project "<Name>"`, same for waiting-for and tickler). A one-shot tickle still linking it means the project is on hold until that date, not stalled: don't draft a new next action for it. A recurring tickle doesn't hold it (`list-definitions.md` "Stalled projects").
    - If the desired outcome is achieved and no next action still needs pushing → close it with an after-action review ("Project close" below).
    - If the project is still unfinished → draft **one** most suitable current next action from the new facts and link it to the project (a note whose `project:` links the README).
    - If the new next action needs the user's value judgment or information is missing → don't force one; list the gap and ask one question.
@@ -70,11 +76,23 @@ Update does one thing: sync the change in reality the user just reported into `m
 
 A finished item leaves its list and lands in the done record with an outcome. Never block the completion on the outcome, and never re-ask about it later.
 
-- **Move the note** to `memory/gtd/_done/<same filename>` (add `(2)` on a collision). Keep every property and the body; add `completed: <today>`, `result: done | cancelled`, `list: <the list it came from>`; append `## Outcome` with `- Done:`, `- Problems and fixes:`, and `- Links:` when there are any.
+- **Move the note** to `memory/gtd/_done/<same filename>` (add `(2)` on a collision); a routine's cycle (it has `from:`) goes to `_done/<Title> YYYY-MM-DD.md`, its completion date. Keep every property and the body; add `completed: <today>`, `result: done | cancelled`, `list: <the list it came from>`; append `## Outcome` with `- Done:`, `- Problems and fixes:`, and `- Links:` when there are any.
 - **Writing the outcome**:
   - You did or watched the work in this session → write it yourself: the steps taken, errors hit, and the fix that worked. Ask nothing; the one-line report shows it, and the user can correct it in one sentence.
   - The user just says "done" with no context → ask **one optional** question, and only when the action belongs to a project or was estimated at 30 min or more / deep work: "Anything worth noting: what got in the way and how you got past it?" Silence or "no" records `Problems and fixes: none noted`. A quick standalone action is never asked.
 - A received waiting-for records what arrived under `Done:`. A cancelled project step records the reason under `Done:`.
+
+## Tagged notes
+
+An update can be written into any note in the vault (on the phone, in Obsidian) and applied later. The format is in `references/list-definitions.md` "Tagged-note updates".
+
+1. **Find them**: `scripts/gtd_tagged.sh` lists each note tagged `gtd-update` (frontmatter `tags:` or an inline `#gtd-update`) with its count of lines still to apply (`updates=N`). It skips hidden folders and `memory/gtd/_done/`. `updates=0` means tagged but nothing to apply: report it and leave it alone.
+2. **Read each note's `Update` sections** (a heading whose text is exactly `Update`; `Update (applied …)` is history, never read). Each non-empty line or bullet that doesn't end in ` ✓` is one update.
+3. **Resolve each line's target**: what the line names (a `[[link]]` or an item title); else the note itself when it is a GTD item under `memory/gtd/` (a project README → that project); else the GTD items the note links to (exactly one → it; several → unclear).
+4. **Apply** each clear line through the update-type table above, exactly as if it had been typed in chat: the same matching rules, the same one confirmation for closing or cutting a project. Unclear lines (no target, several matches, unclear kind of update) are **asked about in one batch** after the clear ones are applied.
+5. **Finish the note** once every line has been applied or answered, in one edit: remove the tag (drop `gtd-update` from `tags:`, and `tags:` itself if it becomes empty; delete the inline `#gtd-update`) and rename each processed heading to `## Update (applied YYYY-MM-DD)` (same level), keeping its text. A note that moved during the update (an action note done into `_done/`) is finished at its new path.
+6. **Partly done** (the user left a question unanswered): keep the tag, leave the heading as it is, and append ` ✓` to each applied line so the next run doesn't apply it again.
+7. Report per note: what each line changed, and which lines still wait (and why).
 
 ## Project close (after-action review)
 
@@ -116,3 +134,5 @@ Briefly output three things:
 - [ ] A cancelled standalone action or someday item was deleted, not recorded
 - [ ] Calendar updates claimed complete only after the calendar provider / tool succeeded
 - [ ] Asked one question on multiple matches or risky deletions; no guessing
+- [ ] A routine's completed cycle: dated done record, `last_completed` set, `tickle` moved with `gtd_next_date.sh`
+- [ ] Tagged notes: ran `gtd_tagged.sh`; clear lines applied, unclear ones asked about in one batch; finished notes have no tag and an `Update (applied YYYY-MM-DD)` heading; partly done notes keep the tag with applied lines marked ` ✓`

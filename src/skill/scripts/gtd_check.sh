@@ -9,9 +9,11 @@
 # Output: one tab-separated line per finding — check, path (relative to memory/gtd/, or
 # reference/<Title>.md for the workspace-root reference/ folder), detail —
 # then a "# N finding(s)" line. Checks:
-#   orphan          an open action / waiting-for / tickle whose project: link resolves to no project
-#   orphan-closed   ...whose project has already moved to _done/ (surface: close or re-link)
+#   orphan          an open action / waiting-for / tickle whose project: link resolves to no project,
+#                   or a next action whose from: link resolves to no tickle
+#   orphan-closed   ...whose project (or from: tickle) has already moved to _done/ (close or re-link)
 #   link-form       project: points at the project but not as [[projects/<Name>/README|<Name>]];
+#                   from: points at the tickle but not as [[tickler/<Title>|<Title>]];
 #                   or any frontmatter link written from the vault root ([[memory/gtd/…]])
 #                   instead of relative to memory/gtd/ ([[projects/…]], [[next-actions/…]])
 #   property-link   a frontmatter property whose wikilink isn't the whole quoted value — text
@@ -21,14 +23,22 @@
 # property-link and the vault-root link-form also read the workspace-root reference/ folder; its
 # notes are reported as reference/<Title>.md. A project: link the first link-form line already
 # covers gets no second finding.
-#   stalled         a project folder with no open next action, waiting-for or tickle linked to it
-#                   (list-definitions.md "Stalled": a tickle means on hold on purpose)
-#   tickler-due     a tickle dated today or earlier (organize turns it into a next action, or adds
-#                   an inbox pointer to it); "queued in inbox" when inbox.md already links the note
+#   stalled         a project folder with no open next action, waiting-for or one-shot tickle linked
+#                   to it (list-definitions.md "Stalled": a one-shot tickle means on hold on purpose;
+#                   a recurring tickle never holds a project)
+#   tickler-due     a one-shot tickle dated today or earlier (organize turns it into a next action,
+#                   or adds an inbox pointer to it; "queued in inbox" when inbox.md already links the
+#                   note); a recurring tickle (valid every:) whose start date — tickle minus its lead:
+#                   — has arrived and that no open next action links with from: (organize creates it)
+#   tickler-overdue a recurring tickle dated before today: its cycle is late (no grace). Reported,
+#                   never re-dated
 #   tickler-date    a tickle with no tickle: date, or one that isn't YYYY-MM-DD
+#   tickler-every   an every: or lead: that isn't <n><unit> (7d, 2w, 3m, 1y), with the compact form
+#                   when one is obvious; until fixed the tickle is one-shot (a bad lead: is ignored)
 #   field           missing or out-of-vocabulary property (vocabulary: list-definitions.md
 #                   "Property values")
-#   duplicate       two notes in one list with the same title, ignoring case and a "(N)" suffix
+#   duplicate       two notes in one list with the same title, ignoring case and a "(N)" suffix;
+#                   or two open next actions whose from: links the same recurring tickle
 #   filename        a note or project folder name with a character unsafe on some filesystem
 #   done-completed  a _done/ note with no completed: date (organize fills today's date)
 #   done-no-aar     a finished project in _done/ whose After action review section is empty
@@ -58,6 +68,7 @@ gtd_refuse_single_file
 # Keep in step with references/list-definitions.md "Property values" (gtd_eval_check.sh verifies).
 ENERGY_VOCAB="low medium deep low-emotional"
 CONTEXT_VOCAB="computer phone errands home person-present before-meeting prep-chain payment documents equipment"
+CADENCE_VOCAB="fixed floating"
 
 FINDINGS=0
 finding() {
@@ -211,10 +222,40 @@ fm_link_problems() {
   ' "$1"
 }
 
+# check_work_fields REL TIME ENERGY CONTEXT REQUIRED — a next action's time / energy / context
+# (REQUIRED=1: each must be there); a tickle may carry them too, checked only when present.
+check_work_fields() {
+  local rel="$1" time="$2" energy="$3" context="$4" required="$5" c old_ifs
+  if [ -z "$time" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing time"
+  elif ! echo "$time" | grep -qE '^[0-9]+$'; then finding field "$rel" "time '$time' is not a number of minutes"; fi
+  if [ -z "$energy" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing energy"
+  elif ! in_words "$energy" "$ENERGY_VOCAB"; then finding field "$rel" "energy '$energy' not in: $ENERGY_VOCAB"; fi
+  if [ -z "$context" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing context"
+  else
+    old_ifs="$IFS"; IFS=','
+    for c in $context; do
+      in_words "$c" "$CONTEXT_VOCAB" || finding field "$rel" "context '$c' not in: $CONTEXT_VOCAB"
+    done
+    IFS="$old_ifs"
+  fi
+}
+
+# span_hint TEXT — the compact every: / lead: form for common wording (quarterly -> 3m), or empty
+span_hint() {
+  local t
+  t="$(echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/^(every|at least)[[:space:]]+//')"
+  case "$t" in
+    daily) echo 1d ;; weekly) echo 1w ;; fortnightly|biweekly) echo 2w ;; monthly) echo 1m ;;
+    quarterly) echo 3m ;; "twice a year"|semiannually|half-yearly) echo 6m ;; yearly|annually|annual) echo 1y ;;
+    *) echo "$t" | sed -nE 's/^([1-9][0-9]*)[[:space:]]*(d|w|m|y)[a-z]*$/\1\2/p' ;;
+  esac
+}
+
 # --- open actions and waiting-for: project links + fields --------------------
 
-LINKED=""   # newline-separated project names that have at least one open action / waiting-for / tickle
-PROJECT_FORM=""   # notes already given a project: link-form finding (property links skip their project:)
+LINKED=""   # newline-separated project names with at least one open action / waiting-for / one-shot tickle
+FORM_DONE=""   # "<rel> <key>" lines already given a link-form finding (property links skip that key)
+OPEN_FROM=""   # "<tickle title><SEP><action>" per open next action whose from: links a live tickle
 TODAY="$(date +%Y-%m-%d)"
 INBOX="$GTD_DIR/inbox.md"
 
@@ -227,14 +268,18 @@ for list in next-actions waiting-for tickler; do
     [ "$base" = "README" ] && continue
     rel="$list/$base.md"
 
+    # A recurring tickle (valid every:) never puts its project on hold.
+    recurring=0
+    if [ "$list" = "tickler" ] && gtd_is_span "$(fm_get "$f" every)"; then recurring=1; fi
+
     project="$(fm_get "$f" project)"
     if [ -n "$project" ]; then
       IFS="$SEP" read -r form name < <(project_name "$project")
       if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
-        LINKED="$LINKED$name"$'\n'
+        [ "$recurring" -eq 1 ] || LINKED="$LINKED$name"$'\n'
         if [ "$form" != "readme" ]; then
           finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
-          PROJECT_FORM="$PROJECT_FORM$rel"$'\n'
+          FORM_DONE="$FORM_DONE$rel project"$'\n'
         fi
       elif [ -f "$GTD_DIR/_done/$name/README.md" ]; then
         finding orphan-closed "$rel" "project '$name' is already in _done/"
@@ -244,27 +289,60 @@ for list in next-actions waiting-for tickler; do
     fi
 
     if [ "$list" = "next-actions" ]; then
-      time="$(fm_get "$f" time)"
-      energy="$(fm_get "$f" energy)"
-      context="$(fm_get "$f" context)"
+      check_work_fields "$rel" "$(fm_get "$f" time)" "$(fm_get "$f" energy)" "$(fm_get "$f" context)" 1
       due="$(fm_get "$f" due)"
-      if [ -z "$time" ]; then finding field "$rel" "missing time"
-      elif ! echo "$time" | grep -qE '^[0-9]+$'; then finding field "$rel" "time '$time' is not a number of minutes"; fi
-      if [ -z "$energy" ]; then finding field "$rel" "missing energy"
-      elif ! in_words "$energy" "$ENERGY_VOCAB"; then finding field "$rel" "energy '$energy' not in: $ENERGY_VOCAB"; fi
-      if [ -z "$context" ]; then finding field "$rel" "missing context"
-      else
-        old_ifs="$IFS"; IFS=','
-        for c in $context; do
-          in_words "$c" "$CONTEXT_VOCAB" || finding field "$rel" "context '$c' not in: $CONTEXT_VOCAB"
-        done
-        IFS="$old_ifs"
-      fi
       [ -z "$due" ] || is_date "$due" || finding field "$rel" "due '$due' is not YYYY-MM-DD"
+      # from: — the recurring tickle this action is one cycle of
+      from="$(fm_get "$f" from)"
+      if [ -n "$from" ]; then
+        ft="$(gtd_from_title "$from")"
+        if [ -f "$GTD_DIR/tickler/$ft.md" ]; then
+          OPEN_FROM="$OPEN_FROM$ft$SEP$base"$'\n'
+          case "$from" in
+            "[[tickler/$ft|"*"]]"|"[[tickler/$ft]]") ;;
+            *) finding link-form "$rel" "from: $from -> [[tickler/$ft|$ft]]"
+               FORM_DONE="$FORM_DONE$rel from"$'\n' ;;
+          esac
+        elif [ -f "$GTD_DIR/_done/$ft.md" ]; then
+          finding orphan-closed "$rel" "from: tickle '$ft' has ended (it is in _done/)"
+        else
+          finding orphan "$rel" "from: $from resolves to no tickle"
+        fi
+      fi
     elif [ "$list" = "tickler" ]; then
       tickle="$(fm_get "$f" tickle)"
+      every="$(fm_get "$f" every)"
+      lead="$(fm_get "$f" lead)"
+      if [ -n "$every" ] && [ "$recurring" -eq 0 ]; then
+        hint="$(span_hint "$every")"
+        finding tickler-every "$rel" "every '$every' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> every: $hint}; one-shot until fixed"
+      fi
+      if [ "$recurring" -eq 1 ]; then
+        if [ -n "$lead" ] && ! gtd_is_span "$lead"; then
+          hint="$(span_hint "$lead")"
+          finding tickler-every "$rel" "lead '$lead' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> lead: $hint}; ignored until fixed"
+        fi
+        cadence="$(fm_get "$f" cadence)"
+        [ -z "$cadence" ] || in_words "$cadence" "$CADENCE_VOCAB" || finding field "$rel" "cadence '$cadence' not in: $CADENCE_VOCAB"
+        last="$(fm_get "$f" last_completed)"
+        [ -z "$last" ] || is_date "$last" || finding field "$rel" "last_completed '$last' is not YYYY-MM-DD"
+      fi
+      check_work_fields "$rel" "$(fm_get "$f" time)" "$(fm_get "$f" energy)" "$(fm_get "$f" context)" 0
       if [ -z "$tickle" ]; then finding tickler-date "$rel" "missing tickle: date"
       elif ! is_date "$tickle"; then finding tickler-date "$rel" "tickle '$tickle' is not YYYY-MM-DD"
+      elif [ "$recurring" -eq 1 ]; then
+        start="$tickle"
+        ! gtd_is_span "$lead" || start="$(gtd_date_add "$tickle" "$lead" -)"
+        # OPEN_FROM is complete here: next-actions/ is read before tickler/.
+        open=0
+        case $'\n'"$OPEN_FROM" in *$'\n'"$base$SEP"*) open=1 ;; esac
+        if [ ! "$start" \> "$TODAY" ] && [ "$open" -eq 0 ]; then
+          finding tickler-due "$rel" "routine (every $every) due $tickle — no open action: create its next action"
+        fi
+        if [ "$tickle" \< "$TODAY" ]; then
+          if [ "$open" -eq 1 ]; then finding tickler-overdue "$rel" "routine (every $every) was due $tickle — its action is still open"
+          else finding tickler-overdue "$rel" "routine (every $every) was due $tickle — no open action"; fi
+        fi
       elif [ ! "$tickle" \> "$TODAY" ]; then
         # An inbox line linking the note means organize already queued it for clarify.
         if [ -f "$INBOX" ] && { grep -qF "[[tickler/$base]]" "$INBOX" || grep -qF "[[tickler/$base|" "$INBOX"; }; then
@@ -284,6 +362,16 @@ for list in next-actions waiting-for tickler; do
     fi
   done
 done
+
+# Two open actions for one routine: organize keeps the oldest and asks about the other.
+from_dupes="$(printf '%s' "$OPEN_FROM" | cut -d"$SEP" -f1 | sort | uniq -d)"
+while IFS= read -r d; do
+  [ -n "$d" ] || continue
+  matches="$(printf '%s' "$OPEN_FROM" | awk -F"$SEP" -v d="$d" '$1 == d { print $2 }' | paste -sd ';' - | sed 's/;/; /g')"
+  finding duplicate "next-actions/" "same from: tickler/$d: $matches"
+done <<EOF
+$from_dupes
+EOF
 
 # --- stalled projects ---------------------------------------------------------
 
@@ -382,10 +470,8 @@ while IFS= read -r f; do
   esac
   while IFS="$SEP" read -r kind key msg; do
     [ -n "$kind" ] || continue
-    # a project: link the project-form check already flagged gets one finding, not two
-    if [ "$key" = "project" ]; then
-      case $'\n'"$PROJECT_FORM" in *$'\n'"$rel"$'\n'*) continue ;; esac
-    fi
+    # a project: / from: link the link-form checks above already flagged gets one finding, not two
+    case $'\n'"$FORM_DONE" in *$'\n'"$rel $key"$'\n'*) continue ;; esac
     finding "$kind" "$rel" "$msg"
   done < <(fm_link_problems "$f")
 done < <(md_files "$GTD_DIR"; md_files "$REF_DIR")

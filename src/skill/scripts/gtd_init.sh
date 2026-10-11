@@ -376,13 +376,14 @@ header_tickler() {
 > A project linked from a tickle is on hold on purpose, not stalled; it stays in `projects/`.
 > **Always local**: never exported to the external calendar, and never touched by organize's calendar-fallback reconcile.
 > When the date arrives, organize moves a concrete project tickle into `next-actions/` (dropping `tickle`, adding time / energy / context) and queues anything else in the inbox for clarify, as a line linking the note. Engage lists due tickles first.
+> **Recurring tickles** — routines with no fixed day ("download statements at least quarterly"): `every: 3m` (`<n>` + `d`/`w`/`m`/`y`). On the tickle date (or `lead:` before it) organize creates one next action with `from:` linking back and `due:` = the tickle date, and the tickle **stays**. Completing that action sets `last_completed` and moves `tickle` to the next date on the schedule (missed periods are skipped; `cadence: floating` counts from the completion instead). Past its date with the action still open, the routine is overdue. A recurring tickle never puts its project on hold. Routines with a hard date (rent on the 1st) belong on the calendar.
 EOF
 }
 
 readme_tickler() {
   header_tickler
   note_format_section tickler-note.md "${NOTE_RULES//<list>/tickler}"
-  views_section tickler '- [[tickler.base]] — Upcoming (by date). Each project README embeds its "For this project" view.'
+  views_section tickler '- [[tickler.base]] — Upcoming (by date) · Overdue routines · Next 14 days · Recurring. Each project README embeds its "For this project" view.'
 }
 
 readme_someday_maybe() {
@@ -396,7 +397,7 @@ readme_done() {
 
 > A record of finished commitments — completed next actions, received waiting-for items, finished projects, and cancelled project steps — each with its outcome: what was done, what problems came up and how they were solved.
 > **Not a list you act from.** Engage never reads it, the dashboard never counts it as open, and organize never checks it for stalled or orphaned items. It feeds the Weekly Review's "Done since last review" and each project's after-action review.
-> A finished action or waiting-for item is a flat note here, keeping its original filename and properties and gaining `completed`, `result` (done | cancelled) and `list` (the list it came from). A finished project moves here as its whole folder, `_done/<Project name>/`: its README gains the same three properties plus the after-action review, and whatever support material you chose to keep stays beside it. A cancelled *standalone* action, or a dropped someday item, is simply deleted — only project-linked work is worth a record.
+> A finished action or waiting-for item is a flat note here, keeping its original filename and properties and gaining `completed`, `result` (done | cancelled) and `list` (the list it came from). Each cycle of a recurring tickle lands as `<Title> YYYY-MM-DD.md` (its completion date) with `from:` linking the routine, `result` done | skipped | cancelled; an ended routine's tickle lands here with `result: ended`. A finished project moves here as its whole folder, `_done/<Project name>/`: its README gains the same three properties plus the after-action review, and whatever support material you chose to keep stays beside it. A cancelled *standalone* action, or a dropped someday item, is simply deleted — only project-linked work is worth a record.
 > Kept indefinitely by default; trimming is off unless enabled in `memory/gtd/personalized.md`.
 
 ## Note format
@@ -530,6 +531,52 @@ views:
     order:
       - file.name
       - tickle
+      - every
+      - project
+    sort:
+      - property: tickle
+        direction: ASC
+  - type: table
+    name: Overdue routines
+    filters:
+      and:
+        - file.hasProperty("every")
+        - tickle < today()
+    order:
+      - file.name
+      - tickle
+      - every
+      - last_completed
+      - project
+    sort:
+      - property: tickle
+        direction: ASC
+  - type: table
+    name: Next 14 days
+    filters:
+      and:
+        - tickle >= today()
+        - tickle <= today() + "14d"
+    order:
+      - file.name
+      - tickle
+      - every
+      - lead
+      - project
+    sort:
+      - property: tickle
+        direction: ASC
+  - type: table
+    name: Recurring
+    filters:
+      and:
+        - file.hasProperty("every")
+    order:
+      - file.name
+      - every
+      - tickle
+      - lead
+      - last_completed
       - project
     sort:
       - property: tickle
@@ -542,6 +589,7 @@ views:
     order:
       - file.name
       - tickle
+      - every
 EOF
 }
 
