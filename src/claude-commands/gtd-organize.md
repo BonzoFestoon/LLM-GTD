@@ -13,7 +13,7 @@ GTD step 3, structural hygiene (AI-native): this is the step the AI should most 
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/organize/SKILL.md
 </execution_context>
 

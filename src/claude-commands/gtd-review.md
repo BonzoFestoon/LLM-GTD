@@ -14,7 +14,7 @@ GTD step 4, Reflect: the Weekly Review, maintaining the system's trustworthiness
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/review/SKILL.md
 </execution_context>
 

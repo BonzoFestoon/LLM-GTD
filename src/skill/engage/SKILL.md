@@ -13,7 +13,7 @@ example: "I have 30 minutes, what should I do?"
 
 ## Loading and boundaries
 
-- Before choosing actions, run mechanical hygiene per `organize/SKILL.md`; read `references/list-definitions.md` when list boundaries are unclear.
+- Before choosing actions, run `scripts/gtd_check.sh` (step 0). Load `organize/SKILL.md` only when it reports something to fix; a clean check needs nothing more. Read `references/list-definitions.md` only when list boundaries are unclear.
 - Hard landscape / free time windows: read `references/capability-map.md`.
 - Daily Engage automation cadence or Approval Radar: read `references/automation-profiles.md`.
 - Automation boundary: offer only a 3-5 item candidate menu; never present candidates as today's commitments, never schedule them into the calendar automatically.
@@ -51,7 +51,7 @@ An item is never recommended by default just because its `context` is `computer`
 
 ## Workflow
 
-0. **Silently run organize structural hygiene first** (the mechanical automatic items in `organize/SKILL.md`: orphans / stalled / contexts / stale checkmarks / duplicates) — so "what to do now" is based on a clean structure and stalled projects don't slip. Add one line only if something needs your decision; otherwise don't interrupt.
+0. **Silently check structural hygiene first**: run `scripts/gtd_check.sh`. If it reports only `# 0 finding(s)`, or only `tickler-overdue` lines (handled in step 1 below), go straight on — no organize instructions to load. Otherwise load `organize/SKILL.md` and fix the mechanical findings it lists (orphans / stalled / fields / due tickles / duplicates), so "what to do now" is based on a clean structure and stalled projects don't slip. Add one line only if something needs your decision; otherwise don't interrupt.
 1. First read **hard appointments for today / the current window** and compute the free time block until the next hard-landscape item; if the external calendar provider is reachable it is authoritative; if all are unreachable, read the `calendar.md` fallback and note "based on local fallback, may be incomplete". Read each event's availability, not just its title or length, before counting it as blocking time (`references/capability-map.md`'s conflict and capacity judgment).
    **What came due today first**, whatever the calendar's reachability. Step 0's organize normally turns a due tickle into a next action (or an inbox pointer): open the menu with that new action ("Tickler: now actionable — …"). If one is still due in `gtd_list.sh tickler --due` (organize couldn't handle it), open with it and hand it to organize / clarify rather than leaving it in the tickler.
    **Then overdue routines**: recurring tickles past their date (`gtd_list.sh tickler --overdue`), each through its open action (`gtd_list.sh next-actions`, the action whose `from=` links it), marked "overdue routine (due <date>)". Offer them first when they fit the lenses; if the user won't do one now, offer once to skip this cycle, change the rule, or end it (`update/SKILL.md`). Never skip or re-date one on your own. A recurring tickle with no open action is organize's (step 0), never listed here.

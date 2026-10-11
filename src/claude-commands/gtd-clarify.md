@@ -14,7 +14,7 @@ GTD steps 2 + 3, Clarify + Organize: question the "stuff" in the inbox item by i
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/clarify/SKILL.md
 </execution_context>
 

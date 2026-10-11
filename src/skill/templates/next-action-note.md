@@ -17,5 +17,5 @@ Values come from the "Property values" table in references/list-definitions.md.
 A note with no properties filled in is still a valid action — clarify fills them, organize repairs missing or invalid ones, the user never tags anything.
 `context` holds only the lens values Engage already uses, not a free-form tag system.
 Filename: short, verb-first, filesystem-safe (no : / \ ? * " < > |); add "(2)" on a collision. The old block id stays traceable as `id:`.
-See references/list-definitions.md's "Note formats" section for the full contract, and the Obsidian link rules for how other notes should link to this one.
+See references/note-formats.md for the full contract, and the Obsidian link rules for how other notes should link to this one.
 -->

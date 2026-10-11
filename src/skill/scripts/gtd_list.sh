@@ -87,28 +87,24 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ ! -d "$GTD_DIR" ]; then
-  echo "memory/gtd/ does not exist. Run first: bash gtd_init.sh" >&2
-  exit 1
-fi
+gtd_require_gtd_dir
 gtd_refuse_single_file
 
-# normalize_energy TEXT — "low energy" / "deep work" / "low-emotional" -> low|medium|deep|low-emotional
+# normalize_energy TEXT — "low energy" / "deep work" / "low-emotional" -> low|medium|deep|low-emotional,
+# into ENERGY_NORM. Only an unknown value costs a process (tr / sed): the lenses run once per note.
 normalize_energy() {
-  local e
-  e="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
-  case "$e" in
-    *low-emotional*) echo "low-emotional" ;;
-    *deep*) echo "deep" ;;
-    *medium*) echo "medium" ;;
-    *low*) echo "low" ;;
-    *) echo "$e" | sed -E 's/[[:space:]]*(energy|work)[[:space:]]*//g' ;;
-  esac
+  if gtd_icontains "$1" low-emotional; then ENERGY_NORM="low-emotional"
+  elif gtd_icontains "$1" deep; then ENERGY_NORM="deep"
+  elif gtd_icontains "$1" medium; then ENERGY_NORM="medium"
+  elif gtd_icontains "$1" low; then ENERGY_NORM="low"
+  else ENERGY_NORM="$(echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:]]*(energy|work)[[:space:]]*//g')"; fi
 }
 
-# first_int TEXT — the first integer substring, or empty
+# first_int TEXT — the first integer substring into FIRST_INT, or empty
+INT_RE='[0-9]+'
 first_int() {
-  echo "$1" | grep -oE '[0-9]+' | head -n1
+  FIRST_INT=""
+  if [[ $1 =~ $INT_RE ]]; then FIRST_INT="${BASH_REMATCH[0]}"; fi
 }
 
 # passes_lenses TIME ENERGY CONTEXT PROJECT — apply whichever of the 4 filters were set;
@@ -116,21 +112,25 @@ first_int() {
 passes_lenses() {
   local t="$1" e="$2" c="$3" p="$4"
   if [ -n "$MAX_TIME" ]; then
-    local ti; ti="$(first_int "$t")"
-    [ -n "$ti" ] || return 1
-    [ "$ti" -le "$MAX_TIME" ] || return 1
+    first_int "$t"
+    [ -n "$FIRST_INT" ] || return 1
+    [ "$FIRST_INT" -le "$MAX_TIME" ] || return 1
   fi
   if [ -n "$ENERGY" ]; then
-    [ "$(normalize_energy "$e")" = "$(normalize_energy "$ENERGY")" ] || return 1
+    normalize_energy "$e"
+    [ "$ENERGY_NORM" = "$ENERGY_WANT" ] || return 1
   fi
   if [ -n "$CONTEXT" ]; then
-    echo "$c" | grep -qi "$CONTEXT" || return 1
+    gtd_icontains "$c" "$CONTEXT" || return 1
   fi
   if [ -n "$PROJECT" ]; then
-    echo "$p" | grep -qi "$PROJECT" || return 1
+    gtd_icontains "$p" "$PROJECT" || return 1
   fi
   return 0
 }
+
+ENERGY_WANT=""
+if [ -n "$ENERGY" ]; then normalize_energy "$ENERGY"; ENERGY_WANT="$ENERGY_NORM"; fi
 
 # emit ID TITLE [VALUE ...] — the values follow this list's COLUMNS order (set below), so
 # every list prints a fixed, self-describing shape.
@@ -158,12 +158,16 @@ esac
 
 # --- done record ---------------------------------------------------------------
 
-# has_problem TEXT — "yes" unless the Problems and fixes text is empty or says nothing was noted
+# has_problem TEXT — PROBLEM=yes unless the Problems and fixes text is empty or says nothing was
+# noted. Plain bash: trim spaces and one trailing period, then compare ignoring case.
 has_problem() {
-  case "$(echo "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/^[[:space:]]+|[[:space:]]*\.?[[:space:]]*$//g')" in
-    ""|none|"none noted"|n/a|-) echo no ;;
-    *) echo yes ;;
-  esac
+  local t="$1"
+  t="${t#"${t%%[![:space:]]*}"}"; t="${t%"${t##*[![:space:]]}"}"
+  t="${t%.}"; t="${t%"${t##*[![:space:]]}"}"
+  PROBLEM=yes
+  shopt -s nocasematch
+  case "$t" in ""|none|"none noted"|n/a|-) PROBLEM=no ;; esac
+  shopt -u nocasematch
 }
 
 emit_done() {
@@ -172,38 +176,39 @@ emit_done() {
   if [ -n "$SINCE" ]; then
     [ -n "$3" ] && [ ! "$3" \< "$SINCE" ] || return 0
   fi
-  [ -z "$PROJECT" ] || echo "$6" | grep -qi -- "$PROJECT" || return 0
+  [ -z "$PROJECT" ] || gtd_icontains "$6" "$PROJECT" || return 0
   [ "$PROBLEMS" -eq 0 ] || [ "$7" = "yes" ] || return 0
-  [ -z "$FROM" ] || gtd_from_title "${8:-}" | grep -qi -- "$FROM" || return 0
+  if [ -n "$FROM" ]; then
+    _gtd_from_title "${8:-}"
+    gtd_icontains "$GTD_FROM_TITLE" "$FROM" || return 0
+  fi
   emit "$1" "$2" "$3" "$4" "$5" "$6" "$7"
 }
 
+# done_item FILE — one _done/ note; gtd_fm_each calls it with the properties in FM_* and the
+# "Problems and fixes:" text in GTD_FM_BODY.
+done_item() {
+  local f="$1" rel title from project
+  rel="${f#"$GTD_DIR/_done"/}"
+  case "$rel" in */README.md) title="${rel%/README.md}" ;; *) title="${rel%.md}" ;; esac
+  from="${FM_list:-}"
+  project="${FM_project:-}"
+  [ "$from" = "projects" ] && project="$title"
+  has_problem "$GTD_FM_BODY"
+  emit_done "${FM_id:-}" "$title" "${FM_completed:-}" "${FM_result:-}" "$from" "$project" "$PROBLEM" "${FM_from:-}"
+}
+
 list_done_per_item() {
-  local dir="$GTD_DIR/_done" f rel title id completed result from project problems key val cycle
+  local dir="$GTD_DIR/_done" f
+  local -a notes=()
   # Flat done notes, plus one folder per finished project (_done/<Project name>/README.md).
   for f in "$dir"/*.md "$dir"/*/README.md; do
     [ -e "$f" ] || continue
-    rel="${f#"$dir"/}"
-    [ "$rel" = "README.md" ] && continue
-    case "$rel" in */README.md) title="${rel%/README.md}" ;; *) title="${rel%.md}" ;; esac
-    id="" completed="" result="" from="" project="" cycle=""
-    while IFS="$SEP" read -r key val; do
-      case "$key" in
-        id) id="$val" ;;
-        completed) completed="$val" ;;
-        result) result="$val" ;;
-        list) from="$val" ;;
-        project) project="$val" ;;
-        from) cycle="$val" ;;
-      esac
-    done < <(frontmatter_kv "$f")
-    [ "$from" = "projects" ] && project="$title"
-    problems="$(has_problem "$(awk '
-      /^---[[:space:]]*$/ && fm < 2 { fm++; next }
-      fm >= 2 && /Problems and fixes:/ { sub(/.*Problems and fixes:[[:space:]]*/, ""); print; exit }
-    ' "$f")")"
-    emit_done "$id" "$title" "$completed" "$result" "$from" "$project" "$problems" "$cycle"
+    [ "$f" = "$dir/README.md" ] && continue
+    notes+=("$f")
   done
+  [ "${#notes[@]}" -gt 0 ] || return 0
+  gtd_fm_each done_item "Problems and fixes:" -- "${notes[@]}"
 }
 
 if [ "$LIST" = "done" ]; then
@@ -213,50 +218,45 @@ fi
 
 # --- tickler -------------------------------------------------------------------
 
+# tickler_item FILE — one tickle; gtd_fm_each calls it with the properties in FM_*.
+tickler_item() {
+  local f="$1" base id tickle project every lead start action
+  base="${f##*/}"; base="${base%.md}"
+  id="${FM_id:-}" tickle="${FM_tickle:-}" project="${FM_project:-}" every="${FM_every:-}" lead="${FM_lead:-}"
+  action=""
+  case $'\n'"$TICKLER_OPEN"$'\n' in *$'\n'"$base"$'\n'*) action=open ;; esac
+  # A tickle with an invalid every: is one-shot until organize fixes it; an invalid lead: is ignored.
+  start="$tickle"
+  if gtd_is_span "$every"; then
+    gtd_is_date "$tickle" && gtd_is_span "$lead" && start="$(gtd_date_add "$tickle" "$lead" -)"
+  else
+    [ "$RECURRING" -eq 0 ] || return 0
+  fi
+  # YYYY-MM-DD compares as text.
+  if [ "$DUE" -eq 1 ]; then
+    gtd_is_date "$start" && [ ! "$start" \> "$TICKLER_TODAY" ] || return 0
+    ! gtd_is_span "$every" || [ "$action" != open ] || return 0
+  fi
+  if [ "$OVERDUE" -eq 1 ]; then
+    gtd_is_span "$every" && gtd_is_date "$tickle" && [ "$tickle" \< "$TICKLER_TODAY" ] || return 0
+  fi
+  if [ -n "$WITHIN" ]; then
+    gtd_is_date "$start" && [ "$start" \> "$TICKLER_TODAY" ] && [ ! "$start" \> "$TICKLER_UNTIL" ] || return 0
+  fi
+  [ -z "$PROJECT" ] || gtd_icontains "$project" "$PROJECT" || return 0
+  emit "$id" "$base" "$tickle" "$project" "$every" "$lead" "$action"
+}
+
 list_tickler() {
-  local dir="$GTD_DIR/tickler" f base id tickle project every lead start action key val today until open
+  local dir="$GTD_DIR/tickler"
   [ -d "$dir" ] || return 0
-  today="$(date +%Y-%m-%d)"
-  [ -z "$WITHIN" ] || until="$(gtd_days_ahead "$WITHIN")"
+  TICKLER_TODAY="$(date +%Y-%m-%d)"
+  TICKLER_UNTIL=""
+  [ -z "$WITHIN" ] || TICKLER_UNTIL="$(gtd_days_ahead "$WITHIN")"
   # Titles of the tickles an open next action links to with from:, one per line.
-  open="$(gtd_open_from "$GTD_DIR/next-actions" | cut -d"$SEP" -f1)"
-  for f in "$dir"/*.md; do
-    [ -e "$f" ] || continue
-    base="$(basename "$f" .md)"
-    [ "$base" = "README" ] && continue
-    id="" tickle="" project="" every="" lead=""
-    while IFS="$SEP" read -r key val; do
-      case "$key" in
-        id) id="$val" ;;
-        tickle) tickle="$val" ;;
-        project) project="$val" ;;
-        every) every="$val" ;;
-        lead) lead="$val" ;;
-      esac
-    done < <(frontmatter_kv "$f")
-    action=""
-    case $'\n'"$open"$'\n' in *$'\n'"$base"$'\n'*) action=open ;; esac
-    # A tickle with an invalid every: is one-shot until organize fixes it; an invalid lead: is ignored.
-    start="$tickle"
-    if gtd_is_span "$every"; then
-      gtd_is_date "$tickle" && gtd_is_span "$lead" && start="$(gtd_date_add "$tickle" "$lead" -)"
-    else
-      [ "$RECURRING" -eq 0 ] || continue
-    fi
-    # YYYY-MM-DD compares as text.
-    if [ "$DUE" -eq 1 ]; then
-      gtd_is_date "$start" && [ ! "$start" \> "$today" ] || continue
-      ! gtd_is_span "$every" || [ "$action" != open ] || continue
-    fi
-    if [ "$OVERDUE" -eq 1 ]; then
-      gtd_is_span "$every" && gtd_is_date "$tickle" && [ "$tickle" \< "$today" ] || continue
-    fi
-    if [ -n "$WITHIN" ]; then
-      gtd_is_date "$start" && [ "$start" \> "$today" ] && [ ! "$start" \> "$until" ] || continue
-    fi
-    [ -z "$PROJECT" ] || echo "$project" | grep -qi -- "$PROJECT" || continue
-    emit "$id" "$base" "$tickle" "$project" "$every" "$lead" "$action"
-  done
+  TICKLER_OPEN="$(gtd_open_from "$GTD_DIR/next-actions" | cut -d"$SEP" -f1)"
+  gtd_notes_in "$dir"
+  gtd_fm_each tickler_item -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
 }
 
 if [ "$LIST" = "tickler" ]; then
@@ -266,57 +266,49 @@ fi
 
 # --- active lists --------------------------------------------------------------
 
-# SEP and frontmatter_kv come from gtd_env.sh.
+# SEP, gtd_notes_in and gtd_fm_each come from gtd_env.sh.
+
+# list_item FILE — one note of $LIST; gtd_fm_each calls it with the properties in FM_*.
+list_item() {
+  local f="$1" base title project d
+  if [ "$LIST" = "projects" ]; then
+    d="${f%/README.md}"; base="${d##*/}"
+  else
+    base="${f##*/}"; base="${base%.md}"
+  fi
+  project="${FM_project:-}"
+  title="$base"
+  # Projects print "name -- outcome"; --project filters on the project's own name.
+  if [ "$LIST" = "projects" ]; then
+    project="$base"
+    [ -n "${FM_outcome:-}" ] && title="$base -- $FM_outcome"
+  fi
+  passes_lenses "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" "$project" || return 0
+  case "$LIST" in
+    next-actions) emit "${FM_id:-}" "$title" "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" "$project" "${FM_due:-}" "${FM_from:-}" ;;
+    waiting-for) emit "${FM_id:-}" "$title" "${FM_person:-}" "${FM_delegated:-}" "${FM_follow_up:-}" "$project" ;;
+    someday-maybe) emit "${FM_id:-}" "$title" "${FM_trigger:-}" ;;
+    projects) emit "${FM_id:-}" "$title" "$project" ;;
+    *) emit "${FM_id:-}" "$title" ;;
+  esac
+}
 
 list_per_item() {
-  local dir="$LIST_DIR" f base id time energy context project outcome title key val
-  local due person delegated followup trigger from
-  local -a notes
+  local dir="$LIST_DIR" f
+  local -a notes=()
   # A project is a folder (projects/<Project name>/README.md); every other list is flat notes.
-  # The list's own README.md is never an item in either shape. An unmatched glob stays literal
-  # (one element), so the array is never empty under set -u on bash 3.2.
-  if [ "$LIST" = "projects" ]; then notes=("$dir"/*/README.md); else notes=("$dir"/*.md); fi
-  for f in "${notes[@]}"; do
-    [ -e "$f" ] || continue
-    if [ "$LIST" = "projects" ]; then
-      base="$(basename "$(dirname "$f")")"
-    else
-      base="$(basename "$f" .md)"
-      [ "$base" = "README" ] && continue
-    fi
-    id="" time="" energy="" context="" project="" outcome="" due="" person="" delegated=""
-    followup="" trigger="" from=""
-    while IFS="$SEP" read -r key val; do
-      case "$key" in
-        id) id="$val" ;;
-        time) time="$val" ;;
-        energy) energy="$val" ;;
-        context) context="$val" ;;
-        project) project="$val" ;;
-        outcome) outcome="$val" ;;
-        due) due="$val" ;;
-        person) person="$val" ;;
-        delegated) delegated="$val" ;;
-        follow-up) followup="$val" ;;
-        trigger) trigger="$val" ;;
-        from) from="$val" ;;
-      esac
-    done < <(frontmatter_kv "$f")
-    title="$base"
-    # Projects print "name -- outcome"; --project filters on the project's own name.
-    if [ "$LIST" = "projects" ]; then
-      project="$base"
-      [ -n "$outcome" ] && title="$base -- $outcome"
-    fi
-    passes_lenses "$time" "$energy" "$context" "$project" || continue
-    case "$LIST" in
-      next-actions) emit "$id" "$title" "$time" "$energy" "$context" "$project" "$due" "$from" ;;
-      waiting-for) emit "$id" "$title" "$person" "$delegated" "$followup" "$project" ;;
-      someday-maybe) emit "$id" "$title" "$trigger" ;;
-      projects) emit "$id" "$title" "$project" ;;
-      *) emit "$id" "$title" ;;
-    esac
-  done
+  # The list's own README.md is never an item in either shape.
+  if [ "$LIST" = "projects" ]; then
+    for f in "$dir"/*/README.md; do
+      [ -e "$f" ] || continue
+      notes+=("$f")
+    done
+  else
+    gtd_notes_in "$dir"
+    notes=(${GTD_NOTES[@]+"${GTD_NOTES[@]}"})
+  fi
+  [ "${#notes[@]}" -gt 0 ] || return 0
+  gtd_fm_each list_item -- "${notes[@]}"
 }
 
 case "$LIST" in

@@ -21,17 +21,37 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$SINCE" ] || SINCE="$(gtd_days_ago 7)"
 
-if [ ! -d "$GTD_DIR" ]; then
-  echo "memory/gtd/ does not exist. Run this skill's scripts/gtd_init.sh first"
-  exit 1
-fi
+gtd_require_gtd_dir
 gtd_refuse_single_file
 
 list() {
   bash "$SCRIPT_DIR/gtd_list.sh" "$@"
 }
 
-CHECK="$(bash "$SCRIPT_DIR/gtd_check.sh")"
+# Every script this pack reads runs at the same time, once; each section reads its output from
+# $GTD_JOB_DIR, and the dashboard reuses check / tagged / done-week instead of running them again.
+WEEK_AGO="$(gtd_days_ago 7)"
+gtd_jobs_init
+gtd_job check bash "$SCRIPT_DIR/gtd_check.sh"
+gtd_job tagged bash "$SCRIPT_DIR/gtd_tagged.sh"
+gtd_job done-since list done --since "$SINCE"
+[ "$SINCE" = "$WEEK_AGO" ] || gtd_job done-week list done --since "$WEEK_AGO"
+gtd_job tickler list tickler
+gtd_job tickler--due list tickler --due
+gtd_job tickler--overdue list tickler --overdue
+gtd_job tickler--within list tickler --within 14
+gtd_job next-actions list next-actions
+gtd_job waiting-for list waiting-for
+gtd_job someday-maybe list someday-maybe
+gtd_jobs_wait
+[ "$SINCE" != "$WEEK_AGO" ] || cp "$GTD_JOB_DIR/done-since" "$GTD_JOB_DIR/done-week"
+
+# job_out NAME — a job's output
+job_out() {
+  cat "$GTD_JOB_DIR/$1"
+}
+
+CHECK="$(job_out check)"
 
 file() {
   printf "%s/%s" "$GTD_DIR" "$1"
@@ -54,9 +74,9 @@ stalled_projects() {
   printf '%s\n' "$CHECK" | awk -F'\t' '$1 == "stalled" { p = $2; sub(/^projects\//, "", p); sub(/\/README\.md$/, "", p); print p }'
 }
 
-# Tickler: "- title · date · project · every N" lines from gtd_list.sh tickler [flags].
+# Tickler: "- title · date · project · every N" lines from gtd_list.sh tickler --<FILTER>.
 tickle_lines() {
-  list tickler "$@" | awk -F'\t' '{
+  job_out "tickler--$1" | awk -F'\t' '{
     t = $2; sub(/^tickle=/, "", t)
     p = $3; sub(/^project=/, "", p)
     e = $4; sub(/^every=/, "", e)
@@ -75,7 +95,7 @@ tickle_lines() {
 projects_on_hold() {
   local today
   today="$(date +%Y-%m-%d)"
-  list tickler | awk -F'\t' -v today="$today" '{
+  job_out tickler | awk -F'\t' -v today="$today" '{
     t = $2; sub(/^tickle=/, "", t)
     if (t !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ || t <= today) next
     e = $4; sub(/^every=/, "", e); if (e ~ /^[1-9][0-9]*[dwmy]$/) next
@@ -91,12 +111,12 @@ projects_on_hold() {
 VAGUE_VERBS='(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)'
 
 vague_next_actions() {
-  list next-actions | awk -F'\t' '{ print $NF }' | grep -iE "$VAGUE_VERBS" | sed 's/^/- /' || true
+  job_out next-actions | awk -F'\t' '{ print $NF }' | grep -iE "$VAGUE_VERBS" | sed 's/^/- /' || true
 }
 
 # Open items of a list as "- title" lines (plus its key=value columns).
 list_items() {
-  list "$1" | awk -F'\t' '{ line = "- " $NF; for (i = 2; i < NF; i++) if ($i !~ /=-$/) line = line " · " $i; print line }'
+  job_out "$1" | awk -F'\t' '{ line = "- " $NF; for (i = 2; i < NF; i++) if ($i !~ /=-$/) line = line " · " $i; print line }'
 }
 
 today="$(date +%Y-%m-%d)"
@@ -106,7 +126,7 @@ echo "Read-only review prep pack: scan before the review; does not modify memory
 
 if [ -f "$SCRIPT_DIR/gtd_status.sh" ]; then
   echo ""
-  bash "$SCRIPT_DIR/gtd_status.sh"
+  bash "$SCRIPT_DIR/gtd_status.sh" --from "$GTD_JOB_DIR"
 else
   section "Dashboard"
   echo "gtd_status.sh not found."
@@ -123,14 +143,14 @@ else
 fi
 
 section "Tagged notes (apply with /gtd-update)"
-tagged="$(bash "$SCRIPT_DIR/gtd_tagged.sh" | awk -F'\t' '{
+tagged="$(job_out tagged | awk -F'\t' '{
   n = $2; sub(/^updates=/, "", n)
   print "- " $1 " (" (n == 0 ? "nothing to apply" : n " line" (n == 1 ? "" : "s")) ")"
 }')"
 echo "${tagged:-None.}"
 
 section "Done since last review ($SINCE)"
-done_items="$(list done --since "$SINCE")"
+done_items="$(job_out done-since)"
 if [ -n "$done_items" ]; then
   echo "Wins:"
   printf '%s\n' "$done_items" | awk -F'\t' '{ r = $3; sub(/^result=/, "", r); f = $4; sub(/^list=/, "", f); print "- " $NF " (" f ", " r ")" }'
@@ -170,11 +190,11 @@ fi
 
 section "Tickler"
 echo "Due now (organize turns each into a next action, or queues it in the inbox for clarify):"
-out="$(tickle_lines --due)"; echo "${out:-None.}"
+out="$(tickle_lines due)"; echo "${out:-None.}"
 echo "Overdue routines (ask once each: do it now, skip this cycle, change the rule, or end it):"
-out="$(tickle_lines --overdue)"; echo "${out:-None.}"
+out="$(tickle_lines overdue)"; echo "${out:-None.}"
 echo "Next 14 days (anything to prepare now?):"
-out="$(tickle_lines --within 14)"; echo "${out:-None.}"
+out="$(tickle_lines within)"; echo "${out:-None.}"
 echo "Projects on hold (does each date still hold?):"
 out="$(projects_on_hold)"; echo "${out:-None.}"
 

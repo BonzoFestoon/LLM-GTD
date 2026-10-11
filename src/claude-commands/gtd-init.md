@@ -12,7 +12,7 @@ First-time enable or reinstall of the GTD harness: idempotently build the memory
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/init/SKILL.md
 </execution_context>
 

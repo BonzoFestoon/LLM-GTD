@@ -28,6 +28,8 @@ echo ""
 # 1. skill package
 mkdir -p "$VAULT/.cursor/skills/gtd-harness"
 cp -R "$REPO/src/skill/." "$VAULT/.cursor/skills/gtd-harness/"
+# Record the installed version for /gtd-help (a plugin install reads its plugin.json instead).
+sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$REPO/plugins/llm-gtd/.claude-plugin/plugin.json" | head -n 1 > "$VAULT/.cursor/skills/gtd-harness/VERSION"
 # Sync the Codex prompt templates into the skill package, so running gtd_init.sh alone can also install/refresh /gtd*.
 mkdir -p "$VAULT/.cursor/skills/gtd-harness/templates/codex-prompts"
 cp "$REPO"/src/codex-prompts/gtd*.md "$VAULT/.cursor/skills/gtd-harness/templates/codex-prompts/"

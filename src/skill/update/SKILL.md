@@ -13,10 +13,10 @@ example: "The dentist appointment got moved to Friday"
 
 ## Loading and boundaries
 
-- List boundaries and action permissions: read `references/list-definitions.md` first.
+- List boundaries: read `references/list-definitions.md` first; what may run without asking: `references/action-permissions.md`. A tickle or routine involved: `references/tickler.md`.
 - Hard landscape / calendar changes: read `references/capability-map.md`.
 - Unclear project outcome or next action: read `references/clarify-decision-tree.md` and `references/natural-planning-model.md` as needed.
-- Done record and after-action review (AAR): `references/list-definitions.md` "Done record"; shapes in `_done/README.md` and `templates/after-action-review.md`.
+- Done record and after-action review (AAR): `references/done-record.md`; shapes in `_done/README.md` and `templates/after-action-review.md`.
 - Automation boundary: clear completions, clear waiting-for replies, and clear text corrections can be updated automatically; ask one question on multiple matches, when a whole project would be closed or cut, or when a calendar event can't be uniquely identified.
 
 ## When to run
@@ -84,7 +84,7 @@ A finished item leaves its list and lands in the done record with an outcome. Ne
 
 ## Tagged notes
 
-An update can be written into any note in the vault (on the phone, in Obsidian) and applied later. The format is in `references/list-definitions.md` "Tagged-note updates".
+An update can be written into any note in the vault (on the phone, in Obsidian) and applied later. The format is in `references/tagged-updates.md`.
 
 1. **Find them**: `scripts/gtd_tagged.sh` lists each note tagged `gtd-update` (frontmatter `tags:` or an inline `#gtd-update`) with its count of lines still to apply (`updates=N`). It skips hidden folders and `memory/gtd/_done/`. `updates=0` means tagged but nothing to apply: report it and leave it alone.
 2. **Read each note's `Update` sections** (a heading whose text is exactly `Update`; `Update (applied …)` is history, never read). Each non-empty line or bullet that doesn't end in ` ✓` is one update.

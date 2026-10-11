@@ -13,32 +13,14 @@ example: "sort out my inbox"
 
 # GTD Skill · Main Entry
 
-**Perspective**: act as David Allen. The goal is not to maintain a to-do list but to put commitments into an external system the user trusts, so the mind doesn't have to hold them.
-
-## State layer
-
-Core lists live in `memory/gtd/` as plain markdown; they are not bundled into the plugin and not added to the knowledge index.
-
-| List | Purpose |
-|---|---|
-| `inbox.md` | The single entry point for unclarified input |
-| `next-actions/` | Action pool of clarified single-step actions |
-| `projects/` | Desired outcomes that take >1 step; one folder per project |
-| `waiting-for/` | Delegated / waiting on others |
-| `calendar.md` | Hard landscape; fallback only when the external calendar provider is unreachable |
-| `tickler/` | Committed work dated for when it becomes actionable (a tickled project is on hold, not stalled); with `every:`, a recurring routine that creates a next action each cycle |
-| `someday-maybe/` | Not committed yet, but not to be forgotten |
-| `reference/` (workspace root) | Non-actionable reference / knowledge |
-| `horizons.md` | Six-horizon direction calibration |
-
-Each list folder holds one note per item plus a `README.md` of rules; finished work goes to `_done/`. See `references/list-definitions.md` "Layout".
+Read `shared-rules.md` first: the state layer, default rules, model check and red lines that every command follows. This file adds only what the router needs: which command handles an intent, and which reference to load for a decision.
 
 ## Routing
 
 | User intent | Must read | Action |
 |---|---|---|
 | Set up, self-check, status, install, initialize | `init/SKILL.md` | Create lists, self-check entry points, read-only automation check; install only with explicit `--install-cron` |
-| New input, mind sweep, session close | `capture/SKILL.md` | Land in inbox first; single items auto-clarify by default, batches are fully captured first |
+| New input, mind sweep, session close | `capture/SKILL.md` | Write it to the inbox verbatim, nothing else; clarifying is a separate step (`/gtd-clarify`) |
 | Clarify inbox, process item by item, file things | `clarify/SKILL.md` | Actionable? → next action / waiting for / project / calendar / someday / reference |
 | It's done, they replied, the schedule changed, it's cancelled; "apply my tagged notes" | `update/SKILL.md` | Sync reality: cross off, advance projects, handle waiting-for replies or corrections, re-date a routine; apply notes tagged `gtd-update` |
 | Clean up structure, stuck projects, duplicates | `organize/SKILL.md` | Do mechanical hygiene automatically; surface only items needing confirmation |
@@ -50,7 +32,12 @@ Each list folder holds one note per item plus a `README.md` of rules; finished w
 
 | What needs deciding | When to read |
 |---|---|
-| List boundaries, action permissions, Obsidian links | `references/list-definitions.md`; read first when clarify / organize / review move, delete, or write |
+| List boundaries, layout, property values, Obsidian links | `references/list-definitions.md` (the core); read first when clarify / organize / review / update move, delete, or write |
+| What may run automatically, what needs confirmation | `references/action-permissions.md`; read before deleting, moving, sending, or deciding on the user's behalf |
+| Tickles and recurring routines | `references/tickler.md`; read when a tickle is filed, comes due, is re-dated or completed |
+| Done record, project close | `references/done-record.md`; read when moving finished work to `_done/` |
+| Notes tagged `gtd-update` | `references/tagged-updates.md`; read when applying them |
+| A note's full shape with examples | `references/note-formats.md`; the list's template is usually enough |
 | Whether a next action is good enough | `references/clarify-decision-tree.md`; read when a next action is vague or the user wants to clarify |
 | Calendar provider, auto-write, fallback | `references/capability-map.md`; read when hard landscape or calendar writes are involved |
 | Automation cadence / cron / Approval Radar | `references/automation-profiles.md`; read only for init `--install-cron` or the Daily Engage cadence |
@@ -58,25 +45,3 @@ Each list folder holds one note per item plus a `README.md` of rules; finished w
 | Vertical project planning | `references/natural-planning-model.md`; read when a project's outcome, milestones, or next action are unclear |
 | Horizons vertical calibration | `references/horizons-of-focus.md`; read during review or priority conflicts |
 | Regression evals | `references/evals.md`; read before and after changing the skill or before a public sync |
-
-## Default rules
-
-- **One inbox per human.** GTD only works with exactly one inbox per person — never create or initialize a second `memory/gtd/`, including inside a project's own memory folder, just because the current project doesn't have one. If `memory/gtd/` can't be found here, that is not "not set up": ask the user whether GTD already exists somewhere else before ever running init. See `init/SKILL.md`'s "One inbox per human" rule.
-- Single input defaults to capture → clarify; a batch mind sweep captures everything first, then clarifies in bulk.
-- A product / feature idea is ordinary input: clarify it like anything else (committed → project + next action; not → someday-maybe).
-- `next-actions/` is an action pool, not grouped by context; new actions state time / energy / context.
-- User declares something done → move it to the done record (`_done/`) with its outcome; project outcome achieved → after-action review, then move the project to the done record (`update/SKILL.md`).
-- User reports a change in reality (done, reply, rescheduled, cancelled, correction) → use update, don't re-capture it as a new inbox item.
-- The calendar is hard landscape; ordinary to-dos must not go into `calendar.md`.
-- Knowledge / ideas with no commitment → file to `reference/`; don't write to GTD action lists.
-- `memory/gtd/personalized.md` may hold local preferences and private mappings (including redirecting the knowledge hand-off to a different system); the general skill does not depend on it.
-- **Model check**: before a command's own work, compare the session's current model against its `model-tier` frontmatter using `references/model-guidance.md`; below tier, say so in one line and ask once whether to continue (capture is the exception — it always writes to the inbox first, see `capture/SKILL.md`). Skip silently if the model is unknown. See `references/model-guidance.md` for the full rule.
-
-## Red lines
-
-- Never maintain two calendars; after a successful external provider write, don't copy it into `calendar.md`.
-- Never claim a calendar write before the external tool returns success.
-- Never present 3-5 Engage candidates as today's commitments.
-- Never automatically approve / reject / withdraw / remind / cc.
-- Never mistake intermediate states such as approval passed, submitted, or reply received for final completion.
-- Never make the user face the whole list; Engage offers only a short menu of doable items.

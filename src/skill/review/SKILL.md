@@ -14,7 +14,7 @@ example: "Help me do my weekly review"
 ## Loading and boundaries
 
 - Review steps: read `references/weekly-review-checklist.md`.
-- List boundaries / delete / move permissions: read `references/list-definitions.md`.
+- List boundaries: read `references/list-definitions.md`; delete / move permissions: `references/action-permissions.md`; the done record: `references/done-record.md`.
 - Hard landscape / capacity judgment: read `references/capability-map.md`.
 - Horizons conflicts or priority judgment: read `references/horizons-of-focus.md`.
 - Automation boundary: preprocessing and mechanical hygiene may be automatic; deleting uncertain items, cutting projects, and fixing next week's 3 things need user confirmation.

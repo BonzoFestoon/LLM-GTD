@@ -58,10 +58,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/gtd_env.sh"
 GTD_DIR="$GTD_WORKSPACE_ROOT/memory/gtd"
 
-if [ ! -d "$GTD_DIR" ]; then
-  echo "memory/gtd/ does not exist. Run first: bash gtd_init.sh" >&2
-  exit 1
-fi
+gtd_require_gtd_dir
 
 gtd_refuse_single_file
 
@@ -83,31 +80,28 @@ in_words() {
 }
 
 is_date() {
-  echo "$1" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  gtd_is_date "$1"
 }
 
-# fm_get FILE KEY — one frontmatter value, or empty
-fm_get() {
-  frontmatter_kv "$1" | awk -F"$SEP" -v k="$2" '$1 == k { print $2; exit }'
-}
-
-# project_name LINK — the project name a project: value refers to, and how it's written:
-# prints "<form><SEP><name>" where form is "readme" ([[projects/<Name>/README|…]]) or "other".
+# project_name LINK — the project name a project: value refers to, and how it's written: sets
+# PN_NAME, and PN_FORM to "readme" ([[projects/<Name>/README|…]]) or "other". It sets variables
+# instead of printing so the per-note loops start no subshell.
 project_name() {
-  local v="$1" target readme=readme
-  target="$v"
+  local target="$1"
+  PN_FORM=readme
   # text before the link is a property-link finding (below), not a different project
   case "$target" in *\[\[*) target="${target#*\[\[}"; target="${target%%]]*}"; target="${target%%|*}"; target="${target%%#*}" ;; esac
   # written from the vault root: the same project, but not the README form
-  case "$target" in memory/gtd/*) target="${target#memory/gtd/}"; readme=other ;; esac
+  case "$target" in memory/gtd/*) target="${target#memory/gtd/}"; PN_FORM=other ;; esac
   case "$target" in
-    projects/*/README) target="${target#projects/}"; printf '%s%s%s\n' "$readme" "$SEP" "${target%/README}" ;;
-    projects/*) printf 'other%s%s\n' "$SEP" "${target#projects/}" ;;
-    *) printf 'other%s%s\n' "$SEP" "$target" ;;
+    projects/*/README) target="${target#projects/}"; PN_NAME="${target%/README}" ;;
+    projects/*) PN_FORM=other; PN_NAME="${target#projects/}" ;;
+    *) PN_FORM=other; PN_NAME="$target" ;;
   esac
 }
 
-# fm_link_problems FILE — "kind<SEP>key<SEP>message" for each frontmatter property (or list item)
+# fm_link_problems — reads one note path per line on stdin, all in one awk, and prints
+# "path<SEP>kind<SEP>key<SEP>message" for each frontmatter property (or list item)
 # whose wikilink Obsidian won't render (property-link): the link (or an "![[…]]" embed) must be
 # the whole value, quoted ("[[Note|Label]]"); several links are a YAML list, one quoted link per
 # item. A well-shaped link written from the vault root ([[memory/gtd/…]]) is link-form; with a
@@ -126,7 +120,7 @@ fm_link_problems() {
       }
       return n
     }
-    function out(kind, key, msg) { printf "%s%s%s%s%s\n", kind, SEP, key, SEP, msg }
+    function out(kind, key, msg) { printf "%s%s%s%s%s%s%s\n", CUR, SEP, kind, SEP, key, SEP, msg }
     # check LABEL KEY V — one scalar value (or one [a, b] list, item by item)
     function check(label, key, v,   q, rest, inner, c, shown, after, all, p, e, link, lead, trail, bang, inside, short, why, bar, tgt, lbl, n, depth, item, items) {
       v = trim(v)
@@ -206,20 +200,27 @@ fm_link_problems() {
       if (trail != "") lbl = lbl " " trail
       out("property-link", key, label ": " shown " — text outside the link -> \"[[" tgt "|" lbl "]]\"")
     }
-    { sub(/\r$/, "") }
-    NR == 1 { if ($0 ~ /^---[[:space:]]*$/) next; exit }
-    /^(---|\.\.\.)[[:space:]]*$/ { exit }
-    match($0, /^[A-Za-z_][A-Za-z0-9_ .-]*:/) {
-      key = substr($0, 1, RLENGTH - 1); items = 0
-      check(key, key, substr($0, RLENGTH + 1))
-      next
+    {
+      CUR = $0; n = 0; key = ""; items = 0
+      while ((getline < CUR) > 0) {
+        n++
+        sub(/\r$/, "")
+        if (n == 1) { if ($0 ~ /^---[[:space:]]*$/) continue; break }
+        if ($0 ~ /^(---|\.\.\.)[[:space:]]*$/) break
+        if (match($0, /^[A-Za-z_][A-Za-z0-9_ .-]*:/)) {
+          key = substr($0, 1, RLENGTH - 1); items = 0
+          check(key, key, substr($0, RLENGTH + 1))
+          continue
+        }
+        if ($0 ~ /^[[:space:]]*-[[:space:]]/ && key != "") {
+          items++
+          v = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", v)
+          check(key " (item " items ")", key, v)
+        }
+      }
+      close(CUR)
     }
-    /^[[:space:]]*-[[:space:]]/ && key != "" {
-      items++
-      v = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", v)
-      check(key " (item " items ")", key, v)
-    }
-  ' "$1"
+  '
 }
 
 # check_work_fields REL TIME ENERGY CONTEXT REQUIRED — a next action's time / energy / context
@@ -227,7 +228,7 @@ fm_link_problems() {
 check_work_fields() {
   local rel="$1" time="$2" energy="$3" context="$4" required="$5" c old_ifs
   if [ -z "$time" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing time"
-  elif ! echo "$time" | grep -qE '^[0-9]+$'; then finding field "$rel" "time '$time' is not a number of minutes"; fi
+  elif ! [[ $time =~ $MINUTES_RE ]]; then finding field "$rel" "time '$time' is not a number of minutes"; fi
   if [ -z "$energy" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing energy"
   elif ! in_words "$energy" "$ENERGY_VOCAB"; then finding field "$rel" "energy '$energy' not in: $ENERGY_VOCAB"; fi
   if [ -z "$context" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing context"
@@ -258,109 +259,116 @@ FORM_DONE=""   # "<rel> <key>" lines already given a link-form finding (property
 OPEN_FROM=""   # "<tickle title><SEP><action>" per open next action whose from: links a live tickle
 TODAY="$(date +%Y-%m-%d)"
 INBOX="$GTD_DIR/inbox.md"
+MINUTES_RE='^[0-9]+$'
+
+# check_open_item FILE — one note of $list (next-actions, waiting-for or tickler); gtd_fm_each
+# calls it with the note's properties in FM_*.
+check_open_item() {
+  local f="$1" base rel recurring project form name due from ft tickle every lead hint cadence last
+  local start open person delegated followup
+  base="${f##*/}"; base="${base%.md}"
+  rel="$list/$base.md"
+
+  # A recurring tickle (valid every:) never puts its project on hold.
+  recurring=0
+  if [ "$list" = "tickler" ] && gtd_is_span "${FM_every:-}"; then recurring=1; fi
+
+  project="${FM_project:-}"
+  if [ -n "$project" ]; then
+    project_name "$project"; form="$PN_FORM"; name="$PN_NAME"
+    if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
+      [ "$recurring" -eq 1 ] || LINKED="$LINKED$name"$'\n'
+      if [ "$form" != "readme" ]; then
+        finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
+        FORM_DONE="$FORM_DONE$rel project"$'\n'
+      fi
+    elif [ -f "$GTD_DIR/_done/$name/README.md" ]; then
+      finding orphan-closed "$rel" "project '$name' is already in _done/"
+    else
+      finding orphan "$rel" "project: $project resolves to no project folder"
+    fi
+  fi
+
+  if [ "$list" = "next-actions" ]; then
+    check_work_fields "$rel" "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" 1
+    due="${FM_due:-}"
+    [ -z "$due" ] || is_date "$due" || finding field "$rel" "due '$due' is not YYYY-MM-DD"
+    # from: — the recurring tickle this action is one cycle of
+    from="${FM_from:-}"
+    if [ -n "$from" ]; then
+      _gtd_from_title "$from"; ft="$GTD_FROM_TITLE"
+      if [ -f "$GTD_DIR/tickler/$ft.md" ]; then
+        OPEN_FROM="$OPEN_FROM$ft$SEP$base"$'\n'
+        case "$from" in
+          "[[tickler/$ft|"*"]]"|"[[tickler/$ft]]") ;;
+          *) finding link-form "$rel" "from: $from -> [[tickler/$ft|$ft]]"
+             FORM_DONE="$FORM_DONE$rel from"$'\n' ;;
+        esac
+      elif [ -f "$GTD_DIR/_done/$ft.md" ]; then
+        finding orphan-closed "$rel" "from: tickle '$ft' has ended (it is in _done/)"
+      else
+        finding orphan "$rel" "from: $from resolves to no tickle"
+      fi
+    fi
+  elif [ "$list" = "tickler" ]; then
+    tickle="${FM_tickle:-}"
+    every="${FM_every:-}"
+    lead="${FM_lead:-}"
+    if [ -n "$every" ] && [ "$recurring" -eq 0 ]; then
+      hint="$(span_hint "$every")"
+      finding tickler-every "$rel" "every '$every' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> every: $hint}; one-shot until fixed"
+    fi
+    if [ "$recurring" -eq 1 ]; then
+      if [ -n "$lead" ] && ! gtd_is_span "$lead"; then
+        hint="$(span_hint "$lead")"
+        finding tickler-every "$rel" "lead '$lead' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> lead: $hint}; ignored until fixed"
+      fi
+      cadence="${FM_cadence:-}"
+      [ -z "$cadence" ] || in_words "$cadence" "$CADENCE_VOCAB" || finding field "$rel" "cadence '$cadence' not in: $CADENCE_VOCAB"
+      last="${FM_last_completed:-}"
+      [ -z "$last" ] || is_date "$last" || finding field "$rel" "last_completed '$last' is not YYYY-MM-DD"
+    fi
+    check_work_fields "$rel" "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" 0
+    if [ -z "$tickle" ]; then finding tickler-date "$rel" "missing tickle: date"
+    elif ! is_date "$tickle"; then finding tickler-date "$rel" "tickle '$tickle' is not YYYY-MM-DD"
+    elif [ "$recurring" -eq 1 ]; then
+      start="$tickle"
+      ! gtd_is_span "$lead" || start="$(gtd_date_add "$tickle" "$lead" -)"
+      # OPEN_FROM is complete here: next-actions/ is read before tickler/.
+      open=0
+      case $'\n'"$OPEN_FROM" in *$'\n'"$base$SEP"*) open=1 ;; esac
+      if [ ! "$start" \> "$TODAY" ] && [ "$open" -eq 0 ]; then
+        finding tickler-due "$rel" "routine (every $every) due $tickle — no open action: create its next action"
+      fi
+      if [ "$tickle" \< "$TODAY" ]; then
+        if [ "$open" -eq 1 ]; then finding tickler-overdue "$rel" "routine (every $every) was due $tickle — its action is still open"
+        else finding tickler-overdue "$rel" "routine (every $every) was due $tickle — no open action"; fi
+      fi
+    elif [ ! "$tickle" \> "$TODAY" ]; then
+      # An inbox line linking the note means organize already queued it for clarify.
+      if [ -f "$INBOX" ] && { grep -qF "[[tickler/$base]]" "$INBOX" || grep -qF "[[tickler/$base|" "$INBOX"; }; then
+        finding tickler-due "$rel" "tickle $tickle — queued in inbox"
+      else
+        finding tickler-due "$rel" "tickle $tickle — now actionable"
+      fi
+    fi
+  else
+    person="${FM_person:-}"
+    delegated="${FM_delegated:-}"
+    followup="${FM_follow_up:-}"
+    [ -n "$person" ] || finding field "$rel" "missing person"
+    if [ -z "$delegated" ]; then finding field "$rel" "missing delegated"
+    elif ! is_date "$delegated"; then finding field "$rel" "delegated '$delegated' is not YYYY-MM-DD"; fi
+    [ -z "$followup" ] || is_date "$followup" || finding field "$rel" "follow-up '$followup' is not YYYY-MM-DD"
+  fi
+
+}
 
 for list in next-actions waiting-for tickler; do
   dir="$GTD_DIR/$list"
   [ -d "$dir" ] || continue
-  for f in "$dir"/*.md; do
-    [ -e "$f" ] || continue
-    base="$(basename "$f" .md)"
-    [ "$base" = "README" ] && continue
-    rel="$list/$base.md"
-
-    # A recurring tickle (valid every:) never puts its project on hold.
-    recurring=0
-    if [ "$list" = "tickler" ] && gtd_is_span "$(fm_get "$f" every)"; then recurring=1; fi
-
-    project="$(fm_get "$f" project)"
-    if [ -n "$project" ]; then
-      IFS="$SEP" read -r form name < <(project_name "$project")
-      if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
-        [ "$recurring" -eq 1 ] || LINKED="$LINKED$name"$'\n'
-        if [ "$form" != "readme" ]; then
-          finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
-          FORM_DONE="$FORM_DONE$rel project"$'\n'
-        fi
-      elif [ -f "$GTD_DIR/_done/$name/README.md" ]; then
-        finding orphan-closed "$rel" "project '$name' is already in _done/"
-      else
-        finding orphan "$rel" "project: $project resolves to no project folder"
-      fi
-    fi
-
-    if [ "$list" = "next-actions" ]; then
-      check_work_fields "$rel" "$(fm_get "$f" time)" "$(fm_get "$f" energy)" "$(fm_get "$f" context)" 1
-      due="$(fm_get "$f" due)"
-      [ -z "$due" ] || is_date "$due" || finding field "$rel" "due '$due' is not YYYY-MM-DD"
-      # from: — the recurring tickle this action is one cycle of
-      from="$(fm_get "$f" from)"
-      if [ -n "$from" ]; then
-        ft="$(gtd_from_title "$from")"
-        if [ -f "$GTD_DIR/tickler/$ft.md" ]; then
-          OPEN_FROM="$OPEN_FROM$ft$SEP$base"$'\n'
-          case "$from" in
-            "[[tickler/$ft|"*"]]"|"[[tickler/$ft]]") ;;
-            *) finding link-form "$rel" "from: $from -> [[tickler/$ft|$ft]]"
-               FORM_DONE="$FORM_DONE$rel from"$'\n' ;;
-          esac
-        elif [ -f "$GTD_DIR/_done/$ft.md" ]; then
-          finding orphan-closed "$rel" "from: tickle '$ft' has ended (it is in _done/)"
-        else
-          finding orphan "$rel" "from: $from resolves to no tickle"
-        fi
-      fi
-    elif [ "$list" = "tickler" ]; then
-      tickle="$(fm_get "$f" tickle)"
-      every="$(fm_get "$f" every)"
-      lead="$(fm_get "$f" lead)"
-      if [ -n "$every" ] && [ "$recurring" -eq 0 ]; then
-        hint="$(span_hint "$every")"
-        finding tickler-every "$rel" "every '$every' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> every: $hint}; one-shot until fixed"
-      fi
-      if [ "$recurring" -eq 1 ]; then
-        if [ -n "$lead" ] && ! gtd_is_span "$lead"; then
-          hint="$(span_hint "$lead")"
-          finding tickler-every "$rel" "lead '$lead' is not <n><unit> (7d, 2w, 3m, 1y)${hint:+ -> lead: $hint}; ignored until fixed"
-        fi
-        cadence="$(fm_get "$f" cadence)"
-        [ -z "$cadence" ] || in_words "$cadence" "$CADENCE_VOCAB" || finding field "$rel" "cadence '$cadence' not in: $CADENCE_VOCAB"
-        last="$(fm_get "$f" last_completed)"
-        [ -z "$last" ] || is_date "$last" || finding field "$rel" "last_completed '$last' is not YYYY-MM-DD"
-      fi
-      check_work_fields "$rel" "$(fm_get "$f" time)" "$(fm_get "$f" energy)" "$(fm_get "$f" context)" 0
-      if [ -z "$tickle" ]; then finding tickler-date "$rel" "missing tickle: date"
-      elif ! is_date "$tickle"; then finding tickler-date "$rel" "tickle '$tickle' is not YYYY-MM-DD"
-      elif [ "$recurring" -eq 1 ]; then
-        start="$tickle"
-        ! gtd_is_span "$lead" || start="$(gtd_date_add "$tickle" "$lead" -)"
-        # OPEN_FROM is complete here: next-actions/ is read before tickler/.
-        open=0
-        case $'\n'"$OPEN_FROM" in *$'\n'"$base$SEP"*) open=1 ;; esac
-        if [ ! "$start" \> "$TODAY" ] && [ "$open" -eq 0 ]; then
-          finding tickler-due "$rel" "routine (every $every) due $tickle — no open action: create its next action"
-        fi
-        if [ "$tickle" \< "$TODAY" ]; then
-          if [ "$open" -eq 1 ]; then finding tickler-overdue "$rel" "routine (every $every) was due $tickle — its action is still open"
-          else finding tickler-overdue "$rel" "routine (every $every) was due $tickle — no open action"; fi
-        fi
-      elif [ ! "$tickle" \> "$TODAY" ]; then
-        # An inbox line linking the note means organize already queued it for clarify.
-        if [ -f "$INBOX" ] && { grep -qF "[[tickler/$base]]" "$INBOX" || grep -qF "[[tickler/$base|" "$INBOX"; }; then
-          finding tickler-due "$rel" "tickle $tickle — queued in inbox"
-        else
-          finding tickler-due "$rel" "tickle $tickle — now actionable"
-        fi
-      fi
-    else
-      person="$(fm_get "$f" person)"
-      delegated="$(fm_get "$f" delegated)"
-      followup="$(fm_get "$f" follow-up)"
-      [ -n "$person" ] || finding field "$rel" "missing person"
-      if [ -z "$delegated" ]; then finding field "$rel" "missing delegated"
-      elif ! is_date "$delegated"; then finding field "$rel" "delegated '$delegated' is not YYYY-MM-DD"; fi
-      [ -z "$followup" ] || is_date "$followup" || finding field "$rel" "follow-up '$followup' is not YYYY-MM-DD"
-    fi
-  done
+  gtd_notes_in "$dir"
+  gtd_fm_each check_open_item -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
 done
 
 # Two open actions for one routine: organize keeps the oldest and asks about the other.
@@ -378,7 +386,7 @@ EOF
 if [ -d "$GTD_DIR/projects" ]; then
   for readme in "$GTD_DIR"/projects/*/README.md; do
     [ -e "$readme" ] || continue
-    name="$(basename "$(dirname "$readme")")"
+    name="${readme%/README.md}"; name="${name##*/}"
     case $'\n'"$LINKED" in
       *$'\n'"$name"$'\n'*) ;;
       *) finding stalled "projects/$name/README.md" "no open next action, waiting-for or tickle links to it" ;;
@@ -395,14 +403,14 @@ for list in $GTD_NOTE_LISTS; do
   if [ "$list" = "projects" ]; then
     for d in "$dir"/*/; do
       [ -d "$d" ] || continue
-      names="$names$(basename "$d")"$'\n'
+      d="${d%/}"
+      names="$names${d##*/}"$'\n'
     done
   else
-    for f in "$dir"/*.md; do
-      [ -e "$f" ] || continue
-      base="$(basename "$f" .md)"
-      [ "$base" = "README" ] && continue
-      names="$names$base"$'\n'
+    gtd_notes_in "$dir"
+    for f in ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}; do
+      base="${f##*/}"
+      names="$names${base%.md}"$'\n'
     done
   fi
   [ -n "$names" ] || continue
@@ -426,32 +434,57 @@ done
 
 # --- _done/ record --------------------------------------------------------------
 
+# aar_written — reads one note path per line on stdin, all in one awk, and prints each path
+# whose After action review section (after the frontmatter) has text beyond an HTML comment.
+aar_written() {
+  awk '
+    {
+      f = $0; fm = 0; in_aar = 0; in_comment = 0
+      while ((getline line < f) > 0) {
+        if (line ~ /^---[[:space:]]*$/ && fm < 2) { fm++; continue }
+        if (fm < 2) continue
+        if (line ~ /^## After action review/) { in_aar = 1; continue }
+        if (in_aar && line ~ /^## /) in_aar = 0
+        if (in_aar && line ~ /<!--/) in_comment = 1
+        if (in_aar && !in_comment && line ~ /[^[:space:]]/) { print f; break }
+        if (in_comment && line ~ /-->/) in_comment = 0
+      }
+      close(f)
+    }
+  '
+}
+
+# check_done_item FILE — one _done/ note; gtd_fm_each calls it with the properties in FM_*.
+check_done_item() {
+  local f="$1" rel project
+  rel="${f#"$GTD_DIR"/}"
+  [ -n "${FM_completed:-}" ] || finding done-completed "$rel" "no completed: date"
+  project="${FM_project:-}"
+  if [ -n "$project" ]; then
+    project_name "$project"
+    if [ ! -d "$GTD_DIR/projects/$PN_NAME" ] && [ -f "$GTD_DIR/_done/$PN_NAME/README.md" ]; then
+      finding done-link "$rel" "project: $project -> [[_done/$PN_NAME/README|$PN_NAME]]"
+    fi
+  fi
+  if [ "${FM_list:-}" = "projects" ]; then
+    case $'\n'"$AAR_WRITTEN"$'\n' in
+      *$'\n'"$f"$'\n'*) ;;
+      *) finding done-no-aar "$rel" "finished project closed with no after-action review" ;;
+    esac
+  fi
+}
+
 if [ -d "$GTD_DIR/_done" ]; then
+  DONE_NOTES=()
   for f in "$GTD_DIR"/_done/*.md "$GTD_DIR"/_done/*/README.md; do
     [ -e "$f" ] || continue
-    rel="${f#"$GTD_DIR"/}"
-    [ "$rel" = "_done/README.md" ] && continue
-    [ -n "$(fm_get "$f" completed)" ] || finding done-completed "$rel" "no completed: date"
-    project="$(fm_get "$f" project)"
-    if [ -n "$project" ]; then
-      IFS="$SEP" read -r form name < <(project_name "$project")
-      if [ ! -d "$GTD_DIR/projects/$name" ] && [ -f "$GTD_DIR/_done/$name/README.md" ]; then
-        finding done-link "$rel" "project: $project -> [[_done/$name/README|$name]]"
-      fi
-    fi
-    if [ "$(fm_get "$f" list)" = "projects" ]; then
-      has_aar="$(awk '
-        /^---[[:space:]]*$/ && fm < 2 { fm++; next }
-        fm < 2 { next }
-        /^## After action review/ { in_aar = 1; next }
-        in_aar && /^## / { in_aar = 0 }
-        in_aar && /<!--/ { in_comment = 1 }
-        in_aar && !in_comment && /[^[:space:]]/ { print "yes"; exit }
-        in_comment && /-->/ { in_comment = 0 }
-      ' "$f")"
-      [ "$has_aar" = "yes" ] || finding done-no-aar "$rel" "finished project closed with no after-action review"
-    fi
+    [ "$f" = "$GTD_DIR/_done/README.md" ] && continue
+    DONE_NOTES+=("$f")
   done
+  if [ "${#DONE_NOTES[@]}" -gt 0 ]; then
+    AAR_WRITTEN="$(printf '%s\n' "${DONE_NOTES[@]}" | aar_written)"
+    gtd_fm_each check_done_item -- "${DONE_NOTES[@]}"
+  fi
 fi
 
 # --- wikilinks in frontmatter properties: memory/gtd/ and the root reference/ ---
@@ -463,17 +496,15 @@ md_files() {
 }
 
 REF_DIR="$GTD_WORKSPACE_ROOT/reference"
-while IFS= read -r f; do
+while IFS="$SEP" read -r f kind key msg; do
+  [ -n "$kind" ] || continue
   case "$f" in
     "$GTD_DIR"/*) rel="${f#"$GTD_DIR"/}" ;;
     *) rel="reference/${f#"$REF_DIR"/}" ;;
   esac
-  while IFS="$SEP" read -r kind key msg; do
-    [ -n "$kind" ] || continue
-    # a project: / from: link the link-form checks above already flagged gets one finding, not two
-    case $'\n'"$FORM_DONE" in *$'\n'"$rel $key"$'\n'*) continue ;; esac
-    finding "$kind" "$rel" "$msg"
-  done < <(fm_link_problems "$f")
-done < <(md_files "$GTD_DIR"; md_files "$REF_DIR")
+  # a project: / from: link the link-form checks above already flagged gets one finding, not two
+  case $'\n'"$FORM_DONE" in *$'\n'"$rel $key"$'\n'*) continue ;; esac
+  finding "$kind" "$rel" "$msg"
+done < <({ md_files "$GTD_DIR"; md_files "$REF_DIR"; } | fm_link_problems)
 
 echo "# $FINDINGS finding(s)"

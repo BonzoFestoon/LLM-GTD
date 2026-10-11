@@ -16,7 +16,7 @@ GTD Update: sync the changes in reality the user reports into the trusted system
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/update/SKILL.md
 </execution_context>
 

@@ -1,7 +1,7 @@
 ---
 name: gtd-capture
-description: GTD capture — writes to the inbox with zero friction, then auto-clarifies and files by default (single items); batches / mind sweeps are fully captured first, then clarified in bulk
-argument-hint: "[things to capture, one or more; leave empty for a mind sweep; say 'capture only' to skip auto-clarify]"
+description: GTD capture — writes to the inbox verbatim with zero friction, nothing else; clarifying is its own step (/gtd-clarify). Empty input starts a mind sweep
+argument-hint: "[things to capture, one or more; leave empty for a mind sweep]"
 allowed-tools:
   - Read
   - Write
@@ -9,11 +9,11 @@ allowed-tools:
   - Bash
 ---
 <objective>
-GTD step 1, Capture (AI-native): first write to memory/gtd/inbox.md with zero friction (so nothing is lost), then by default auto-clarify and file for the user — you're an AI, your switching cost is ≈0, so the user shouldn't have to run step two by hand.
+GTD step 1, Capture: get each item into memory/gtd/inbox.md fast, verbatim, with zero friction. Capture never clarifies, files, or asks what an item means — deciding is a different kind of thinking, done later in its own step (/gtd-clarify).
 </objective>
 
 <execution_context>
-@__VAULT__/.cursor/skills/gtd-harness/SKILL.md
+@__VAULT__/.cursor/skills/gtd-harness/shared-rules.md
 @__VAULT__/.cursor/skills/gtd-harness/capture/SKILL.md
 </execution_context>
 
@@ -23,9 +23,9 @@ $ARGUMENTS
 
 <process>
 Follow capture/SKILL.md:
-1. First write each item in $ARGUMENTS verbatim to inbox.md (so nothing is lost).
-2. Single / few items → by default run the clarify decision tree, clarify and file into the right list + set the next action, delete from the inbox, and report the destination in one line (act-then-surface, correctable in one sentence).
-3. Batch / empty input mind sweep → capture everything first, then ask once "Want me to clarify these one by one now?"
-4. Stop and ask one question only in the four decision cases (action vs knowledge / no derivable next action / implied commitment / unclear project outcome).
-5. The user says "capture only / don't clarify yet" → write to the inbox only, no auto-clarify.
+1. Write each item in $ARGUMENTS verbatim to inbox.md, one per line with its capture date.
+2. Report in one line — "Captured N item(s) to the inbox (M waiting to clarify). Run /gtd-clarify when you're ready." — and stop. No question, no suggested list or next action.
+3. Empty input → mind sweep: prompt with the trigger list, capture each thing as it comes without comment, report the count once at the end.
+4. Session close → the template's deltas (insights included) go to the inbox as items; nothing is filed.
+5. A change to an existing item ("that's done", "they replied") is an update, not a capture → follow update/SKILL.md.
 </process>
