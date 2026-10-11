@@ -26,7 +26,7 @@ Core lists live in `memory/gtd/` as plain markdown; they are not bundled into th
 | `projects/` | Desired outcomes that take >1 step; one folder per project |
 | `waiting-for/` | Delegated / waiting on others |
 | `calendar.md` | Hard landscape; fallback only when the external calendar provider is unreachable |
-| `tickler/` | Committed work dated for when it becomes actionable (a tickled project is on hold, not stalled) |
+| `tickler/` | Committed work dated for when it becomes actionable (a tickled project is on hold, not stalled); with `every:`, a recurring routine that creates a next action each cycle |
 | `someday-maybe/` | Not committed yet, but not to be forgotten |
 | `reference/` (workspace root) | Non-actionable reference / knowledge |
 | `horizons.md` | Six-horizon direction calibration |
@@ -40,7 +40,7 @@ Each list folder holds one note per item plus a `README.md` of rules; finished w
 | Set up, self-check, status, install, initialize | `init/SKILL.md` | Create lists, self-check entry points, read-only automation check; install only with explicit `--install-cron` |
 | New input, mind sweep, session close | `capture/SKILL.md` | Land in inbox first; single items auto-clarify by default, batches are fully captured first |
 | Clarify inbox, process item by item, file things | `clarify/SKILL.md` | Actionable? → next action / waiting for / project / calendar / someday / reference |
-| It's done, they replied, the schedule changed, it's cancelled | `update/SKILL.md` | Sync reality: cross off, advance projects, handle waiting-for replies or corrections |
+| It's done, they replied, the schedule changed, it's cancelled; "apply my tagged notes" | `update/SKILL.md` | Sync reality: cross off, advance projects, handle waiting-for replies or corrections, re-date a routine; apply notes tagged `gtd-update` |
 | Clean up structure, stuck projects, duplicates | `organize/SKILL.md` | Do mechanical hygiene automatically; surface only items needing confirmation |
 | What now, 10 minutes, low energy, shopping, prep, what to follow up on | `engage/SKILL.md` | Pick 3-5 candidates by context / time / energy / priority |
 | Weekly review, system feels messy, don't trust the lists | `review/SKILL.md` | Review prep pack + Get Clear / Current / Creative + Horizons |

@@ -33,7 +33,7 @@ example: "Clean up my GTD lists"
 | Orphans | Detect actions / tickles whose `project:` link is broken; re-link when there's a unique match | Several possible owners or unclear result |
 | Completed projects | Outcome clearly achieved and no next action or tickle still links it → close it through `update/SKILL.md`'s "Project close" (AAR draft, one confirmation, done record) | Unsure whether the outcome is achieved; whether to cut the project; a tickle still links it |
 | Stalled projects | Draft one concrete next action and attach it to the project. Stalled = no open next action, waiting-for or tickle links it (`references/list-definitions.md` "Stalled projects"); a project on hold (a tickle links it) is never given a drafted next action | Can't draft one; the commitment needs to change |
-| Tickler | A due tickle linked to a project whose body is a concrete action → move the note to `next-actions/` (drop `tickle`, fill time / energy / context, keep `project:`). Any other due tickle (standalone, or too vague to be an action) → one inbox pointer, `- Tickle due: <title> → [[tickler/<title>]] · Captured: YYYYMMDD`, the note left in place for clarify; never a second pointer while one exists | A tickle's project is closed or missing; its date is malformed; its date conflicts with the calendar (flag + suggested date, never re-date) |
+| Tickler | A due one-shot tickle linked to a project whose body is a concrete action → move the note to `next-actions/` (drop `tickle`, fill time / energy / context, keep `project:`). Any other due one-shot tickle (standalone, or too vague to be an action) → one inbox pointer, `- Tickle due: <title> → [[tickler/<title>]] · Captured: YYYYMMDD`, the note left in place for clarify; never a second pointer while one exists. A due **recurring** tickle (`every:`) → create one next action and **leave the tickle unchanged**: body, `project:`, time / energy / context copied (filled when missing), `from: "[[tickler/<Title>\|<Title>]]"`, `due: <tickle>`, `source: recurring tickle` (`list-definitions.md` "Recurring tickles"). Convert an invalid `every` / `lead` whose compact form is unambiguous (`quarterly` → `3m`) | A tickle's project is closed or missing; its date is malformed; a one-shot tickle's date conflicts with the calendar (flag + suggested date, never re-date); an overdue routine (report it; never skip, re-date or end it) |
 | Constraint / lens hygiene | Fill clearly missing time / energy / context | Needs the user to judge setting or priority |
 | Stale checkmarks / duplicates | Clean up completed leftovers and obvious duplicates | Looks duplicated but means something different |
 | Calendar fallback | Delete fallback items confirmed in the external calendar; move ordinary to-dos back to next-actions | External calendar unreachable, expired with unclear status, conflict / possible duplicate |
@@ -45,10 +45,10 @@ example: "Clean up my GTD lists"
 2. Use `list-definitions.md` to check whether each item is in the right list; move mechanical misfilings directly and collect unclear ones.
 3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (`gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it) is in play: never draft a next action for it or call it stalled.
 4. Fill light fields on next-actions: time / energy / context.
-5. **Tickler**: handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox"; then check tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
+5. **Tickler**: handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox" (a recurring tickle is listed as due only while no open action links it, so a second run creates nothing); note overdue routines (`tickler-overdue`) for the summary; then check one-shot tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
 6. Reconcile `calendar.md` fallback items against external calendar provider reachability; delete the local copy once successfully externalized, otherwise keep it and surface it. This covers `calendar.md` only: the tickler is never reconciled, exported or deleted here.
 7. Do the monthly re-evaluation of someday-maybe.
-8. Output a one-line summary of what was handled automatically + one batch of questions needing confirmation; don't interrupt item by item. Name each tickler result, e.g. "Tickler: 2 now actionable → 1 next action for <Project>, 1 queued in the inbox; 1 date conflict to confirm".
+8. Output a one-line summary of what was handled automatically + one batch of questions needing confirmation; don't interrupt item by item. Name each tickler result, e.g. "Tickler: 3 now actionable → 1 next action for <Project>, 1 queued in the inbox, 1 routine's next action (Water the plants, due Oct 17); 1 routine overdue; 1 date conflict to confirm".
 
 ## Fixing gtd_check.sh findings
 
@@ -56,16 +56,18 @@ example: "Clean up my GTD lists"
 
 | Finding | Automatic | Surface for confirmation |
 |---|---|---|
-| `link-form` | (action, waiting-for or tickle) Rewrite `project:` to `"[[projects/<Name>/README\|<Name>]]"`. (Any note, any property) A link from the vault root: rewrite it to the `->` short form, relative to `memory/gtd/` | — |
+| `link-form` | (action, waiting-for or tickle) Rewrite `project:` to `"[[projects/<Name>/README\|<Name>]]"`; (a routine's action) rewrite `from:` to `"[[tickler/<Title>\|<Title>]]"`. (Any note, any property) A link from the vault root: rewrite it to the `->` short form, relative to `memory/gtd/` | — |
 | `property-link` | (Any note under `memory/gtd/` or `reference/`, any property) Apply the finding's `->` fix: quote a bare link or embed; move text around a link into its display text (`"[[…\|plan (Phase 4 step 5)]]"`); split several links into a YAML list, one quoted link per item | Several links with text between them whose meaning would be lost in a list; text beside an embed (which property should hold it) |
-| `orphan` | Re-link when exactly one project folder is a clear match (renamed / typo) | No match or several; whether it's now standalone (then drop `project:`) |
-| `orphan-closed` | — | The project is already in `_done/`: finish this action, drop it, or re-link it to a live project (a tickle: drop it, or re-link it) |
+| `orphan` | Re-link when exactly one project folder (or, for `from:`, one tickle) is a clear match (renamed / typo) | No match or several; whether it's now standalone (then drop `project:` / `from:`) |
+| `orphan-closed` | — | The project (or the routine, for `from:`) is already in `_done/`: finish this action, drop it, or re-link it (a tickle: drop it, or re-link it) |
 | `stalled` | Draft one next-action note linked to the project (act-then-surface) | Can't draft one; the outcome may be achieved (closing it is `update/SKILL.md`'s job) |
 | `field` | Fill or correct a value the body makes clear, using list-definitions' "Property values" | Genuinely unclear — leave it empty; a note with no properties is still valid |
-| `duplicate` | Merge obvious duplicates into one note; delete the other | Same title, different commitments — rename one instead |
+| `duplicate` | Merge obvious duplicates into one note; delete the other | Same title, different commitments — rename one instead; two open actions for one routine (`same from:`) — keep the oldest, ask before removing the other |
 | `filename` | Rename to a safe title and update links to it | — |
 | `tickler-due` | Due tickle: move a concrete project tickle to `next-actions/`, otherwise add one inbox pointer ("Tickler" row above). "queued in inbox" → nothing to do, clarify has it | Project closed or missing |
 | `tickler-date` | Fill `tickle` when the body states the date clearly | Otherwise surface: when does it become actionable? |
+| `tickler-overdue` | — (it is reported, never changed) | Name it in the summary; engage and the Weekly Review ask: do it now, skip this cycle, change the rule, or end it |
+| `tickler-every` | Rewrite to the finding's `->` compact form when it is given | No compact form, or the wording is ambiguous: ask how often |
 | `done-completed` | Add `completed:` with today's date | — |
 | `done-no-aar` | — | List once for the next Weekly Review: draft the AAR, or write `Skipped (YYYY-MM-DD).` under the heading so it isn't listed again |
 | `done-link` | Rewrite `project:` to `"[[_done/<Name>/README\|<Name>]]"` | — |
@@ -78,7 +80,7 @@ Never move a note into `_done/` from organize (that's `update/SKILL.md`), and ne
 - [ ] Mechanical issues (orphans, missing light fields, stale checkmarks, obvious duplicates) fixed automatically and summarized
 - [ ] Completed projects closed through update's Project close (AAR + done record); unfinished projects have a linked next action, waiting-for item or tickle, or are listed for confirmation
 - [ ] `calendar.md` reconciled: synced items removed, ordinary to-dos re-filed, unconfirmed hard appointments kept and surfaced
-- [ ] Tickler: due tickles moved to `next-actions/` or queued in the inbox once; no project with a tickle given a drafted next action or called stalled; no tickle exported or touched by the calendar reconcile; date conflicts surfaced, never re-dated
+- [ ] Tickler: due one-shot tickles moved to `next-actions/` or queued in the inbox once; each due routine got exactly one next action with `from:` and `due:`, its tickle left in place; overdue routines reported, not changed; no project with a tickle given a drafted next action or called stalled; no tickle exported or touched by the calendar reconcile; date conflicts surfaced, never re-dated
 - [ ] Every `gtd_check.sh` finding either fixed or in the confirmation batch; `README.md` never treated as an item
 - [ ] Judgment calls asked in a batch; no commitment decisions made for the user
 - [ ] No high-consequence actions taken such as sending messages, automatic approvals, or unconfirmed external writes

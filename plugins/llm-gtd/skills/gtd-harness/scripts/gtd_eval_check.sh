@@ -110,6 +110,8 @@ bash -n "$ROOT/scripts/gtd_review_prep_notify.sh"
 bash -n "$ROOT/scripts/gtd_help.sh"
 bash -n "$ROOT/scripts/gtd_list.sh"
 bash -n "$ROOT/scripts/gtd_check.sh"
+bash -n "$ROOT/scripts/gtd_next_date.sh"
+bash -n "$ROOT/scripts/gtd_tagged.sh"
 ok "shell scripts pass bash -n"
 
 # product-ideas was retired in 2.0.0: product opportunities are clarified like any other input.
@@ -156,7 +158,7 @@ grep -q '^## Note format' "$fixture/notes/memory/gtd/next-actions/README.md" || 
 [ -z "$(LLM_GTD_ROOT="$fixture/notes" bash "$ROOT/scripts/gtd_list.sh" projects)" ] || fail "gtd_list.sh counted projects/README.md as a project"
 # A 1.x single-file system: every script refuses (exit 4) and init writes nothing.
 touch "$fixture/files/memory/gtd/next-actions.md"
-for sc in gtd_init.sh gtd_status.sh gtd_list.sh gtd_check.sh gtd_review_prep.sh; do
+for sc in gtd_init.sh gtd_status.sh gtd_list.sh gtd_check.sh gtd_review_prep.sh gtd_tagged.sh; do
   case "$sc" in gtd_init.sh) arg="--confirm-create" ;; gtd_list.sh) arg="next-actions" ;; *) arg="" ;; esac
   rc=0; LLM_GTD_ROOT="$fixture/files" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/$sc" $arg >/dev/null 2>"$fixture/err" || rc=$?
   [ "$rc" -eq 4 ] || fail "$sc did not refuse single-file lists (exit $rc, want 4)"
@@ -305,6 +307,249 @@ rm -rf "$NT/memory/gtd/tickler"
 out="$(LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" && [ -z "$out" ] || fail "gtd_list.sh tickler with no tickler/ folder: $out"
 LLM_GTD_ROOT="$NT" bash "$ROOT/scripts/gtd_status.sh" >/dev/null 2>&1 || fail "gtd_status.sh failed with no tickler/ folder"
 ok "tickler: tickled projects in play, due / within split, link checks, inbox guard, dashboard and review prep"
+
+# Recurring tickles (E38-E43): gtd_next_date.sh's arithmetic (fixed by default, floating opt-in,
+# month-end clamp, lead), and how a tickle with every: is listed and checked — due on tickle - lead
+# only while no open action links it (from:), overdue the day after its date, never a project hold,
+# from: links checked like project: links, two open actions for one routine a duplicate.
+ND="$ROOT/scripts/gtd_next_date.sh"
+nd_case() {
+  # nd_case WANT ARGS... — gtd_next_date.sh ARGS must print WANT
+  local want="$1" got; shift
+  got="$(bash "$ND" "$@" 2>&1)" || true
+  [ "$got" = "$want" ] || fail "gtd_next_date.sh $* gave '$got', want '$want'"
+}
+nd_case 2026-02-28 add 2026-01-31 1m
+nd_case 2024-02-29 add 2024-01-31 1m
+nd_case 2025-02-28 add 2024-02-29 1y
+nd_case 2027-02-15 add 2026-11-15 3m
+nd_case 2027-01-01 add 2026-12-30 2d
+nd_case 2026-10-22 add 2026-10-01 3w
+nd_case 2026-10-08 start 2026-10-15 7d
+nd_case 2026-02-28 start 2026-03-31 1m
+nd_case 2026-10-15 start 2026-10-15
+nd_case 2027-04-15 next 3m 2027-01-15 2027-02-02
+nd_case 2027-07-15 next 3m 2027-01-15 2027-05-03
+nd_case 2027-04-15 next 3m 2027-01-15 2027-01-10
+nd_case 2027-04-15 next 3m 2027-01-15 2027-01-15 fixed
+nd_case 2027-01-12 next 3m 2026-10-15 2026-10-12 floating
+nd_case 2026-02-28 next 1m 2026-01-31 2026-02-01
+nd_case 2026-11-05 next 1w 2026-10-01 2026-10-30
+bash "$ND" valid 3m || fail "gtd_next_date.sh valid rejected 3m"
+for bad in quarterly 3 0m 3months 1m2w; do
+  ! bash "$ND" valid "$bad" || fail "gtd_next_date.sh valid accepted '$bad'"
+done
+rc=0; bash "$ND" next quarterly 2026-01-01 2026-01-02 >/dev/null 2>&1 || rc=$?
+[ "$rc" -eq 2 ] || fail "gtd_next_date.sh next with a bad every exited $rc, want 2"
+rc=0; bash "$ND" next 3m 2026-01-01 2026-01-02 weekly >/dev/null 2>&1 || rc=$?
+[ "$rc" -eq 2 ] || fail "gtd_next_date.sh next with a bad cadence exited $rc, want 2"
+ok "gtd_next_date.sh: fixed by default (missed periods skipped), floating, month-end clamp, lead, bad input refused"
+
+RC="$fixture/recur"
+mkdir -p "$RC"
+LLM_GTD_ROOT="$RC" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
+  || fail "gtd_init.sh failed (recurring fixture)"
+RG="$RC/memory/gtd"
+mkdir -p "$RG/projects/Home upkeep" "$RG/projects/Paused"
+printf -- '---\noutcome: The house runs itself\n---\n' > "$RG/projects/Home upkeep/README.md"
+printf -- '---\noutcome: Paused until spring\n---\n' > "$RG/projects/Paused/README.md"
+rc_day() { bash "$ND" add "$tk_today" "$1"; }
+rc_ago() { bash "$ND" start "$tk_today" "$1"; }
+rtickle() {
+  # rtickle TITLE FRONTMATTER-LINES — a tickler note with those properties
+  printf -- '---\nid: tk-recur-20261010\n%s\ncreated: 2026-10-10\n---\n%s, the body.\n' "$2" "$1" > "$RG/tickler/$1.md"
+}
+# due: its lead window has opened (tickle in 3 days, lead 7d) and no action is open
+rtickle "Pay the quarterly estimate" "every: 3m
+lead: 7d
+tickle: $(rc_day 3d)
+project: \"[[projects/Home upkeep/README|Home upkeep]]\""
+# overdue: dated 2 days ago with its action still open
+rtickle "Water the plants" "every: 1w
+tickle: $(rc_ago 2d)
+time: 10
+energy: low
+context: [home]"
+# coming up: dated in 20 days, no lead; its open action uses a bare from: link (link-form)
+rtickle "Check the backups" "every: 1m
+cadence: floating
+tickle: $(rc_day 20d)
+last_completed: $(rc_ago 10d)"
+# the only link to a project: a recurring tickle never puts it on hold
+rtickle "Review the garden" "every: 1y
+tickle: 2999-01-01
+project: \"[[projects/Paused/README|Paused]]\""
+# invalid rules: treated as one-shot until fixed
+rtickle "Bad every" "every: quarterly
+tickle: 2999-01-01"
+rtickle "Bad lead" "every: 1m
+lead: soon
+tickle: 2999-01-01"
+rtickle "Bad fields" "every: 1m
+cadence: weekly
+last_completed: last week
+energy: huge
+tickle: 2999-01-01"
+# a one-shot tickle in the same folder still behaves as before
+rtickle "Start the one-shot" "tickle: 2000-01-01"
+raction() {
+  # raction TITLE FROM — an open next action created from a recurring tickle
+  printf -- '---\ntime: 10\nenergy: low\ncontext: [home]\nfrom: "%s"\ndue: %s\n---\nx\n' "$2" "$(rc_ago 2d)" > "$RG/next-actions/$1.md"
+}
+raction "Water the plants" "[[tickler/Water the plants|Water the plants]]"
+raction "Water the plants again" "[[tickler/Water the plants|Water the plants]]"
+raction "Check the backups" "[[Check the backups]]"
+raction "Feed the fish" "[[tickler/Feed the fish|Feed the fish]]"
+printf -- '---\nfrom: "[[tickler/Water the plants|Water the plants]]"\ncompleted: 2026-09-01\nresult: done\nlist: next-actions\n---\nx\n' > "$RG/_done/Water the plants 2026-09-01.md"
+
+tl="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler 2>&1)" || fail "gtd_list.sh tickler failed: $tl"
+echo "$tl" | grep -q "${T}every=1w${T}lead=-${T}action=open${T}Water the plants$" || fail "gtd_list.sh tickler lacks every / lead / action columns: $tl"
+echo "$tl" | grep -q "${T}every=-${T}lead=-${T}action=-${T}Start the one-shot$" || fail "gtd_list.sh tickler one-shot columns wrong: $tl"
+echo "$tl" | grep -q "action=open${T}Check the backups$" || fail "gtd_list.sh tickler missed an action linked by a bare from: link: $tl"
+rl_due="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --due | awk -F'\t' '{ print $NF }' | sort | paste -sd ';' -)"
+[ "$rl_due" = "Pay the quarterly estimate;Start the one-shot" ] || fail "gtd_list.sh tickler --due (want the lead-window routine and the one-shot): $rl_due"
+rl_over="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --overdue | awk -F'\t' '{ print $NF }' | paste -sd ';' -)"
+[ "$rl_over" = "Water the plants" ] || fail "gtd_list.sh tickler --overdue: $rl_over"
+rl_rec="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --recurring | grep -c .)"
+[ "$rl_rec" -eq 6 ] || fail "gtd_list.sh tickler --recurring counted $rl_rec, want 6 (bad every: is not recurring)"
+rl_soon="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --within 30 | awk -F'\t' '{ print $NF }' | paste -sd ';' -)"
+[ "$rl_soon" = "Check the backups" ] || fail "gtd_list.sh tickler --within 30 (the lead-window routine is due, not upcoming): $rl_soon"
+LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" next-actions | grep -q "from=\[\[tickler/Water the plants|Water the plants\]\]${T}Water the plants$" \
+  || fail "gtd_list.sh next-actions lacks the from= column"
+[ "$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" done --from "Water the plants" | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --from did not find the routine's cycle"
+[ -z "$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" done --from "Check the backups")" ] || fail "gtd_list.sh done --from matched another routine"
+
+chk="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_check.sh")"
+for want in "tickler-due${T}tickler/Pay the quarterly estimate.md" "tickler-overdue${T}tickler/Water the plants.md" \
+  "tickler-due${T}tickler/Start the one-shot.md" "stalled${T}projects/Paused/README.md" \
+  "tickler-every${T}tickler/Bad every.md" "tickler-every${T}tickler/Bad lead.md" \
+  "field${T}tickler/Bad fields.md${T}cadence" "field${T}tickler/Bad fields.md${T}last_completed" \
+  "field${T}tickler/Bad fields.md${T}energy" "orphan${T}next-actions/Feed the fish.md" \
+  "link-form${T}next-actions/Check the backups.md${T}from:" "duplicate${T}next-actions/${T}same from:"; do
+  echo "$chk" | grep -qF "$want" || fail "gtd_check.sh missed: $want"
+done
+! echo "$chk" | grep -qF "tickler-due${T}tickler/Water the plants.md" || fail "gtd_check.sh called a routine with an open action due"
+! echo "$chk" | grep -qF "tickler-due${T}tickler/Check the backups.md" || fail "gtd_check.sh called a future routine due"
+! echo "$chk" | grep -qE "tickler-overdue${T}tickler/(Pay the quarterly estimate|Check the backups|Start the one-shot)" || fail "gtd_check.sh called a routine overdue before its date (or a one-shot overdue)"
+! echo "$chk" | grep -qE "${T}tickler/(Water the plants|Check the backups|Pay the quarterly estimate)\.md${T}(missing|.*not in)" || fail "gtd_check.sh flagged a routine's valid optional fields"
+! echo "$chk" | grep -qF "orphan${T}next-actions/Water the plants" || fail "gtd_check.sh called a routine's action an orphan"
+# Home upkeep's only link is a routine too, so it is stalled, like Paused
+echo "$chk" | grep -qF "stalled${T}projects/Home upkeep/README.md" || fail "gtd_check.sh let a recurring tickle hold a project"
+
+st="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_status.sh" 2>&1 || true)"
+echo "$st" | grep -qE "Tickler +: 8 \(2 due\) · 6 recurring, 1 overdue" || fail "gtd_status.sh tickler line lacks recurring / overdue: $st"
+echo "$st" | grep -q "1 routine(s) overdue" || fail "gtd_status.sh has no overdue-routine alert: $st"
+rp="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 || true)"
+rp_tk="$(part_of "$rp" '^## Tickler' '^## ')"
+part_of "$rp_tk" '^Overdue routines' '^(Next 14 days|Projects on hold)' | grep -q 'Water the plants' || fail "review prep lacks the overdue routine: $rp_tk"
+! part_of "$rp_tk" '^Projects on hold' '^$' | grep -q 'Paused' || fail "review prep calls a project on hold through a recurring tickle: $rp_tk"
+! part_of "$rp" '^## Hygiene findings' '^## ' | grep -q 'tickler-overdue' || fail "review prep repeats tickler-overdue under Hygiene findings"
+ok "recurring tickles: lead window, overdue, open-action guard, no project hold, from: links, duplicate routine actions, dashboard and review prep"
+
+# Tagged-note updates (E44): gtd_tagged.sh finds every note in the workspace tagged gtd-update —
+# in frontmatter tags (flow list, block list, scalar) or inline #gtd-update — and counts the lines
+# still to apply under Update headings; it skips hidden folders, _done/, tags inside code, nested
+# tags, applied headings and lines marked ✓.
+TA="$fixture/tagged"
+mkdir -p "$TA"
+LLM_GTD_ROOT="$TA" CODEX_HOME="$fixture/codex" bash "$ROOT/scripts/gtd_init.sh" --confirm-create >/dev/null \
+  || fail "gtd_init.sh failed (tagged-note fixture)"
+mkdir -p "$TA/notes" "$TA/.obsidian"
+tnote() { printf '%s\n' "$2" > "$TA/$1"; }
+tnote "notes/Phone note.md" '---
+tags: [daily, gtd-update]
+---
+Walked the dog.
+
+## Update
+- Statements are downloaded ✓
+- Sam replied: the quote is approved
+
+## Later
+- not an update'
+tnote "notes/Block tags.md" '---
+tags:
+  - journal
+  - gtd-update
+---
+## Update
+Push the dentist tickle to December'
+tnote "notes/Scalar.md" '---
+tags: gtd-update
+---
+# Day
+
+### update
+- one
+
+- two
+## Other
+- not an update'
+tnote "notes/Inline.md" 'Some text #gtd-update, more text.
+
+## Update
+- The backups check is done'
+tnote "notes/Code only.md" 'Talking about `#gtd-update` in code.
+
+```
+#gtd-update
+```
+
+## Update
+- would apply if tagged'
+tnote "notes/Nested.md" 'A #gtd-update/later tag is another tag.
+
+## Update
+- nope'
+tnote "notes/Untagged.md" 'This note mentions gtd-update without a tag.
+
+## Update
+- nope'
+tnote "notes/Applied.md" '---
+tags: [gtd-update]
+---
+## Update (applied 2026-10-01)
+- old line'
+tnote "notes/No section.md" '#gtd-update but nothing to apply.'
+tnote ".obsidian/Hidden.md" '#gtd-update
+
+## Update
+- hidden'
+tnote "memory/gtd/_done/Old.md" '#gtd-update
+
+## Update
+- finished'
+tnote "memory/gtd/next-actions/Tagged action.md" '---
+time: 10
+energy: low
+context: [phone]
+tags: [gtd-update]
+---
+Call Sam.
+
+## Update
+- done, no problems'
+tg="$(LLM_GTD_ROOT="$TA" bash "$ROOT/scripts/gtd_tagged.sh" 2>&1)" || fail "gtd_tagged.sh failed: $tg"
+tg_want="memory/gtd/next-actions/Tagged action.md${T}updates=1${T}Tagged action
+notes/Applied.md${T}updates=0${T}Applied
+notes/Block tags.md${T}updates=1${T}Block tags
+notes/Inline.md${T}updates=1${T}Inline
+notes/No section.md${T}updates=0${T}No section
+notes/Phone note.md${T}updates=1${T}Phone note
+notes/Scalar.md${T}updates=2${T}Scalar"
+[ "$tg" = "$tg_want" ] || fail "gtd_tagged.sh listed:
+$tg
+want:
+$tg_want"
+st="$(LLM_GTD_ROOT="$TA" bash "$ROOT/scripts/gtd_status.sh" 2>&1 || true)"
+echo "$st" | grep -qE "Tagged updates +: 5" || fail "gtd_status.sh lacks 'Tagged updates: 5': $st"
+echo "$st" | grep -q "5 tagged note(s) to apply → /gtd-update" || fail "gtd_status.sh has no tagged-note alert: $st"
+rp="$(LLM_GTD_ROOT="$TA" bash "$ROOT/scripts/gtd_review_prep.sh" 2>&1 || true)"
+rp_tag="$(part_of "$rp" '^## Tagged notes' '^## ')"
+echo "$rp_tag" | grep -q 'notes/Scalar.md (2 lines)' && echo "$rp_tag" | grep -q 'notes/No section.md (nothing to apply)' \
+  || fail "review prep Tagged notes section wrong: $rp_tag"
+[ -z "$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_tagged.sh")" ] || fail "gtd_tagged.sh found tagged notes in a workspace with none"
+ok "tagged notes: frontmatter and inline tags found, code / nested tags / hidden folders / _done/ skipped, applied headings and ✓ lines not counted; dashboard and review prep"
 
 # Property links (E37): Obsidian renders a wikilink in a frontmatter property only when the link is
 # the property's whole value, quoted; several links are a YAML list, one quoted link per item.

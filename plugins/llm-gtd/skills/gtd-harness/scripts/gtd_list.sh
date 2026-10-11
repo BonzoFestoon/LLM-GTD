@@ -5,8 +5,8 @@
 #
 # Usage:
 #   bash gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project SUBSTRING]
-#   bash gtd_list.sh done [--since YYYY-MM-DD] [--project SUBSTRING] [--problems]
-#   bash gtd_list.sh tickler [--due | --within N] [--project SUBSTRING]
+#   bash gtd_list.sh done [--since YYYY-MM-DD] [--project SUBSTRING] [--from SUBSTRING] [--problems]
+#   bash gtd_list.sh tickler [--due | --within N | --overdue] [--recurring] [--project SUBSTRING]
 #
 # <list> is a bare list name: next-actions, waiting-for, projects, someday-maybe, or reference
 # (a folder under memory/gtd/; reference/ sits at the workspace root instead). A list whose
@@ -18,21 +18,30 @@
 #
 # Output: one tab-separated line per item — id, then key=value columns for that list, then the
 # title last ("-" for a field the item doesn't carry):
-#   next-actions   id  time=  energy=  context=  project=  due=  title
+#   next-actions   id  time=  energy=  context=  project=  due=  from=  title
 #   waiting-for    id  person=  delegated=  follow-up=  project=  title
 #   someday-maybe  id  trigger=  title
 #   projects       id  project=  name -- outcome
 #   reference      id  title
 #   done           id  completed=  result=  list=  project=  problems=  title
-#   tickler        id  tickle=  project=  title
+#   tickler        id  tickle=  project=  every=  lead=  action=  title
 # Only `done` reads the done record (memory/gtd/_done/);
 # no active list ever includes a finished item. For done: --since keeps completed >= DATE,
-# --project matches the project link (or a finished project's own name), and --problems keeps
-# only items whose "Problems and fixes" records a real problem (problems=yes).
+# --project matches the project link (or a finished project's own name), --from matches the
+# recurring tickle a cycle came from (its from: link), and --problems keeps only items whose
+# "Problems and fixes" records a real problem (problems=yes).
 # The tickler (memory/gtd/tickler/) holds committed things that can't be acted on until their
-# tickle date. --due keeps tickles dated on or before today; --within N keeps tickles dated after
-# today and on or before today + N days (the two never overlap); a tickle with no valid date
-# matches neither.
+# tickle date. A tickle with a valid every: (7d, 2w, 3m, 1y) is recurring: it stays in the tickler,
+# and organize creates one next action (from: links back to it) on its start date, the tickle date
+# minus its optional lead:. Its start date is the one --due and --within use; a one-shot tickle's is
+# its tickle date. action=open when an open next action's from: links the tickle.
+#   --due        what organize must act on: a one-shot tickle whose date is today or earlier; a
+#                recurring one whose start date has arrived and that has no open action
+#   --within N   start date after today and on or before today + N days (never overlaps --due,
+#                except a recurring tickle past its start that still has its action open: neither)
+#   --overdue    a recurring tickle dated before today (its cycle is late; no grace)
+#   --recurring  only recurring tickles
+# A tickle with no valid date matches none of the date filters.
 #
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile) — see gtd_init.sh's note.
 
@@ -58,6 +67,9 @@ SINCE=""
 PROBLEMS=0
 DUE=0
 WITHIN=""
+OVERDUE=0
+RECURRING=0
+FROM=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --max-time) MAX_TIME="$2"; shift 2 ;;
@@ -68,6 +80,9 @@ while [ $# -gt 0 ]; do
     --problems) PROBLEMS=1; shift ;;
     --due) DUE=1; shift ;;
     --within) WITHIN="$2"; shift 2 ;;
+    --overdue) OVERDUE=1; shift ;;
+    --recurring) RECURRING=1; shift ;;
+    --from) FROM="$2"; shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -132,12 +147,12 @@ emit() {
 }
 
 case "$LIST" in
-  next-actions) COLUMNS="time energy context project due" ;;
+  next-actions) COLUMNS="time energy context project due from" ;;
   waiting-for) COLUMNS="person delegated follow-up project" ;;
   someday-maybe) COLUMNS="trigger" ;;
   projects) COLUMNS="project" ;;
   done) COLUMNS="completed result list project problems" ;;
-  tickler) COLUMNS="tickle project" ;;
+  tickler) COLUMNS="tickle project every lead action" ;;
   *) COLUMNS="" ;;
 esac
 
@@ -152,25 +167,26 @@ has_problem() {
 }
 
 emit_done() {
-  # emit_done ID TITLE COMPLETED RESULT LIST PROJECT PROBLEMS
+  # emit_done ID TITLE COMPLETED RESULT LIST PROJECT PROBLEMS FROM
   # YYYY-MM-DD sorts as text; an item with no completed date can't be placed, so --since drops it.
   if [ -n "$SINCE" ]; then
     [ -n "$3" ] && [ ! "$3" \< "$SINCE" ] || return 0
   fi
   [ -z "$PROJECT" ] || echo "$6" | grep -qi -- "$PROJECT" || return 0
   [ "$PROBLEMS" -eq 0 ] || [ "$7" = "yes" ] || return 0
+  [ -z "$FROM" ] || gtd_from_title "${8:-}" | grep -qi -- "$FROM" || return 0
   emit "$1" "$2" "$3" "$4" "$5" "$6" "$7"
 }
 
 list_done_per_item() {
-  local dir="$GTD_DIR/_done" f rel title id completed result from project problems key val
+  local dir="$GTD_DIR/_done" f rel title id completed result from project problems key val cycle
   # Flat done notes, plus one folder per finished project (_done/<Project name>/README.md).
   for f in "$dir"/*.md "$dir"/*/README.md; do
     [ -e "$f" ] || continue
     rel="${f#"$dir"/}"
     [ "$rel" = "README.md" ] && continue
     case "$rel" in */README.md) title="${rel%/README.md}" ;; *) title="${rel%.md}" ;; esac
-    id="" completed="" result="" from="" project=""
+    id="" completed="" result="" from="" project="" cycle=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
@@ -178,6 +194,7 @@ list_done_per_item() {
         result) result="$val" ;;
         list) from="$val" ;;
         project) project="$val" ;;
+        from) cycle="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
     [ "$from" = "projects" ] && project="$title"
@@ -185,7 +202,7 @@ list_done_per_item() {
       /^---[[:space:]]*$/ && fm < 2 { fm++; next }
       fm >= 2 && /Problems and fixes:/ { sub(/.*Problems and fixes:[[:space:]]*/, ""); print; exit }
     ' "$f")")"
-    emit_done "$id" "$title" "$completed" "$result" "$from" "$project" "$problems"
+    emit_done "$id" "$title" "$completed" "$result" "$from" "$project" "$problems" "$cycle"
   done
 }
 
@@ -197,31 +214,48 @@ fi
 # --- tickler -------------------------------------------------------------------
 
 list_tickler() {
-  local dir="$GTD_DIR/tickler" f base id tickle project key val today until
+  local dir="$GTD_DIR/tickler" f base id tickle project every lead start action key val today until open
   [ -d "$dir" ] || return 0
   today="$(date +%Y-%m-%d)"
   [ -z "$WITHIN" ] || until="$(gtd_days_ahead "$WITHIN")"
+  # Titles of the tickles an open next action links to with from:, one per line.
+  open="$(gtd_open_from "$GTD_DIR/next-actions" | cut -d"$SEP" -f1)"
   for f in "$dir"/*.md; do
     [ -e "$f" ] || continue
     base="$(basename "$f" .md)"
     [ "$base" = "README" ] && continue
-    id="" tickle="" project=""
+    id="" tickle="" project="" every="" lead=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
         tickle) tickle="$val" ;;
         project) project="$val" ;;
+        every) every="$val" ;;
+        lead) lead="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
+    action=""
+    case $'\n'"$open"$'\n' in *$'\n'"$base"$'\n'*) action=open ;; esac
+    # A tickle with an invalid every: is one-shot until organize fixes it; an invalid lead: is ignored.
+    start="$tickle"
+    if gtd_is_span "$every"; then
+      gtd_is_date "$tickle" && gtd_is_span "$lead" && start="$(gtd_date_add "$tickle" "$lead" -)"
+    else
+      [ "$RECURRING" -eq 0 ] || continue
+    fi
     # YYYY-MM-DD compares as text.
     if [ "$DUE" -eq 1 ]; then
-      gtd_is_date "$tickle" && [ ! "$tickle" \> "$today" ] || continue
+      gtd_is_date "$start" && [ ! "$start" \> "$today" ] || continue
+      ! gtd_is_span "$every" || [ "$action" != open ] || continue
+    fi
+    if [ "$OVERDUE" -eq 1 ]; then
+      gtd_is_span "$every" && gtd_is_date "$tickle" && [ "$tickle" \< "$today" ] || continue
     fi
     if [ -n "$WITHIN" ]; then
-      gtd_is_date "$tickle" && [ "$tickle" \> "$today" ] && [ ! "$tickle" \> "$until" ] || continue
+      gtd_is_date "$start" && [ "$start" \> "$today" ] && [ ! "$start" \> "$until" ] || continue
     fi
     [ -z "$PROJECT" ] || echo "$project" | grep -qi -- "$PROJECT" || continue
-    emit "$id" "$base" "$tickle" "$project"
+    emit "$id" "$base" "$tickle" "$project" "$every" "$lead" "$action"
   done
 }
 
@@ -236,7 +270,7 @@ fi
 
 list_per_item() {
   local dir="$LIST_DIR" f base id time energy context project outcome title key val
-  local due person delegated followup trigger
+  local due person delegated followup trigger from
   local -a notes
   # A project is a folder (projects/<Project name>/README.md); every other list is flat notes.
   # The list's own README.md is never an item in either shape. An unmatched glob stays literal
@@ -251,7 +285,7 @@ list_per_item() {
       [ "$base" = "README" ] && continue
     fi
     id="" time="" energy="" context="" project="" outcome="" due="" person="" delegated=""
-    followup="" trigger=""
+    followup="" trigger="" from=""
     while IFS="$SEP" read -r key val; do
       case "$key" in
         id) id="$val" ;;
@@ -265,6 +299,7 @@ list_per_item() {
         delegated) delegated="$val" ;;
         follow-up) followup="$val" ;;
         trigger) trigger="$val" ;;
+        from) from="$val" ;;
       esac
     done < <(frontmatter_kv "$f")
     title="$base"
@@ -275,7 +310,7 @@ list_per_item() {
     fi
     passes_lenses "$time" "$energy" "$context" "$project" || continue
     case "$LIST" in
-      next-actions) emit "$id" "$title" "$time" "$energy" "$context" "$project" "$due" ;;
+      next-actions) emit "$id" "$title" "$time" "$energy" "$context" "$project" "$due" "$from" ;;
       waiting-for) emit "$id" "$title" "$person" "$delegated" "$followup" "$project" ;;
       someday-maybe) emit "$id" "$title" "$trigger" ;;
       projects) emit "$id" "$title" "$project" ;;

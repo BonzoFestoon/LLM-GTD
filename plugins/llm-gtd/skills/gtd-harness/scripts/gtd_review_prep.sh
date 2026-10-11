@@ -54,26 +54,31 @@ stalled_projects() {
   printf '%s\n' "$CHECK" | awk -F'\t' '$1 == "stalled" { p = $2; sub(/^projects\//, "", p); sub(/\/README\.md$/, "", p); print p }'
 }
 
-# Tickler: "- title · date · project" lines from gtd_list.sh tickler [flags].
+# Tickler: "- title · date · project · every N" lines from gtd_list.sh tickler [flags].
 tickle_lines() {
   list tickler "$@" | awk -F'\t' '{
     t = $2; sub(/^tickle=/, "", t)
     p = $3; sub(/^project=/, "", p)
+    e = $4; sub(/^every=/, "", e)
     if (p ~ /\|/) { sub(/^.*\|/, "", p); sub(/\]\]$/, "", p) }
     else { gsub(/^\[\[|\]\]$/, "", p); sub(/^projects\//, "", p); sub(/\/README$/, "", p) }
     line = "- " $NF " · " t
     if (p != "-") line = line " · " p
+    if (e ~ /^[1-9][0-9]*[dwmy]$/) line = line " · every " e
+    if ($6 == "action=open") line = line " · action open"
     print line
   }'
 }
 
-# Projects on hold: each live project linked from a future tickle, with its earliest date.
+# Projects on hold: each live project linked from a future one-shot tickle, with its earliest
+# date (a recurring tickle never holds a project).
 projects_on_hold() {
   local today
   today="$(date +%Y-%m-%d)"
   list tickler | awk -F'\t' -v today="$today" '{
     t = $2; sub(/^tickle=/, "", t)
     if (t !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ || t <= today) next
+    e = $4; sub(/^every=/, "", e); if (e ~ /^[1-9][0-9]*[dwmy]$/) next
     p = $3; sub(/^project=/, "", p)
     if (p == "-") next
     gsub(/^\[\[|\]\]$/, "", p); sub(/\|.*$/, "", p); sub(/^projects\//, "", p); sub(/\/README$/, "", p)
@@ -117,6 +122,13 @@ else
   echo "None."
 fi
 
+section "Tagged notes (apply with /gtd-update)"
+tagged="$(bash "$SCRIPT_DIR/gtd_tagged.sh" | awk -F'\t' '{
+  n = $2; sub(/^updates=/, "", n)
+  print "- " $1 " (" (n == 0 ? "nothing to apply" : n " line" (n == 1 ? "" : "s")) ")"
+}')"
+echo "${tagged:-None.}"
+
 section "Done since last review ($SINCE)"
 done_items="$(list done --since "$SINCE")"
 if [ -n "$done_items" ]; then
@@ -132,8 +144,8 @@ else
 fi
 
 section "Hygiene findings (gtd_check.sh)"
-# Stalled projects and due tickles have their own sections below.
-findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' | grep -v '^tickler-due' || true)"
+# Stalled projects and due / overdue tickles have their own sections below.
+findings="$(printf '%s\n' "$CHECK" | grep -v '^#' | grep -v '^stalled' | grep -v '^tickler-due' | grep -v '^tickler-overdue' || true)"
 if [ -n "$findings" ]; then
   echo "$findings" | awk -F'\t' '{ print "- " $1 ": " $2 " — " $3 }'
 else
@@ -159,6 +171,8 @@ fi
 section "Tickler"
 echo "Due now (organize turns each into a next action, or queues it in the inbox for clarify):"
 out="$(tickle_lines --due)"; echo "${out:-None.}"
+echo "Overdue routines (ask once each: do it now, skip this cycle, change the rule, or end it):"
+out="$(tickle_lines --overdue)"; echo "${out:-None.}"
 echo "Next 14 days (anything to prepare now?):"
 out="$(tickle_lines --within 14)"; echo "${out:-None.}"
 echo "Projects on hold (does each date still hold?):"
@@ -183,9 +197,11 @@ fi
 
 section "Confirmation queue"
 echo "- Empty the inbox: clarify item by item to zero."
+echo "- Tagged notes: apply each through /gtd-update (unclear lines asked once, in a batch)."
 echo "- Done since last review: for each problem solved, file its how-to to reference now or leave it for the project's after-action review."
 echo "- Stalled projects: add at least one concrete next action per project; attach several parallel actions if needed, or confirm cutting it."
 echo "- Waiting for: confirm which items to follow up on; AI can draft a neutral message first."
 echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
+echo "- Overdue routines: for each, do it now, skip this cycle, change the rule, or end it."
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
 echo "- Next week's 3 things: AI proposes candidates; the user confirms."

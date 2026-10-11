@@ -10,7 +10,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 | `waiting-for/` | Things delegated / waiting on others | Not your own next actions | One note per item: person + what you're waiting for + agreement + delegated date |
 | `calendar.md` | **Only** hard commitments that matter on a specific day / time | Not ordinary to-dos (the calendar is sacred; clutter destroys its trustworthiness) | By date |
 | `someday-maybe/` | Not committed yet, incubating | Not things already committed to | One note per item, with a trigger condition (when it becomes worth starting) |
-| `tickler/` | Committed things you can't (or don't want to) act on until a date — Allen's tickler; one note per tickle, dated `tickle:` for when it becomes actionable | Not appointments (calendar), not things someone owes you (waiting-for), not uncommitted maybes (someday-maybe); **never exported to the external calendar** | By `tickle` date |
+| `tickler/` | Committed things you can't (or don't want to) act on until a date — Allen's tickler; one note per tickle, dated `tickle:` for when it becomes actionable. A tickle with `every:` is a recurring routine that stays here and creates a next action each cycle | Not appointments (calendar), not things someone owes you (waiting-for), not uncommitted maybes (someday-maybe); **never exported to the external calendar** | By `tickle` date |
 | `reference/` (workspace root) | Non-actionable reference + knowledge / insight notes | Not actionable items (those go through clarify to next-actions / projects / waiting-for) | One note per topic; project support material lives in that project's own folder instead |
 | `horizons.md` | The six Horizons of Focus | Not a task list (it's direction calibration) | Six levels, 50k → runway |
 | `_done/` | A record of finished commitments: completed next actions, received waiting-for items, finished projects, and cancelled project steps, each with an outcome | Not a list you act from — never read by Engage, never counted as open in the dashboard, never given a stalled/orphan check | Flat done notes plus one `_done/<Project name>/` folder per finished project. See "Done record" below |
@@ -25,7 +25,7 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 
 ## Stalled projects
 
-A project is **in play** when at least one open next action, waiting-for item, or tickle links to it; otherwise it is **stalled**. A tickle means the project is on hold on purpose until its date: it stays in `projects/`, is never called stalled, and organize never drafts a next action for it. A tickle that has come due is organize's to handle (see "Tickler"), not a stalled project. `gtd_check.sh` and the dashboard apply this rule; every other statement of it in the skill points here.
+A project is **in play** when at least one open next action, waiting-for item, or one-shot tickle links to it; otherwise it is **stalled**. A one-shot tickle means the project is on hold on purpose until its date: it stays in `projects/`, is never called stalled, and organize never drafts a next action for it. A **recurring** tickle (`every:`) never puts a project on hold — a project whose only link is a standing routine is still stalled, though the routine's open action, once created, counts like any other action. A tickle that has come due is organize's to handle (see "Tickler"), not a stalled project. `gtd_check.sh` and the dashboard apply this rule; every other statement of it in the skill points here.
 
 ## Layout
 
@@ -70,13 +70,20 @@ The body keeps the full concrete action text and the free-text constraint; `cont
 | `context` | a list drawn from: `computer`, `phone`, `errands`, `home`, `person-present`, `before-meeting`, `prep-chain`, `payment`, `documents`, `equipment` | The hard constraints (shopping and on-the-way errands → `errands`; ID → `documents`; something to raise with someone → `person-present`, the person in the body). Anything that doesn't map stays in the body's `Constraint:` line only |
 | `due` | `YYYY-MM-DD` | Only a real deadline |
 | `created` | `YYYY-MM-DD` | The day it was clarified |
-| `tickle` | `YYYY-MM-DD` | Tickler only — the date the tickle becomes actionable |
+| `tickle` | `YYYY-MM-DD` | Tickler only — the date the tickle becomes actionable (recurring: the date it is due again) |
+| `every` | `<n><unit>`, unit `d` \| `w` \| `m` \| `y` | Tickler only — makes the tickle recurring (`7d`, `2w`, `3m`, `1y`); "at least quarterly" is `3m`. Absent = one-shot |
+| `lead` | `<n><unit>`, as `every` | Recurring tickle only — create the cycle's action this long before `tickle` |
+| `cadence` | `fixed` \| `floating` | Recurring tickle only — absent = `fixed` (the next schedule date after the completion); `floating` = completion + `every` |
+| `last_completed` | `YYYY-MM-DD` | Recurring tickle only — written by update on each completion |
+| `from` | `"[[tickler/<Title>\|<Title>]]"` | Next action only — the recurring tickle this action is one cycle of (written by organize) |
+
+A tickle may also carry `time` / `energy` / `context` (same values as a next action); they are carried into the action it creates.
 
 **Waiting for**: same shape, with `person`, `delegated`, `follow-up`, and optional `project` instead of `time`/`energy`/`context`.
 
 **Someday / maybe**: adds `trigger` (the condition that makes it worth starting).
 
-**Tickle** (`memory/gtd/tickler/Open the per-bot accounts.md`; format in `templates/tickler-note.md`): `id: tk-<short>-<created YYYYMMDD>` (the creation date, so re-dating never changes it), `tickle: YYYY-MM-DD`, optional `project:` in the same `[[projects/<Name>/README|<Name>]]` form as an action, `source`, `created`; the body says what becomes actionable, as concretely as possible.
+**Tickle** (`memory/gtd/tickler/Open the per-bot accounts.md`; format in `templates/tickler-note.md`): `id: tk-<short>-<created YYYYMMDD>` (the creation date, so re-dating never changes it), `tickle: YYYY-MM-DD`, optional `project:` in the same `[[projects/<Name>/README|<Name>]]` form as an action, `source`, `created`; the body says what becomes actionable, as concretely as possible. A recurring tickle adds `every:` and, optionally, `lead:`, `cadence:` and `time` / `energy` / `context`; update writes `last_completed:` (see "Recurring tickles").
 
 
 **Project** (`memory/gtd/projects/Tastytrade broker service/README.md`):
@@ -129,12 +136,52 @@ A tickle holds a commitment until its date; the project it links stays in `proje
 - **Always local**: the tickler is not part of the calendar adapter or its fallback chain; nothing in it is ever written to an external calendar provider, and organize's `calendar.md` reconcile never touches it.
 - **Changes**: "the date moved" re-dates `tickle` (id unchanged); a cancelled tickle is deleted (no done record); cancelling or closing a project removes or resolves its tickles first — a project with an open tickle is not closed.
 
+### Recurring tickles
+
+A routine with no fixed day and no hard deadline ("download statements at least quarterly", "verify the backups monthly") is a tickle with `every:`. Routines with a hard date (rent on the 1st, property tax in October) stay on the calendar.
+
+- **Dates**: `tickle` is when the cycle is due. The cycle's **start date** is `tickle` minus `lead` (no `lead`: `tickle`). All date arithmetic goes through `scripts/gtd_next_date.sh` — never worked out by hand.
+- **Creating the action**: on the start date, if no open next action's `from:` links the tickle, organize creates one (`gtd_check.sh` `tickler-due`): the body, `project:`, `time` / `energy` / `context` copied (filled by judgment when missing), plus `from: "[[tickler/<Title>|<Title>]]"`, `due: <tickle>`, `source: recurring tickle`. **The tickle stays, unchanged.** No asking: clarify only files a recurring tickle with a concrete body. If that action is deleted without being completed, the next organize creates another; never two at once (`duplicate` if there are).
+- **Completing it** (update): the action goes to the done record as `_done/<Title> YYYY-MM-DD.md` (the completion date in the name, so cycles don't pile up as `(2)`, `(3)`), keeping `from:`. Then, in one edit, the tickle gets `last_completed: <completed>` and `tickle: $(gtd_next_date.sh next <every> <tickle> <completed> [floating])` — **fixed** (default): the first schedule date after the completion, so missed periods are skipped, never stacked; **floating** (`cadence: floating`): completion + `every`. Use the date the user names ("I did it on the 3rd") instead of today when they give one.
+- **Overdue**: a recurring tickle dated before today (`gtd_list.sh tickler --overdue`, `gtd_check.sh` `tickler-overdue`) — no grace. Shown first in Engage after what came due today, in the Weekly Review, the dashboard and `tickler.base`; never re-dated or dropped automatically.
+- **The log** is the done record: `gtd_list.sh done --from "<title>"` lists a routine's cycles. The tickle carries no log of its own.
+- **Skip a cycle**: the action goes to the done record with `result: skipped` and the reason; `last_completed` is unchanged; `tickle` moves on by the same rule, counted from today.
+- **Pause**: re-date `tickle` to the resume date (any open action is cancelled first); paused with no end → move the note to `someday-maybe/` keeping `every`, and back with a fresh `tickle` when resumed.
+- **End**: the tickle moves to `_done/<Title>.md` with `completed`, `result: ended`, `list: tickler` (unlike a cancelled one-shot tickle, it is kept: its cycles link to it); any open action is cancelled into the done record.
+- **Change the rule** (`every` / `lead` / `cadence`): edit in place; recompute `tickle` from `last_completed` (or `created`) with `gtd_next_date.sh`, never earlier than today; refresh `due` on an open action.
+- **Invalid `every`** (`quarterly`, `3 months`): `tickler-every` with the compact form; organize converts it when the meaning is unambiguous. Until then the note is one-shot. An invalid `lead` is ignored until fixed.
+- **Projects**: a recurring tickle never holds its project (see "Stalled projects"); cancelling a project asks once whether to end its routines too. The calendar-conflict check is for one-shot tickles only.
+
+## Tagged-note updates
+
+An update can be written into **any note in the workspace** (a daily note on the phone, a project doc, an action note) and applied by the next `/gtd-update`, exactly as if it had been typed in chat.
+
+```markdown
+---
+tags: [gtd-update]
+---
+…the note…
+
+## Update
+- Statements are downloaded, no problems
+- Sam replied: the quote is approved
+- Push the dentist tickle to December
+```
+
+- **The tag is the request**: `gtd-update` in frontmatter `tags:` (or `tag:`; flow list, block list or a single value) or an inline `#gtd-update` in the body — not inside code, and not a nested tag like `#gtd-update/later`. An `Update` section without the tag is ignored; a tagged note without one is reported and left alone.
+- **The section**: a heading whose text is exactly `Update` (any level, any case), up to the next heading of the same or a higher level. Each non-empty line or bullet is one update.
+- **Found by** `scripts/gtd_tagged.sh` (the whole workspace, minus hidden folders and `memory/gtd/_done/`); counted on the dashboard and in the review prep pack.
+- **Targets**: what the line names; else the note itself when it is a GTD item; else the GTD item it links to (one link → that item).
+- **Applied** through update's own rules: clear lines without asking, unclear lines asked once in a batch, a project close still confirmed once.
+- **Finished** when every line is applied or answered: the tag is removed and the heading renamed `## Update (applied YYYY-MM-DD)` — kept as a record, never applied again. **Partly done**: the tag stays and each applied line gets ` ✓`, which the next run skips.
+
 ## Done record
 
 Completed next actions, received waiting-for items, finished projects, and cancelled project steps move to `_done/` with an outcome: what was done, what problems came up and how they were solved. This replaces deleting the item outright — the active lists still hold only open commitments, and the done record is the raw material for the Weekly Review's "done since last review" section and each project's after-action review (AAR). A cancelled *standalone* action, or a someday item you drop, is still simply deleted — only project-linked work is worth keeping a record of. `_done/` is never read by Engage, never counted as open, and never checked for orphans/stalled status.
 
 - **Shape**: a finished action or waiting-for item is a flat `_done/<Title>.md` that keeps its filename, properties and body, and gains `completed`, `result` (done | cancelled), `list` and a `## Outcome` section (`Done:` / `Problems and fixes:` / `Links:`). A finished project moves as its whole folder to `_done/<Project name>/`: the README gains the same three properties plus its after-action review, the support material you chose to keep stays beside it, and every link to `projects/<Project name>/…` is rewritten to `_done/<Project name>/…`.
-- **Reading it**: only `gtd_list.sh done [--since DATE] [--project P] [--problems]`, the Weekly Review, and the AAR read the done record.
+- **Recurring cycles**: an action with `from:` lands as `_done/<Title> YYYY-MM-DD.md` (its completion date), `result: done | skipped | cancelled`; an ended routine's tickle lands as `_done/<Title>.md` with `result: ended`, `list: tickler`.
+- **Reading it**: only `gtd_list.sh done [--since DATE] [--project P] [--from ROUTINE] [--problems]`, the Weekly Review, and the AAR read the done record.
 
 The five-heading AAR shape (intended outcome · what happened · problems and how they were overcome · what to do the same or differently next time · reusable how-tos) is in `templates/after-action-review.md`; the close steps are `update/SKILL.md`'s "Project close".
 
@@ -151,6 +198,10 @@ The five-heading AAR shape (intended outcome · what happened · problems and ho
 | Delete a cancelled standalone action or a dropped someday item | Auto | The user explicitly cancelled it; project-linked work goes to the done record as `cancelled` instead |
 | Draft a next action for a stalled project | Auto | Act-then-surface; the user can change it in one sentence. Never for a project on hold (a tickle links it) |
 | Turn a due tickle into a next action, or add an inbox pointer to it | Auto | A concrete project tickle moves to `next-actions/`, anything else is queued in the inbox once; reported in organize's one-line summary |
+| Create the next action for a due recurring tickle | Auto | Only when no open action links it (`from:`); the tickle stays; reported in organize's one-line summary |
+| Re-date a recurring tickle after its action is completed | Auto | Through `gtd_next_date.sh`; part of update's done step |
+| Skip a cycle, pause, end a routine, or change its rule | Needs confirmation | The user says so; an overdue routine is never skipped, re-dated or ended automatically |
+| Apply a tagged note's Update section | Auto for clear lines | Each line under update's own rules; unclear lines asked once, in a batch; the tag is removed only when every line is resolved |
 | Re-date a tickle that conflicts with the calendar | Needs confirmation | Organize flags it with a suggested date; never re-dates on its own |
 | Export a tickle to the external calendar | Never | The tickler is local: when things become actionable, not appointments |
 | Move a completed item to `_done/` with its outcome | Auto | The user explicitly declared it done or there is strong evidence; act-then-surface; never blocks on the outcome text, never re-asked later |

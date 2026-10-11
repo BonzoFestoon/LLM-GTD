@@ -18,6 +18,7 @@ What is it?
             ├── Someone else should ─────→ ⏳ Delegate it → waiting-for/ (person + agreement + delegated date)
             └── Mine, > 2 minutes → Defer it ─┬── Time- / day-specific → 📅 calendar.md
                                               ├── Committed, but can't act until a date → 🗂️ tickler/ (a dated tickle)
+                                              ├── Recurs: "every N" / "at least every N", no fixed day → 🗂️ tickler/ (recurring: every:)
                                               └── As soon as possible  → ✅ next-actions/ (action pool; state time / energy / context)
 
             ※ If the outcome takes > 1 step to complete:
@@ -40,6 +41,7 @@ What is it?
 
 - **Calendar**: it must happen on that day or at that time (an appointment, a deadline, a day-specific action).
 - **Tickler**: you're committed, but you can't (or don't want to) act until a date; on the date it becomes a next action. Not an appointment, so it never goes on the external calendar.
+- **Recurring tickle**: a routine with no fixed day and no hard deadline ("download statements at least quarterly"): `every: 3m`. It stays in the tickler and creates a next action each cycle. A routine with a fixed day (rent on the 1st) is a calendar entry instead.
 - **Someday-maybe**: you haven't committed to it at all. "Reconsider X in March" is a tickle if you're committed to reconsidering it; a someday item if it's only a maybe.
 
 ## The logic of the two-minute rule
