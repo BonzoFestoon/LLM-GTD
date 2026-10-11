@@ -29,8 +29,15 @@ core_heading_count="$(grep -c '^## Core lists' "$ROOT/organize/SKILL.md" || true
 [ "$core_heading_count" -le 1 ] || fail "organize has duplicate core-list headings: $core_heading_count"
 ok "organize has no duplicate core-list definition"
 
-grep -q '^## Action permissions' "$ROOT/references/list-definitions.md" || fail "list-definitions lacks action permission table"
-ok "list-definitions carries action permission table"
+grep -q '^| Action | Permission tier | Rule |' "$ROOT/references/action-permissions.md" || fail "references/action-permissions.md lacks the action permission table"
+grep -q '^## Action permissions' "$ROOT/references/list-definitions.md" || fail "list-definitions.md lacks its Action permissions pointer"
+ok "action permission table in references/action-permissions.md, pointed to from list-definitions.md"
+
+# Every command loads shared-rules.md, so it must hold the rules a command can't skip.
+for h in '## Default rules' '## Model check' '## Tiers → current Claude models' '## Red lines'; do
+  grep -qF "$h" "$ROOT/shared-rules.md" || fail "shared-rules.md lacks '$h'"
+done
+ok "shared-rules.md carries the default rules, model check, tier table and red lines"
 
 eval_count="$(grep -c '^| E[0-9][0-9]-' "$ROOT/references/evals.md" || true)"
 [ "$eval_count" -ge 12 ] || fail "not enough eval cases: $eval_count"
@@ -87,11 +94,11 @@ case "$router_tier" in
   *) fail "SKILL.md (router) has no valid model-tier (got: '${router_tier:-<empty>}')" ;;
 esac
 
-# Model names are single-sourced in model-guidance.md; a name anywhere else in the
+# Model names are single-sourced in shared-rules.md's tier table; a name anywhere else in the
 # skill means the tier system has started drifting.
-model_name_hits="$(grep -RlE 'Opus 5\.5|Sonnet 5|Haiku 4\.5' "$ROOT" --include='*.md' --include='*.sh' 2>/dev/null | grep -v 'references/model-guidance.md' | grep -v 'gtd_eval_check.sh' || true)"
-[ -z "$model_name_hits" ] || fail "Claude model name(s) leaked outside model-guidance.md: $model_name_hits"
-ok "no Claude model name outside references/model-guidance.md"
+model_name_hits="$(grep -RlE 'Opus 5\.5|Sonnet 5|Haiku 4\.5' "$ROOT" --include='*.md' --include='*.sh' 2>/dev/null | grep -v '/shared-rules.md' | grep -v 'gtd_eval_check.sh' || true)"
+[ -z "$model_name_hits" ] || fail "Claude model name(s) leaked outside shared-rules.md: $model_name_hits"
+ok "no Claude model name outside shared-rules.md"
 
 if find "$ROOT" -name '*.bak-*' -print -quit | grep -q .; then
   fail "backup files remain under skill root"

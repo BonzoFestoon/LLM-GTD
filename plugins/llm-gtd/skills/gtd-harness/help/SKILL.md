@@ -13,7 +13,7 @@ example: "Which GTD command should I use?"
 
 ## Loading and boundaries
 
-- No arguments, or a command name: run `scripts/gtd_help.sh [command]`; the script reads every sub-skill's frontmatter and `## When to run` section, so the output is never hand-written and never drifts.
+- No arguments, or a command name: run `scripts/gtd_help.sh [command]`; the script reads every sub-skill's frontmatter and `## When to run` section, so the output is never hand-written and never drifts. Nothing else needs loading: help doesn't use the main `SKILL.md`'s routing table.
 - `lists` argument: read `references/list-definitions.md` and explain each list.
 - Automation boundary: **read-only, always.** Help never creates, edits, or deletes anything in `memory/gtd/`, never runs init, never files an item — not even if the input sounds like a task ("help me remember to call the dentist" is capture's job, not help's; if genuinely ambiguous, ask which one was meant rather than guessing and writing).
 
@@ -25,11 +25,11 @@ example: "Which GTD command should I use?"
 
 ## Workflow
 
-1. **No arguments — the default view**, built entirely from `scripts/gtd_help.sh` (no argument):
-   1. **Commands table**: all nine commands (`gtd`, `gtd-init`, `gtd-capture`, `gtd-clarify`, `gtd-update`, `gtd-organize`, `gtd-engage`, `gtd-review`, `gtd-help`), each with its `description`, `## When to run`, `example`, and a **Model** column from `references/model-guidance.md`'s tier table plus this session's current model (or "unknown" if it can't be determined).
-   2. **The rhythm**: capture any time → clarify when the inbox has items (usually automatic) → engage when choosing what to do → update when something changes (said in chat, or written into a note tagged `gtd-update` from anywhere, the phone included) → organize runs by itself before engage and review → Weekly Review once a week.
-   3. **Right now**: run `scripts/gtd_status.sh` and turn its top finding into one suggestion, e.g. "3 items in the inbox → `/gtd-clarify`", "2 stalled projects → `/gtd-organize`", or "nothing pending → `/gtd-engage`". If the status script can't run, skip this section and say so in one line — never block the rest of the output on it.
-   4. **Where things live**: the resolved GTD folder (from `gtd_init.sh --status`'s `Vault:` line or equivalent), the list folders (each with its `README.md`), `tickler/` and `_done/`, and `reference/` at the workspace root.
+1. **No arguments — the default view**: run `scripts/gtd_help.sh` (no argument) **once** and show its output. It prints the loaded LLM-GTD version (and where it was loaded from — a plugin runs from a per-version cache, so this shows whether a reinstall is needed) above all four parts, so don't run `gtd_status.sh`, `gtd_init.sh --status` or read other files to build them:
+   1. **Commands table**: all nine commands (`gtd`, `gtd-init`, `gtd-capture`, `gtd-clarify`, `gtd-update`, `gtd-organize`, `gtd-engage`, `gtd-review`, `gtd-help`), each with its `description`, `example` and model tier, then the tier → model mapping read from `references/model-guidance.md`. The script can't see the session's model; add it in one line if you know it.
+   2. **The rhythm**: capture any time (inbox only) → clarify when you choose to process the inbox → engage when choosing what to do → update when something changes (said in chat, or written into a note tagged `gtd-update` from anywhere, the phone included) → organize runs by itself before engage and review → Weekly Review once a week.
+   3. **Right now**: one suggestion from the quick signals only — inbox items → `/gtd-clarify`, tagged notes → `/gtd-update`, due tickles → `/gtd-organize`, otherwise `/gtd-engage`. Stalled projects and the done count are left out on purpose: on a large vault they take minutes (`gtd_status.sh` has them), and organize finds stalled projects before engage anyway. If `memory/gtd/` can't be found, the script skips this part with a one-line note.
+   4. **Where things live**: the resolved GTD folder and how it was resolved (`LLM_GTD_ROOT`, the legacy install, or the current directory), each list, `_done/`, and `reference/` at the workspace root. If the folder is missing, never offer init: ask where GTD lives (see `init/SKILL.md`'s "One inbox per human").
 
 2. **`/gtd-help <command>`**: run `scripts/gtd_help.sh <command>` and show that one command's `description` plus its `## When to run` section, verbatim from the sub-skill — nothing summarized or reworded.
 
@@ -38,8 +38,9 @@ example: "Which GTD command should I use?"
 ## Quality check
 
 - [ ] Never writes to any file in `memory/gtd/`, under any input
-- [ ] Default view has all four parts: commands table (with model column), the rhythm, one "right now" suggestion (or an honest skip), where things live
+- [ ] Default view starts with the loaded version and its location, then has all four parts: commands table (with model tiers), the rhythm, one "right now" suggestion (or an honest skip), where things live
+- [ ] Default view takes one `gtd_help.sh` call and no other reads or scripts
 - [ ] Commands table content comes from `gtd_help.sh` reading sub-skill frontmatter/sections, never hand-typed into this file
 - [ ] `<command>` argument shows that command's own description + When to run, unedited
 - [ ] `lists` argument explains list boundaries from `references/list-definitions.md`, not reinvented here
-- [ ] A status-script failure skips that one section with a one-line note, never blocks or errors the rest of the output
+- [ ] A missing `memory/gtd/` skips "right now" with a one-line note, never blocks or errors the rest of the output

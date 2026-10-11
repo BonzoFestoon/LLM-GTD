@@ -1,57 +1,46 @@
 ---
 name: gtd-capture
-description: GTD skill scenario command · Capture. Writes input to the inbox with zero friction, then (by default) the AI auto-clarifies and files it; also used for session close. GTD step 1 + (automatic) step 2.
+description: GTD skill scenario command · Capture. Writes input to the inbox verbatim with zero friction — nothing is clarified, filed or decided; also used for mind sweeps and session close. GTD step 1; clarifying is its own step (/gtd-clarify).
 parent: gtd-harness
-model-tier: balanced
+model-tier: fast
 example: "Note this: confirm the contract version with Colleague A"
 ---
 
 
-# GTD · capture (capture → auto-clarify by default)
+# GTD · capture (inbox only)
 
-**Perspective**: David Allen, with an AI-native refinement. Allen deliberately separated capture and clarify for the *human* mind — switching into decision mode has a cost, so capture only dumps things out with zero friction, and clarifying waits for a dedicated session. **But the AI's switching cost is ≈0 and it can draft a next action instantly**, so here the default is **auto-clarify after capture** — provided it keeps Allen's two real insights: ① **writing to file always comes first** (nothing gets lost); ② **batches / mind sweeps are never interrupted item by item** (friction is most damaging at high volume).
+**Perspective**: David Allen. Capture gets things out of your head and into a trusted inbox **fast and easily**; deciding what each thing means is a different kind of thinking, done later, in its own step (`/gtd-clarify`). Mixing the two makes capture slow and makes you hesitate to capture at all, so capture never clarifies, files, or asks what something means.
 
 ## Loading and boundaries
 
 - Session close: read `templates/session-close-template.md` first.
-- Single-item auto-clarify: follow `clarify/SKILL.md`; read `references/list-definitions.md` when list boundaries are unclear.
-- Automation boundary: capture may write to the inbox automatically; ask one question when the commitment itself, the desired outcome, or action-vs-knowledge is unclear.
+- Nothing else to load: capture needs no list definitions, decision tree or note templates.
+- Automation boundary: capture only appends to `memory/gtd/inbox.md`. It never creates notes in other lists, never deletes from the inbox, and never asks a question about what an item means.
 
 ## When to run
 - The user comes up with a to-do, idea, reminder, commitment, open question, "don't forget…".
 - The user says "note this", "put it in the inbox", "capture this for me".
-- The user wants to wrap up "today / this session's status / close this session": turn the commitments, blockers, waiting-fors, hard dates, and project status changes from the conversation into GTD input, and output the fixed five sections.
+- The user wants to wrap up "today / this session's status / close this session": turn the commitments, blockers, waiting-fors, hard dates, project status changes and insights from the conversation into inbox items, and output the fixed five sections.
 - A one-time full mind sweep: "my head is a mess, help me empty it".
 
 ## Workflow
 
-1. **Zero-friction write to file (always first, so nothing is lost)**: append each item verbatim to the end of the "To clarify" section of `memory/gtd/inbox.md`, one item per line, keeping the original wording:
+1. **Write to the inbox, verbatim**: append each item to the end of the "To clarify" section of `memory/gtd/inbox.md`, one item per line, keeping the user's own wording (split a message into items only where the user clearly listed several things):
    ```
    - Original wording · Captured: YYYYMMDD
    ```
 
-2. **Model check exception**: capture is the one command that never waits on the model check in `references/model-guidance.md`. If the session is below capture's tier, skip straight to auto-clarify's off-switch: don't run the clarify decision tree, and report "Captured. You're on ⟨model⟩, so I didn't file it; switch to ⟨tier's model⟩ and run `/gtd-clarify`." instead of the usual one-line clarified-to report. The write in step 1 has already happened either way — nothing is ever lost waiting on a model check.
+2. **Report in one line** and stop: "Captured N item(s) to the inbox (M waiting to clarify). Run `/gtd-clarify` when you're ready." Count M from the inbox's `- ` lines. No question, no suggested list, no next action.
 
-3. **Session-status preprocessing (not journaling)**: when the user says "wrap up today / this session's status / close out", read `templates/session-close-template.md` first, then compress the conversation into 3-5 GTD-relevant deltas: new commitments, pending confirmations, waiting on others, hard dates, project status changes or blockers. Write each as a separate inbox item from the raw facts; don't stuff a full chat summary or emotional log into `memory/gtd/`. Knowledge / insights, whether project-tied or general, go to `reference/` (or wherever `personalized.md` points knowledge instead, if the user runs a separate system). Before closing, run `scripts/gtd_status.sh`, then output the template's five sections.
+3. **Mind sweep** (empty input, or "empty my head"): prompt with an incompletion trigger list (work: projects started, commitments to others, communications to send, upcoming events, waiting on; personal: home, family, health, finances, errands, someday ideas), writing each thing the user names to the inbox as it comes, without comment. When they're done, report the count once, as in step 2.
 
-4. **Triage by volume**:
-   - **Single / few (≤3 items) → auto-clarify by default**: after writing to file, immediately run the `clarify` decision tree on each item (see `clarify/SKILL.md`), **clarify and file** it in the right list + set the next action, then delete it from the inbox, and **report in one line**: "Clarified: ⟨original⟩ → ⟨list⟩ ⟨context⟩ (next action: ⟨concrete action⟩). Tell me if you want a different list or action." (A committed item that can't start until a date goes to the tickler: "→ tickler, ⟨date⟩".) — act-then-surface, no item-by-item Q&A (markdown is instantly editable; optimistic filing + easy correction beats up-front interrogation).
-   - **Batch / mind sweep (many items) → capture everything first, no item-by-item interruptions**: use an incompletion trigger list to help the user sweep, drop everything into the inbox, **then** ask once "Want me to clarify these one by one now?" for a batch clarify. This keeps Allen's zero-friction capture.
+4. **Session close**: when the user says "wrap up today / this session's status / close out", read `templates/session-close-template.md`, then compress the conversation into 3-5 GTD-relevant deltas — new commitments, pending confirmations, waiting on others, hard dates, project status changes or blockers, and knowledge insights worth keeping. Write each as its own inbox item from the raw facts (an insight as `- Insight: … · Captured: YYYYMMDD`; clarify files it to `reference/`). Don't stuff a chat summary or emotional log into the inbox. Run `scripts/gtd_status.sh`, then output the template's five sections.
 
-5. **Human-judgment guard (stop and ask one question only in these cases; otherwise don't interrupt)**:
-   - Can't tell "action vs knowledge / idea" (knowledge goes to `reference/`, not GTD action lists);
-   - No concrete next action can be derived (not enough information);
-   - It implies a commitment "you may not want to make" (whether to do it at all is your call);
-   - It's a >1-step project but the desired outcome is unclear.
-   In these cases: write to file first, then ask one confirming question — **never decide for the user**.
-
-6. **Off-switch**: the user says "capture only / don't clarify yet / just record" → write to the inbox only, no auto-clarify; leave it for a later `/gtd-clarify`.
+5. **Changes to existing items aren't captures**: "that's done", "they replied", "move it to Friday" are updates — route them to `update/SKILL.md` instead of adding an inbox line.
 
 ## Quality check
-- [ ] Writing to file always precedes clarifying (nothing lost under any circumstance)
-- [ ] Single items auto-clarified and filed by default + one-line report of where they went, correctable in one sentence
-- [ ] Below the model-tier, still wrote to the inbox first, then said so and named the command to run instead of auto-clarifying
-- [ ] Mind sweep not interrupted item by item (capture all first, then batch clarify)
-- [ ] Stopped to ask only in the four "your call" cases; no other interruptions
-- [ ] Session status extracted only changes that affect the commitment system, created no second log / daily report, and used the five-section template
-- [ ] Knowledge / ideas filed to `reference/`; action lists not polluted
+- [ ] Every item is in `inbox.md` verbatim, one per line, with its capture date
+- [ ] Nothing filed, moved, deleted or decided; no note created outside the inbox
+- [ ] No question asked about what an item means; one-line report naming `/gtd-clarify`
+- [ ] Mind sweep captured everything as it came, with no commentary per item
+- [ ] Session close wrote only GTD-relevant deltas (insights included) as inbox items and used the five-section template

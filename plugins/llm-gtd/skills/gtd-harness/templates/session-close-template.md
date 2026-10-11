@@ -5,8 +5,8 @@ Use for "this session's status / close this session / wrap up today". The goal i
 ## Order of operations
 
 1. Scan this session and extract only GTD-relevant deltas: changes already completed and written, new commitments, project status changes, blockers, waiting on others, hard dates, decisions the user must make, and knowledge insights not yet in GTD.
-2. Run each delta through the clarify decision tree: Is it actionable? What's the next action? Which list does it belong to? A knowledge insight goes to `reference/`.
-3. Write whatever needs persisting into `memory/gtd/` via capture→clarify, then delete it from the inbox; don't decide uncertain commitments for the user.
+2. Write each delta that isn't already in a GTD list to `memory/gtd/inbox.md` as its own line (an insight as `- Insight: …`). Capture doesn't clarify: what each item means and where it goes is decided later, in `/gtd-clarify`.
+3. Don't decide uncertain commitments for the user; capture them as they are.
 4. Before closing, run `scripts/gtd_status.sh` and use the real dashboard numbers, not numbers from memory.
 5. Output the five sections below; write "None" for an empty section — never omit a heading.
 
@@ -15,17 +15,13 @@ Use for "this session's status / close this session / wrap up today". The goal i
 **Completed and written to file**
 - ...
 
-**New / changed GTD items**
-- Projects: ...
-- Next Actions: ...
-- Waiting For: ...
-- Calendar: ...
-- Reference: ...
+**Captured to the inbox (clarify with /gtd-clarify)**
+- ...
 
 **Decisions for the user**
 - ...
 
-**Knowledge insights not in GTD**
+**Knowledge insights (captured as inbox items)**
 - ...
 
 **Current dashboard**
@@ -41,4 +37,4 @@ Use for "this session's status / close this session / wrap up today". The goal i
 - Don't stuff a whole-chat summary into `inbox.md` or `reference/`.
 - Don't treat "already mentioned" as "already written to file"; only actual file changes count as written.
 - Don't invent next actions for things that are clearly done.
-- Don't pollute action lists with knowledge insights; file them to `reference/` instead.
+- Don't file anything at session close: insights and commitments both go to the inbox, and clarify files them (insights to `reference/`).

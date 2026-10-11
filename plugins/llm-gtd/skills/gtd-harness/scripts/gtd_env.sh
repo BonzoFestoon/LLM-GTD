@@ -32,6 +32,23 @@ fi
 # it lives at the workspace root (reference/), outside memory/gtd/.
 GTD_NOTE_LISTS="next-actions waiting-for projects someday-maybe tickler"
 
+# gtd_require_gtd_dir — stop if memory/gtd/ isn't under the resolved workspace. Names where the
+# scripts looked and how they decide, so the agent fixes the location instead of guessing a path
+# or running init and creating a second inbox (init/SKILL.md "One inbox per human").
+gtd_require_gtd_dir() {
+  [ -d "$GTD_WORKSPACE_ROOT/memory/gtd" ] && return 0
+  echo "LLM-GTD: no memory/gtd/ under $GTD_WORKSPACE_ROOT." >&2
+  if [ -n "${LLM_GTD_ROOT:-}" ]; then
+    echo "  LLM_GTD_ROOT is set to that folder, but it has no memory/gtd/." >&2
+  else
+    echo "  LLM_GTD_ROOT is not set, so the scripts used the current directory." >&2
+  fi
+  echo "  GTD already set up elsewhere? Set LLM_GTD_ROOT to that folder (README: one canonical GTD" >&2
+  echo "  folder). Don't run init here; that would start a second inbox. First-time setup only:" >&2
+  echo "  bash gtd_init.sh" >&2
+  exit 1
+}
+
 # gtd_refuse_single_file — stop if memory/gtd/ still holds LLM-GTD 1.x single-file lists. Every
 # command would silently miss their items, so refuse with the way out instead of half-reading them.
 gtd_refuse_single_file() {
@@ -46,6 +63,28 @@ gtd_refuse_single_file() {
   exit 4
 }
 
+# Background jobs, for scripts that need several other scripts' output: run them at the same time,
+# not one after another (each costs seconds on a large vault, more on Windows).
+# gtd_jobs_init makes GTD_JOB_DIR, removed on exit; gtd_job NAME CMD... runs CMD in the background
+# into $GTD_JOB_DIR/NAME (stderr still shows); gtd_jobs_wait waits for them all and fails if any did.
+gtd_jobs_init() {
+  GTD_JOB_DIR="$(mktemp -d)"
+  GTD_JOB_PIDS=""
+  trap 'rm -rf "$GTD_JOB_DIR"' EXIT
+}
+gtd_job() {
+  local name="$1"
+  shift
+  "$@" > "$GTD_JOB_DIR/$name" &
+  GTD_JOB_PIDS="$GTD_JOB_PIDS $!"
+}
+gtd_jobs_wait() {
+  local p rc=0
+  for p in $GTD_JOB_PIDS; do wait "$p" || rc=$?; done
+  GTD_JOB_PIDS=""
+  return $rc
+}
+
 # gtd_days_ago N — the date N days before today as YYYY-MM-DD (GNU date, then BSD/macOS date).
 gtd_days_ago() {
   date -d "$1 days ago" +%Y-%m-%d 2>/dev/null || date -v-"$1"d +%Y-%m-%d
@@ -56,14 +95,28 @@ gtd_days_ahead() {
   date -d "+$1 days" +%Y-%m-%d 2>/dev/null || date -v+"$1"d +%Y-%m-%d
 }
 
+# Plain bash tests, no grep: these run once per note, and on Windows (Git Bash) every extra
+# process costs tens of milliseconds. The regexes live in variables for bash 3.2.
+GTD_DATE_RE='^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+GTD_SPAN_RE='^[1-9][0-9]*[dwmy]$'
+
 # gtd_is_date TEXT — true for a well-formed YYYY-MM-DD.
 gtd_is_date() {
-  echo "$1" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  [[ $1 =~ $GTD_DATE_RE ]]
 }
 
 # gtd_is_span TEXT — true for a recurrence span <n><unit>: 7d, 2w, 3m, 1y (a tickle's every: / lead:).
 gtd_is_span() {
-  echo "$1" | grep -qE '^[1-9][0-9]*[dwmy]$'
+  [[ $1 =~ $GTD_SPAN_RE ]]
+}
+
+# gtd_icontains TEXT PART — true when TEXT contains PART, ignoring case (no grep).
+gtd_icontains() {
+  local r=1
+  shopt -s nocasematch
+  [[ $1 == *"$2"* ]] && r=0
+  shopt -u nocasematch
+  return $r
 }
 
 # Date arithmetic in plain awk, so GNU and BSD/macOS give the same answer. Months and years add
@@ -96,25 +149,30 @@ gtd_date_add() {
 # gtd_from_title VALUE — the tickle title a next action's from: link points at:
 # "[[tickler/Water the plants|Water the plants]]" -> Water the plants (a bare [[Title]] too).
 gtd_from_title() {
+  _gtd_from_title "$1"
+  printf '%s\n' "$GTD_FROM_TITLE"
+}
+
+# _gtd_from_title VALUE — gtd_from_title into GTD_FROM_TITLE, for loops that can't afford $(...).
+_gtd_from_title() {
   local t="$1"
   case "$t" in *\[\[*) t="${t#*\[\[}"; t="${t%%]]*}" ;; esac
   t="${t%%|*}"; t="${t%%#*}"; t="${t#memory/gtd/}"; t="${t#tickler/}"; t="${t%.md}"
-  printf '%s\n' "$t"
+  GTD_FROM_TITLE="$t"
 }
 
 # gtd_open_from DIR — one line per open next action in DIR (memory/gtd/next-actions):
 # "<tickle title><SEP><action filename without .md>" for each action that has a from: link.
 gtd_open_from() {
-  local f base v
   [ -d "$1" ] || return 0
-  for f in "$1"/*.md; do
-    [ -e "$f" ] || continue
-    base="$(basename "$f" .md)"
-    [ "$base" = "README" ] && continue
-    v="$(frontmatter_kv "$f" | awk -F"$SEP" '$1 == "from" { print $2; exit }')"
-    [ -n "$v" ] || continue
-    printf '%s%s%s\n' "$(gtd_from_title "$v")" "$SEP" "$base"
-  done
+  gtd_notes_in "$1"
+  gtd_fm_each _gtd_open_from_one -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
+}
+_gtd_open_from_one() {
+  local base="${1##*/}"
+  [ -n "${FM_from:-}" ] || return 0
+  _gtd_from_title "$FM_from"
+  printf '%s%s%s\n' "$GTD_FROM_TITLE" "$SEP" "${base%.md}"
 }
 
 # SEP is a unit separator (0x1f), not tab: bash's `read` treats IFS whitespace
@@ -123,29 +181,107 @@ gtd_open_from() {
 # (a missing Project:, an empty context) survive the round trip.
 SEP=$'\x1f'
 
-# frontmatter_kv FILE — "key<SEP>value" per simple frontmatter line; strips trailing
+# GTD_FM_AWK — the frontmatter line parser frontmatter_kv and frontmatter_kv_files share:
+# fm_kv(LINE) prints "key<SEP>value" for a simple frontmatter line; strips trailing
 # " # comment", surrounding quotes, and [bracket] array syntax down to a comma list.
+GTD_FM_AWK='
+function fm_kv(line,   key, val) {
+  sub(/[[:space:]]+#.*$/, "", line)
+  if (!match(line, /^[A-Za-z_][A-Za-z0-9_-]*:/)) return
+  key = substr(line, 1, RLENGTH-1)
+  val = substr(line, RLENGTH+1)
+  sub(/^[[:space:]]+/, "", val)
+  sub(/[[:space:]]+$/, "", val)
+  if (val ~ /^".*"$/) {
+    # a quoted string: drop the quotes and unescape \" — commas inside are text, not a list
+    val = substr(val, 2, length(val) - 2)
+    gsub(/\\"/, "\"", val)
+  } else if (substr(val, 1, 1) == "[" && substr(val, 1, 2) != "[[") {
+    # a [a, b] list -> a,b
+    gsub(/^\[|\]$/, "", val)
+    gsub(/[[:space:]]*,[[:space:]]*/, ",", val)
+  }
+  printf "%s%s%s\n", key, SEP, val
+}
+'
+
+# frontmatter_kv FILE — "key<SEP>value" per simple frontmatter line (see GTD_FM_AWK).
 frontmatter_kv() {
-  awk -v SEP="$SEP" '
+  awk -v SEP="$SEP" "$GTD_FM_AWK"'
     /^---[[:space:]]*$/ { infm++; if (infm==2) exit; next }
-    infm==1 {
-      line = $0
-      sub(/[[:space:]]+#.*$/, "", line)
-      if (!match(line, /^[A-Za-z_][A-Za-z0-9_-]*:/)) next
-      key = substr(line, 1, RLENGTH-1)
-      val = substr(line, RLENGTH+1)
-      sub(/^[[:space:]]+/, "", val)
-      sub(/[[:space:]]+$/, "", val)
-      if (val ~ /^".*"$/) {
-        # a quoted string: drop the quotes and unescape \" — commas inside are text, not a list
-        val = substr(val, 2, length(val) - 2)
-        gsub(/\\"/, "\"", val)
-      } else if (substr(val, 1, 1) == "[" && substr(val, 1, 2) != "[[") {
-        # a [a, b] list -> a,b
-        gsub(/^\[|\]$/, "", val)
-        gsub(/[[:space:]]*,[[:space:]]*/, ",", val)
-      }
-      printf "%s%s%s\n", key, SEP, val
-    }
+    infm==1 { fm_kv($0) }
   ' "$1"
+}
+
+# GTD_FILE_MARK (0x1e) starts each note's block in frontmatter_kv_files' output; no path or
+# property holds it.
+GTD_FILE_MARK=$'\x1e'
+
+# frontmatter_kv_files [MARKER] — frontmatter_kv for many notes in one awk. Reads one path per
+# line on stdin (so no argument-length limit) and prints, per note in that order, "<MARK><path>"
+# and then its "key<SEP>value" lines. With MARKER, also "@body<SEP><text>" for the first body
+# line holding MARKER, with the text after it. An empty or unreadable note still gets its
+# "<MARK><path>" line.
+frontmatter_kv_files() {
+  awk -v SEP="$SEP" -v MARK="$GTD_FILE_MARK" -v MARKER="${1:-}" "$GTD_FM_AWK"'
+    {
+      f = $0; infm = 0
+      printf "%s%s\n", MARK, f
+      while ((getline line < f) > 0) {
+        if (infm < 2 && line ~ /^---[[:space:]]*$/) {
+          infm++
+          if (infm == 2 && MARKER == "") break
+          continue
+        }
+        if (infm == 1) { fm_kv(line); continue }
+        if (infm == 2 && (p = index(line, MARKER)) > 0) {
+          line = substr(line, p + length(MARKER)); sub(/^[[:space:]]+/, "", line)
+          printf "@body%s%s\n", SEP, line
+          break
+        }
+      }
+      close(f)
+    }
+  '
+}
+
+# gtd_notes_in DIR — GTD_NOTES becomes DIR's notes (*.md, README.md left out), in glob order.
+# Expand it as ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}: an empty array trips set -u on bash 3.2.
+gtd_notes_in() {
+  local f
+  GTD_NOTES=()
+  for f in "$1"/*.md; do
+    [ -e "$f" ] || continue
+    [ "${f##*/}" = README.md ] && continue
+    GTD_NOTES+=("$f")
+  done
+}
+
+# gtd_fm_each CALLBACK [MARKER] -- FILE... — read every FILE's frontmatter with one awk, then
+# call CALLBACK FILE once per file, in order, in this shell (so its variables and counters stick).
+# During the call each property is in FM_<key>, any character other than a letter, digit or _
+# turned into _ (follow-up -> FM_follow_up); when a key repeats, the first line wins. Read them
+# as "${FM_key:-}". With MARKER, GTD_FM_BODY holds the @body text (see frontmatter_kv_files).
+# Loop over notes this way, not with frontmatter_kv per note: on Windows each awk costs tens of
+# milliseconds, and a vault has hundreds of notes.
+gtd_fm_each() {
+  local _fe_cb="$1" _fe_marker="" _fe_line _fe_cur="" _fe_started=0 _fe_k _fe_v _fe_name
+  shift
+  if [ "${1:-}" != "--" ]; then _fe_marker="${1:-}"; shift; fi
+  shift
+  [ $# -gt 0 ] || return 0
+  while IFS= read -r _fe_line <&3; do
+    if [ "${_fe_line:0:1}" = "$GTD_FILE_MARK" ]; then
+      [ "$_fe_started" -eq 0 ] || "$_fe_cb" "$_fe_cur"
+      _fe_started=1; _fe_cur="${_fe_line:1}"
+      for _fe_name in ${!FM_@}; do unset "$_fe_name"; done
+      GTD_FM_BODY=""
+      continue
+    fi
+    _fe_k="${_fe_line%%"$SEP"*}"; _fe_v="${_fe_line#*"$SEP"}"
+    if [ "$_fe_k" = "@body" ]; then GTD_FM_BODY="$_fe_v"; continue; fi
+    _fe_name="FM_${_fe_k//[^A-Za-z0-9_]/_}"
+    [ -n "${!_fe_name+x}" ] || printf -v "$_fe_name" '%s' "$_fe_v"
+  done 3< <(printf '%s\n' "$@" | frontmatter_kv_files "$_fe_marker")
+  [ "$_fe_started" -eq 0 ] || "$_fe_cb" "$_fe_cur"
 }

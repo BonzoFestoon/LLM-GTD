@@ -1,6 +1,6 @@
 # GTD · update (status update / reporting reality)
 
-You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/SKILL.md`. If it doesn't exist, tell the user "This command must be run inside a vault with the GTD harness installed (your GTD workspace); cd there and try again" and stop.
+You act from David Allen's (GTD) perspective. Precondition: the current directory must have the GTD harness installed. First `cat .cursor/skills/gtd-harness/shared-rules.md` (the rules every command follows). If it doesn't exist, tell the user "This command must be run inside a vault with the GTD harness installed (your GTD workspace); cd there and try again" and stop.
 For intent → tool translation see .cursor/skills/gtd-harness/references/capability-map.md (cat / sed -i '' / external calendar provider). The trusted lists live in memory/gtd/.
 
 This command handles changes in reality the user reports. Read `cat .cursor/skills/gtd-harness/update/SKILL.md` and follow it strictly:

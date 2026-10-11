@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # gtd_status.sh — read every list in memory/gtd/ and print a GTD dashboard (pure bash, works on all three platforms)
-# Usage: bash gtd_status.sh
+# Usage: bash gtd_status.sh [--from DIR]
+#   --from DIR: reuse output a caller already has — DIR/check (gtd_check.sh), DIR/tagged
+#   (gtd_tagged.sh), DIR/done-week (gtd_list.sh done --since 7 days ago); any missing one is run.
 
 set -euo pipefail
 
@@ -9,10 +11,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_ROOT="$GTD_WORKSPACE_ROOT"
 GTD_DIR="$VAULT_ROOT/memory/gtd"
 
-if [ ! -d "$GTD_DIR" ]; then
-  echo "memory/gtd/ does not exist. Run first: bash gtd_init.sh"
-  exit 1
-fi
+FROM=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --from) FROM="$2"; shift 2 ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+
+gtd_require_gtd_dir
 gtd_refuse_single_file
 
 # grep -c still prints "0" on zero matches but exits 1 — swallow the exit code with || true and return a single value
@@ -36,24 +43,53 @@ count_calendar() {
   cnt '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$f"
 }
 
-# Count notes through gtd_list.sh (README.md and _done/ never count) and take stalled projects
-# from gtd_check.sh. A tickled project is on hold, so gtd_check.sh never calls it stalled.
 count_lines() {
   grep -c . || true
 }
-n_next="$(bash "$SCRIPT_DIR/gtd_list.sh" next-actions | count_lines)"
-n_projects="$(bash "$SCRIPT_DIR/gtd_list.sh" projects | count_lines)"
-n_waiting="$(bash "$SCRIPT_DIR/gtd_list.sh" waiting-for | count_lines)"
-n_someday="$(bash "$SCRIPT_DIR/gtd_list.sh" someday-maybe | count_lines)"
-stalled_n="$(bash "$SCRIPT_DIR/gtd_check.sh" | awk -F'\t' '$1 == "stalled"' | count_lines)"
-n_tickler="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler | count_lines)"
-n_tickler_due="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler --due | count_lines)"
-n_tickler_rec="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler --recurring | count_lines)"
-n_tickler_over="$(bash "$SCRIPT_DIR/gtd_list.sh" tickler --overdue | count_lines)"
+
+# The three slow sources run at the same time; a caller that already has one (gtd_review_prep.sh)
+# passes it with --from DIR as DIR/check, DIR/tagged or DIR/done-week.
+gtd_jobs_init
+source_of() {
+  if [ -n "$FROM" ] && [ -f "$FROM/$1" ]; then echo "$FROM/$1"; else echo "$GTD_JOB_DIR/$1"; fi
+}
+[ -n "$FROM" ] && [ -f "$FROM/check" ] || gtd_job check bash "$SCRIPT_DIR/gtd_check.sh"
+[ -n "$FROM" ] && [ -f "$FROM/tagged" ] || gtd_job tagged bash "$SCRIPT_DIR/gtd_tagged.sh"
+[ -n "$FROM" ] && [ -f "$FROM/done-week" ] || gtd_job done-week bash "$SCRIPT_DIR/gtd_list.sh" done --since "$(gtd_days_ago 7)"
+
+# Notes counted the way gtd_list.sh finds them (README.md and _done/ never count), in this shell.
+count_notes() {
+  gtd_notes_in "$GTD_DIR/$1"
+  echo "${#GTD_NOTES[@]}"
+}
+n_next="$(count_notes next-actions)"
+n_waiting="$(count_notes waiting-for)"
+n_someday="$(count_notes someday-maybe)"
+n_tickler="$(count_notes tickler)"
+n_projects=0
+for f in "$GTD_DIR"/projects/*/README.md; do
+  [ -e "$f" ] || continue
+  n_projects=$((n_projects + 1))
+done
+# Recurring tickles: a valid every: (gtd_list.sh tickler --recurring).
+n_tickler_rec=0
+count_recurring() {
+  if gtd_is_span "${FM_every:-}"; then n_tickler_rec=$((n_tickler_rec + 1)); fi
+}
+gtd_notes_in "$GTD_DIR/tickler"
+gtd_fm_each count_recurring -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
+
+gtd_jobs_wait
+# Stalled projects and due / overdue tickles come from gtd_check.sh's findings: the same tests as
+# gtd_list.sh tickler --due / --overdue. A tickled project is on hold, so it is never stalled.
+check_out="$(source_of check)"
+stalled_n="$(awk -F'\t' '$1 == "stalled"' "$check_out" | count_lines)"
+n_tickler_due="$(awk -F'\t' '$1 == "tickler-due"' "$check_out" | count_lines)"
+n_tickler_over="$(awk -F'\t' '$1 == "tickler-overdue"' "$check_out" | count_lines)"
 tickler_rec=""
 [ "$n_tickler_rec" -eq 0 ] || tickler_rec=" · $n_tickler_rec recurring, $n_tickler_over overdue"
-n_tagged="$(bash "$SCRIPT_DIR/gtd_tagged.sh" | awk -F'\t' '$2 != "updates=0"' | count_lines)"
-n_done_week="$(bash "$SCRIPT_DIR/gtd_list.sh" done --since "$(gtd_days_ago 7)" | count_lines)"
+n_tagged="$(awk -F'\t' '$2 != "updates=0"' "$(source_of tagged)" | count_lines)"
+n_done_week="$(count_lines < "$(source_of done-week)")"
 
 echo "════════════════════════════════════"
 echo "  GTD Dashboard · memory/gtd/"

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # gtd_tagged.sh — read-only: list the notes anywhere in the workspace tagged gtd-update, so
-# /gtd-update can apply the updates written into them (references/list-definitions.md
-# "Tagged-note updates").
+# /gtd-update can apply the updates written into them (references/tagged-updates.md).
 #
 # Usage:
 #   bash gtd_tagged.sh
