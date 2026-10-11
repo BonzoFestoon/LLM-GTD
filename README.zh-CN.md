@@ -63,14 +63,14 @@ David Allen 给了我们管理承诺的操作系统。LLM-GTD 把这套操作系
 | 你想要 | 命令 | 它会做什么 |
 |---|---|---|
 | 搭建可信系统 | `gtd-init` | 创建八张 GTD 清单并检查接线；旧安装模式还会刷新 Codex slash prompts |
-| 捕捉一个想法或任务 | `gtd-capture` | 先写入 inbox，再自动理清小输入 |
+| 捕捉一个想法或任务 | `gtd-capture` | 原样写入 inbox，仅此而已；理清是单独一步 |
 | 清理收件箱 | `gtd-clarify` | 把模糊的 stuff 变成 next action、project、waiting-for、reference 或 someday |
 | 汇报进展或变更 | `gtd-update` | 销掉已完成行动、推进项目、处理 waiting-for 回应、更新日程细节或纠正既有状态 |
 | 整理系统结构 | `gtd-organize` | 修复机械漂移：孤儿行动、停滞项目、错误情境、重复项 |
 | 判断现在做什么 | `gtd-engage` | 基于情境、时间、精力和优先级给 3-5 个候选行动 |
 | 做每周回顾 | `gtd-review` | 先生成只读预回顾包，清理机械漂移，再回顾 inbox/calendar/waiting/projects/horizons |
 
-核心设计选择：**capture、clarify 和机械 organize 可以尽量自动；engage 和 review 仍由人主导。**
+核心设计选择：**capture 快速且只进 inbox；clarify（单独一步）和机械 organize 可以尽量自动；engage 和 review 仍由人主导。**
 
 ## 可信状态
 
@@ -272,7 +272,7 @@ bash .cursor/skills/gtd-harness/scripts/gtd_status.sh
 /gtd-capture Ask Mei about the school form, renew passport, maybe learn piano, save the tax PDF
 ```
 
-LLM-GTD 会先捕捉所有内容，再理清可以安全推断的部分：
+capture 会把四项原样写进 inbox 就停下——快速、不提问。等你准备处理时，`/gtd-clarify` 再理清可以安全推断的部分：
 
 - `Ask Mei about the school form` 会变成具体 next action 或 waiting-for。
 - `renew passport` 如果需要多步，会变成 project。

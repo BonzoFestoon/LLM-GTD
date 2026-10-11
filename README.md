@@ -70,7 +70,7 @@ agent-native.
 | You want to... | Command | What happens |
 |---|---|---|
 | set up the trusted system | `gtd-init` | creates the eight GTD lists and checks wiring; legacy installs also refresh Codex slash prompts |
-| capture a thought or task | `gtd-capture` | writes it to inbox first, then auto-clarifies small inputs |
+| capture a thought or task | `gtd-capture` | writes it to the inbox verbatim, nothing else; clarify is its own step |
 | process inbox items | `gtd-clarify` | turns vague "stuff" into next actions, projects, waiting-for, reference, or someday |
 | report progress or changes | `gtd-update` | closes completed actions, advances projects, handles waiting-for replies, updates calendar details, or corrects existing state |
 | clean the system | `gtd-organize` | fixes mechanical drift: orphan actions, stalled projects, bad contexts, duplicates |
@@ -78,8 +78,8 @@ agent-native.
 | run the weekly review | `gtd-review` | generates a read-only prep package, cleans mechanical drift, then reviews inbox/calendar/waiting/projects/horizons |
 | which command should I use | `gtd-help` | read-only: every command with what it does, when to run it, and its recommended model; the day-to-day rhythm; one "right now" suggestion; and where things live |
 
-The important design choice: **capture, clarify, and mechanical organize can be mostly automated;
-engage and review stay human-led.**
+The important design choice: **capture is fast and inbox-only; clarify (its own step) and mechanical
+organize can be mostly automated; engage and review stay human-led.**
 
 ## The Trusted State
 
@@ -316,7 +316,7 @@ You say:
 /gtd-capture Ask Mei about the school form, renew passport, maybe learn piano, save the tax PDF
 ```
 
-LLM-GTD first captures everything, then clarifies what can be safely inferred:
+Capture writes all four to the inbox and stops — fast, with no questions. When you're ready to process them, `/gtd-clarify` clarifies what can be safely inferred:
 
 - `Ask Mei about the school form` becomes a concrete next action or waiting-for item.
 - `renew passport` becomes a project if it needs multiple steps.

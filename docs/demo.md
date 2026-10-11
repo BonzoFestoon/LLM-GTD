@@ -85,7 +85,7 @@ report reality.
 
 ---
 
-## 1. Capture → auto-clarify (single item)
+## 1. Capture (inbox only), then clarify when you're ready
 
 > You:
 ```
@@ -93,17 +93,26 @@ report reality.
 ```
 > LLM-GTD:
 ```
+Captured 1 item to the inbox (1 waiting to clarify). Run /gtd-clarify when you're ready.
+```
+*Capture is fast and asks nothing. Later:*
+
+> You:
+```
+/gtd-clarify
+```
+> LLM-GTD:
+```
 Clarified: "Renew passport before the summer trip"
-→ projects.md "Renew passport" (desired outcome: valid passport in hand before the trip)
+→ projects/Renew passport (desired outcome: valid passport in hand before the trip)
 → next-actions @errands: look up the nearest passport office and the documents it needs
 Tell me if you want a different list or action.
 ```
-*It captured first (never lost), then clarified one item and filed it. A multi-step outcome became a
-project with a concrete next action.*
+*Clarify, as its own step, turned a multi-step outcome into a project with a concrete next action.*
 
 ---
 
-## 2. Mind sweep (bulk → captured first, then batch-clarified)
+## 2. Mind sweep (bulk capture, no interruptions)
 
 > You:
 ```
@@ -111,9 +120,9 @@ Help me clear my head.
 ```
 > LLM-GTD walks a trigger list, dumps everything to `inbox.md` **without interrupting**, then:
 ```
-Captured 14 items to the inbox. Want me to clarify them one by one now? (batch)
+Captured 14 items to the inbox (14 waiting to clarify). Run /gtd-clarify when you're ready.
 ```
-*High-volume capture stays zero-friction; clarify happens as a batch afterward.*
+*High-volume capture stays zero-friction; clarify is a separate session, whenever you choose.*
 
 ---
 

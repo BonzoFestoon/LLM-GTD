@@ -2,6 +2,59 @@
 
 All notable changes.
 
+## v2.2.0 — Capture only captures; much faster scripts; leaner instructions
+**Capture only captures.** `/gtd-capture` writes each item to the inbox
+verbatim and reports "Captured N item(s) to the inbox (M waiting to clarify).
+Run /gtd-clarify when you're ready." It no longer clarifies, files, or asks
+what an item means: Allen keeps capture fast and easy and does clarifying
+later, in its own step. A mind sweep captures everything as it comes and
+reports once. Session close turns the conversation's deltas, insights
+included, into inbox items; clarify files them later. Capture moves to the
+`fast` model tier. **If you relied on auto-clarify, run `/gtd-clarify` after
+capturing.**
+
+**Scripts, measured on a 350-note vault on Windows (Git Bash):**
+`gtd_check.sh` 82 s → 4 s, `gtd_status.sh` 117 s → 3 s,
+`gtd_review_prep.sh` several minutes → 6 s, `gtd_list.sh done` 28 s → 2 s.
+Output is unchanged. Starting a process costs tens of milliseconds on
+Windows, and the scripts started thousands of them.
+
+- `gtd_env.sh`: new `gtd_fm_each` reads the frontmatter of many notes with one
+  awk and calls a function per note with its properties in `FM_*` variables;
+  `gtd_check.sh` and `gtd_list.sh` loop through it. Date / span / contains
+  checks are plain bash. New background-job helpers run sub-scripts at once.
+- `gtd_status.sh` counts lists directly and takes stalled / due / overdue from
+  `gtd_check.sh`'s findings; its three slow sources run in parallel. New
+  `--from DIR` reuses output a caller already has.
+- `gtd_review_prep.sh` runs all its sub-scripts at once, and the dashboard
+  reuses them, so `gtd_check.sh` runs once per review instead of twice.
+- `gtd_list.sh --context / --project / --from` match plain text, ignoring
+  case (they were `grep` patterns, so `.` matched any character).
+- A missing `memory/gtd/` now names `LLM_GTD_ROOT` and warns against starting
+  a second inbox, instead of suggesting `gtd_init.sh`.
+
+**Leaner instructions** (fewer tokens per command: capture −84%, engage −75%
+on a clean system, clarify / update / organize / review about −40%):
+
+- New `shared-rules.md` holds the state layer, default rules, model check, the
+  tier → model table and red lines. Every command reads it instead of the
+  router's `SKILL.md`, which keeps only routing and the reference table. The
+  tier table moved here from `model-guidance.md` and is now the one place
+  model names appear.
+- `references/list-definitions.md` keeps the core (lists, boundaries, stalled
+  projects, layout, property values, link rules). New topic files are read
+  only when needed: `tickler.md`, `done-record.md`, `tagged-updates.md`,
+  `action-permissions.md`, `note-formats.md`.
+- Engage runs `gtd_check.sh` and loads organize only when there is something
+  to fix.
+
+**`/gtd-help`** shows the loaded LLM-GTD version and where it was loaded from
+(a plugin runs from a per-version cache, so this shows whether a reinstall is
+needed). The default view is one `gtd_help.sh` call that prints the commands,
+models by tier, the rhythm, one "right now" suggestion and where things live.
+`install.sh` writes a `VERSION` file for legacy installs. The help command
+runs on the fast model.
+
 ## v2.1.0 — Recurring tickles; updates written into tagged notes
 **Recurring tickles.** A tickle with `every:` (`7d`, `2w`, `3m`, `1y`) is a
 routine with no fixed day: "download statements at least quarterly". It stays

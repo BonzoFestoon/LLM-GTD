@@ -69,7 +69,8 @@ a scheduled reminder is optional and off by default (a reminder can prep; it can
 **Allen × Luhmann (capture vs. knowledge).** Capture is shared; Clarify is the fork. Actions →
 GTD lists; ideas/knowledge → your note system. Knowledge never pollutes the action lists.
 
-**AI-native automation.** Capture→Clarify and the mechanical half of Organize run automatically
+**AI-native automation.** Capture only captures — fast, verbatim, no questions — and Clarify is its
+own step, as Allen intends. Clarify's filing and the mechanical half of Organize run automatically
 (act-then-surface; markdown is trivially reversible). The harness stops and asks only on genuine
 forks: action-vs-knowledge, no derivable next action, an implied commitment, an unclear outcome,
 or a calendar write. Engage and Review keep the human in the loop by design.
