@@ -91,7 +91,7 @@ LLM-GTD stores its operating state as plain Markdown in `memory/gtd/`. Each list
 | `memory/gtd/next-actions/` | Next Actions | concrete single-step actions in an action pool, with time, energy, and real constraints |
 | `memory/gtd/projects/` | Projects | one folder per outcome that needs more than one action: its README plus its support material |
 | `memory/gtd/waiting-for/` | Waiting For | delegated or pending items, with person and agreement |
-| `memory/gtd/tickler/` | Tickler | committed work that can't start until a date |
+| `memory/gtd/tickler/` | Tickler | committed work that can't start until a date, and recurring routines |
 | `memory/gtd/someday-maybe/` | Someday/Maybe | things you do not commit to now but do not want to lose |
 | `memory/gtd/calendar.md` | Calendar fallback | hard landscape only, used only when the real calendar is unavailable |
 | `reference/` (workspace root) | Reference | non-actionable knowledge, one note per topic |
@@ -114,6 +114,10 @@ bash <skill>/scripts/gtd_init.sh --confirm-create --with-bases
 **Coming from LLM-GTD 1.x single-file lists?** Version 2.0.0 keeps one note per item only. If `memory/gtd/` still holds `next-actions.md`, `projects.md` and friends, every command stops and says so. Install 1.17.x, run its `scripts/gtd_migrate_to_notes.sh` (dry run, then `--apply` on a clean git tree), then upgrade.
 
 **The tickler.** Some committed work can't start until a date: an account you can open only after a trade settles, a renewal you'll decide in March. That is neither someday/maybe (you've committed) nor waiting-for (nobody owes it to you). Clarify files it in `memory/gtd/tickler/`, one note per tickle with a `tickle:` date. A project linked from a tickle is on hold on purpose, so it is never reported as stalled. When the date arrives, organize turns a concrete project tickle into a next action and queues anything else in the inbox for clarify; engage lists what came due first, and the Weekly Review shows what's due, what's coming in the next 14 days, and each project on hold. The tickler is always local: it is never written to your external calendar. Organize flags a tickle whose date the calendar shows as blocked, and suggests another date.
+
+**Recurring tickles.** Some routines have no fixed day but must not lapse: download the account statements at least quarterly, check the backups monthly. Give the tickle `every: 3m` and it stays in the tickler. On its date (or `lead: 7d` before it), organize creates the next action, and completing that action moves the tickle to the next date on its schedule. A missed cycle is skipped, never stacked; `cadence: floating` counts from when you actually did it instead. A routine is overdue the day after its date. Engage leads with it, and the Weekly Review asks once whether to do it, skip this cycle, change the rule, or end it. Each cycle lands in the done record, so `gtd_list.sh done --from "<routine>"` is its history. Routines with a hard date (rent on the 1st) still belong on the calendar.
+
+**Updates from anywhere.** Write what changed into any note, a daily note on your phone for example, under an `## Update` heading, and tag the note `gtd-update`. The next `/gtd-update` (or the Weekly Review) applies each line as if you had typed it in chat. Clear lines are applied, and unclear ones are asked about once. When every line is resolved, the tag comes off and the heading becomes `## Update (applied <date>)`. The dashboard shows how many tagged notes are waiting.
 
 ## How It Works
 

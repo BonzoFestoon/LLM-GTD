@@ -34,6 +34,11 @@ after-action review has raw material to draw on. `reference/` sits at the worksp
 folder (Allen's tickler): committed work that can't be acted on until a date, one note per tickle; a
 project linked from a tickle is on hold, not stalled, and on the date organize turns the tickle into
 a next action or queues it in the inbox. It is always local, never on the external calendar.
+A tickle with `every:` is a recurring routine: it stays in the tickler, organize creates one next
+action per cycle (linked back with `from:`), and completing that action moves the tickle to its next
+date, computed by `gtd_next_date.sh` rather than by the model. A routine never puts its project on
+hold. Updates can also be written into any note under an `## Update` heading tagged `gtd-update`;
+`gtd_tagged.sh` finds them and update applies them as if they had been typed in chat.
 `gtd_init.sh --confirm-create` sets it all up. A read-only script, `gtd_list.sh`, gives the rest of
 the harness one compact line per item, so nothing else has to open every note; its sibling
 `gtd_check.sh` reports organize's mechanical findings (orphans, stalled projects, bad properties,

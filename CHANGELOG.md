@@ -2,6 +2,50 @@
 
 All notable changes.
 
+## v2.1.0 — Recurring tickles; updates written into tagged notes
+**Recurring tickles.** A tickle with `every:` (`7d`, `2w`, `3m`, `1y`) is a
+routine with no fixed day: "download statements at least quarterly". It stays
+in `tickler/`. On its `tickle:` date (or `lead:` before it) organize creates
+one next action with `from: "[[tickler/<Title>|<Title>]]"` and
+`due: <tickle>`. Completing that action records the cycle as
+`_done/<Title> YYYY-MM-DD.md` and moves the tickle on: by default to the next
+date on its schedule, skipping missed periods. `cadence: floating` counts from
+the completion instead. The routine is overdue from the day after its date
+(no grace); engage leads with it, and the Weekly Review asks once whether to
+do it, skip the cycle, change the rule or end it. Nothing is skipped or
+re-dated automatically. A recurring tickle never puts its project on hold.
+A tickle without `every:` behaves exactly as before.
+
+- New `scripts/gtd_next_date.sh` (`next`, `start`, `add`, `valid`): date
+  arithmetic in plain awk with an end-of-month clamp, the same on GNU and BSD.
+- `gtd_list.sh tickler` gains the `every=`, `lead=` and `action=` columns and
+  the `--overdue` and `--recurring` flags; `--due` / `--within` use the start
+  date, and `--due` leaves out a routine whose action is open.
+  `next-actions` gains `from=`; `done` gains `--from`.
+- `gtd_check.sh`: `tickler-overdue`, `tickler-every` (with the compact form,
+  e.g. `quarterly -> 3m`), `cadence` / `last_completed` / optional
+  time-energy-context validation, `orphan` / `orphan-closed` / `link-form`
+  for `from:`, and `duplicate` for two open actions of one routine.
+- Dashboard: `Tickler: N (D due) · R recurring, O overdue` and an
+  overdue-routine alert. Review prep gains "Overdue routines"; "Projects on
+  hold" leaves routines out.
+- `tickler.base` (new installs) gains the Overdue routines, Next 14 days and
+  Recurring views. An existing `tickler.base` is not overwritten: add the
+  views by hand, or delete it and rerun `gtd_init.sh --with-bases`.
+
+**Tagged-note updates.** Write updates into any note under an `## Update`
+heading and tag it `gtd-update` (frontmatter `tags:` or inline `#gtd-update`).
+The next `/gtd-update` applies each line exactly as if it had been typed in
+chat. Clear lines are applied, and unclear ones are asked about once, in a
+batch. When every line is resolved the tag is removed and the heading becomes
+`## Update (applied YYYY-MM-DD)`. A partly applied note keeps its tag, with
+the applied lines marked ` ✓`. New read-only `scripts/gtd_tagged.sh` scans the
+workspace, skipping hidden folders, `_done/`, tags inside code and nested
+tags. The dashboard counts tagged notes and the Weekly Review's Get Clear
+applies them.
+
+New evals E38-E46, with static-gate fixtures for the scripts.
+
 ## v2.0.1 — Property links that Obsidian shows as plain text
 Obsidian renders a wikilink in a frontmatter property only when the link is
 the property's whole value, quoted (`source: "[[Note|Label]]"`).
