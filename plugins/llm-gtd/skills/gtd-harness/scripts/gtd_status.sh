@@ -78,6 +78,20 @@ count_recurring() {
 }
 gtd_notes_in "$GTD_DIR/tickler"
 gtd_fm_each count_recurring -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
+# Next actions waiting on a dependency (blocked or broken): not doable yet, so shown apart.
+n_blocked=0
+count_blocked() {
+  local base="${1##*/}"
+  gtd_dep_eval "${FM_depends_on:-}" "next-actions/${base%.md}"
+  [ "$DEP_BLOCKED" = no ] || n_blocked=$((n_blocked + 1))
+}
+if gtd_dep_needed "$GTD_DIR/next-actions"; then
+  gtd_dep_index
+  gtd_notes_in "$GTD_DIR/next-actions"
+  gtd_fm_each count_blocked -- ${GTD_NOTES[@]+"${GTD_NOTES[@]}"}
+fi
+next_blocked=""
+[ "$n_blocked" -eq 0 ] || next_blocked=" ($n_blocked blocked, waiting on another item)"
 
 gtd_jobs_wait
 # Stalled projects and due / overdue tickles come from gtd_check.sh's findings: the same tests as
@@ -96,7 +110,7 @@ echo "  GTD Dashboard · memory/gtd/"
 echo "════════════════════════════════════"
 printf "  📥 Inbox to clarify   : %s\n" "$(count_inbox)"
 printf "  📝 Tagged updates     : %s\n" "$n_tagged"
-printf "  ✅ Next Actions       : %s\n" "$n_next"
+printf "  ✅ Next Actions       : %s%s\n" "$((n_next - n_blocked))" "$next_blocked"
 printf "  🎯 Projects           : %s (stalled≈ %s)\n" "$n_projects" "$stalled_n"
 printf "  ⏳ Waiting For        : %s\n" "$n_waiting"
 printf "  📅 Calendar (hard)    : %s\n" "$(count_calendar)"

@@ -2,6 +2,37 @@
 
 All notable changes.
 
+## v2.3.0 — Steps that have to wait (depends_on)
+**Dependencies.** A next action or a project can now wait on next actions,
+waiting-for items and projects with `depends_on:`, a YAML list of quoted
+links on the item that waits. While anything it links is still open, a next
+action is left out of the action pool (Engage never offers it) and a project
+is on hold (never stalled, no drafted next action). Clarify files a step the
+user says must wait ("after X, do Y") this way, only the step that follows;
+update rewrites the links when what they wait on finishes and reports "Now
+unblocked: …", and asks once when it is cancelled. Rules in the new
+`references/dependencies.md`. Notes without `depends_on:` behave exactly as
+before; no migration.
+
+- `gtd_list.sh`: `next-actions` and `projects` gain `blocked=` (`no` / `yes` /
+  `broken`) and `waits-on=` columns, before the title. **Blocked and broken
+  next actions are left out by default**; `--blocked` lists only them, `--all`
+  both. `--depends-on TITLE` lists what an item is blocking (exact title,
+  ignoring case, wherever the link points now).
+- `gtd_check.sh`: new findings `depends-done-link` (organize rewrites it),
+  `depends-cancelled`, `depends-missing`, `depends-target`, `depends-form`,
+  `depends-cycle` and `depends-hold`. A next action waiting on an open item
+  still keeps its project in play; one with a broken link doesn't.
+- `gtd_status.sh` counts blocked next actions apart; `gtd_review_prep.sh` has
+  a "Blocked" section (actions and projects, with what each waits on) and
+  checks blocked actions for vague verbs too.
+- `next-actions.base` (`gtd_init.sh --with-bases`): a `blocked` formula; the
+  lens views leave blocked actions out, and a new "Blocked" view lists them.
+  An existing `.base` is never overwritten: copy the `formulas:` block and the
+  `'!formula.blocked'` filters across by hand.
+- Frontmatter written as a YAML block list (`context:` then `  - phone`) is now
+  read like the `[a, b]` form; before, it read as empty.
+
 ## v2.2.0 — Capture only captures; much faster scripts; leaner instructions
 **Capture only captures.** `/gtd-capture` writes each item to the inbox
 verbatim and reports "Captured N item(s) to the inbox (M waiting to clarify).

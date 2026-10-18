@@ -354,7 +354,7 @@ NOTE_RULES='One note per item: `<list>/<Short verb-first title>.md`, filesystem-
 readme_next_actions() {
   header_next_actions
   note_format_section next-action-note.md "${NOTE_RULES//<list>/next-actions}"
-  views_section next-actions '- [[next-actions.base]] — lens views: 15 min or less · Low energy · Errands. Each project README embeds its "For this project" view.'
+  views_section next-actions '- [[next-actions.base]] — lens views: 15 min or less · Low energy · Errands (each leaves out blocked actions) · Blocked. Each project README embeds its "For this project" view.'
 }
 
 readme_waiting_for() {
@@ -441,16 +441,21 @@ base_next_actions() {
 # LLM-GTD lens views over the next-actions pool. Optional Obsidian extra: every GTD command works without it.
 # Lens views only — there is deliberately no unfiltered "all actions" view (never face the whole list).
 # "For this project" is meant to be embedded in a project README: ![[next-actions.base#For this project]]
+# The lens views leave out actions still waiting on a dependency (depends_on:); "Blocked" lists them.
 filters:
   and:
     - file.inFolder("memory/gtd/next-actions")
     - file.basename != "README"
+formulas:
+  # waiting on a dependency: a depends_on: link whose note isn't in _done/ yet (or doesn't resolve)
+  blocked: 'if(depends_on, list(depends_on).filter(!value.asFile() || !value.asFile().inFolder("memory/gtd/_done")).length > 0, false)'
 views:
   - type: table
     name: 15 min or less
     filters:
       and:
         - time <= 15
+        - '!formula.blocked'
     order:
       - file.name
       - time
@@ -462,6 +467,7 @@ views:
     filters:
       and:
         - energy == "low"
+        - '!formula.blocked'
     order:
       - file.name
       - time
@@ -472,10 +478,20 @@ views:
     filters:
       and:
         - context.contains("errands")
+        - '!formula.blocked'
     order:
       - file.name
       - time
       - energy
+      - project
+  - type: table
+    name: Blocked
+    filters:
+      and:
+        - formula.blocked
+    order:
+      - file.name
+      - depends_on
       - project
   - type: table
     name: For this project
@@ -487,6 +503,7 @@ views:
       - time
       - energy
       - context
+      - formula.blocked
 EOF
 }
 

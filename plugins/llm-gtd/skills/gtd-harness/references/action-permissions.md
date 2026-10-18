@@ -16,6 +16,8 @@ Companion to `list-definitions.md`, which holds the core rules. Read this before
 | Turn a due tickle into a next action, or add an inbox pointer to it | Auto | A concrete project tickle moves to `next-actions/`, anything else is queued in the inbox once; reported in organize's one-line summary |
 | Create the next action for a due recurring tickle | Auto | Only when no open action links it (`from:`); the tickle stays; reported in organize's one-line summary |
 | Re-date a recurring tickle after its action is completed | Auto | Through `gtd_next_date.sh`; part of update's done step |
+| Rewrite a `depends_on:` link to a finished item's `_done/` path | Auto | Part of update's done step and organize's `depends-done-link` fix; reported as "Now unblocked: …" |
+| Drop a dependency, or cancel what waited on a cancelled item | Needs confirmation | Asked once when the item is cancelled, or in organize's batch; never decided automatically |
 | Skip a cycle, pause, end a routine, or change its rule | Needs confirmation | The user says so; an overdue routine is never skipped, re-dated or ended automatically |
 | Apply a tagged note's Update section | Auto for clear lines | Each line under update's own rules; unclear lines asked once, in a batch; the tag is removed only when every line is resolved |
 | Re-date a tickle that conflicts with the calendar | Needs confirmation | Organize flags it with a suggested date; never re-dates on its own |

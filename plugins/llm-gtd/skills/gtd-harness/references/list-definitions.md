@@ -20,12 +20,12 @@ The boundaries of the trusted system. Each list has a single job; mixing in fore
 2. **Ordinary to-dos stuffed into the calendar** → the calendar holds only "must happen on this day / at this time"; everything else goes to next-actions.
 3. **Giving product ideas a list of their own** → A product / feature / scenario idea is ordinary input, not its own list: if the user is committed to building it, it is a project (keep the original opportunity, assumptions and evidence in the project README's body) with a next action; if not, someday-maybe; if it's only knowledge, reference.
 4. **Knowledge notes stuffed into actionable lists** → knowledge / insights go to `reference/`, not `next-actions/` / `projects/` (overridable in `personalized.md` if you run a separate knowledge system).
-5. **A full task tree stuffed into projects** → keep only current parallel next actions / waiting-for items; milestones, dependencies, and task trees go in a doc in the project's folder.
+5. **A full task tree stuffed into projects** → keep current parallel next actions / waiting-for items. A step that has to wait for another one may be written now as a next action with `depends_on:`, and it stays out of the action pool until then (see "Dependencies"); milestones and longer plans go in a doc in the project's folder.
 6. **A committed project waiting on a date parked in someday-maybe or waiting-for** → it stays a project and gets a tickle: someday-maybe is for what you haven't committed to, waiting-for for what someone else owes you.
 
 ## Stalled projects
 
-A project is **in play** when at least one open next action, waiting-for item, or one-shot tickle links to it; otherwise it is **stalled**. A one-shot tickle means the project is on hold on purpose until its date: it stays in `projects/`, is never called stalled, and organize never drafts a next action for it. A **recurring** tickle (`every:`) never puts a project on hold — a project whose only link is a standing routine is still stalled, though the routine's open action, once created, counts like any other action. A tickle that has come due is organize's to handle (see `references/tickler.md`), not a stalled project. `gtd_check.sh` and the dashboard apply this rule; every other statement of it in the skill points here.
+A project is **in play** when at least one open next action, waiting-for item, or one-shot tickle links to it; otherwise it is **stalled**. A next action blocked by a dependency still counts while that dependency is open, but not when it is broken; a project whose own `depends_on:` is open is on hold, like a tickled one (`references/dependencies.md` "Projects in play"). A one-shot tickle means the project is on hold on purpose until its date: it stays in `projects/`, is never called stalled, and organize never drafts a next action for it. A **recurring** tickle (`every:`) never puts a project on hold — a project whose only link is a standing routine is still stalled, though the routine's open action, once created, counts like any other action. A tickle that has come due is organize's to handle (see `references/tickler.md`), not a stalled project. `gtd_check.sh` and the dashboard apply this rule; every other statement of it in the skill points here.
 
 ## Layout
 
@@ -57,12 +57,17 @@ The properties are light fields — Time / Energy / Constraint / Project / Sourc
 | `cadence` | `fixed` \| `floating` | Recurring tickle only — absent = `fixed` (the next schedule date after the completion); `floating` = completion + `every` |
 | `last_completed` | `YYYY-MM-DD` | Recurring tickle only — written by update on each completion |
 | `from` | `"[[tickler/<Title>\|<Title>]]"` | Next action only — the recurring tickle this action is one cycle of (written by organize) |
+| `depends_on` | a YAML list of quoted links to next actions, waiting-for items or projects | Next action or project only — what it waits on; blocked until each is done. See "Dependencies" |
 
 A tickle may also carry `time` / `energy` / `context` (same values as a next action); they are carried into the action it creates.
 
 ## Tickler
 
 Tickles, recurring tickles and their dates, completion, skip / pause / end: `references/tickler.md`. Read it whenever a tickle is filed, comes due, is re-dated or completed.
+
+## Dependencies
+
+A next action or project can wait on next actions, waiting-for items and projects with `depends_on:`. While blocked, an action is left out of the action pool and a project is on hold. What is allowed, when a link counts as done, what happens when one finishes or is cancelled, and organize's `depends-*` findings: `references/dependencies.md`. Read it whenever a dependency is filed, or something another item depends on is completed or cancelled.
 
 ## Tagged-note updates
 

@@ -40,7 +40,8 @@ gtd_job tickler list tickler
 gtd_job tickler--due list tickler --due
 gtd_job tickler--overdue list tickler --overdue
 gtd_job tickler--within list tickler --within 14
-gtd_job next-actions list next-actions
+gtd_job next-actions list next-actions --all
+gtd_job projects list projects
 gtd_job waiting-for list waiting-for
 gtd_job someday-maybe list someday-maybe
 gtd_jobs_wait
@@ -106,6 +107,21 @@ projects_on_hold() {
   } END { for (p in d) print p "\t" d[p] }' | sort | while IFS=$'\t' read -r name date; do
     [ -f "$GTD_DIR/projects/$name/README.md" ] && echo "- $name · until $date"
   done
+}
+
+# Blocked: "- title · waits on X" for each next action (or, with projects, project) whose
+# dependencies aren't all done; a broken one says so.
+blocked_lines() {
+  job_out "$1" | awk -F'\t' '{
+    b = ""; w = ""
+    for (i = 2; i < NF; i++) {
+      if ($i ~ /^blocked=/) { b = $i; sub(/^blocked=/, "", b) }
+      if ($i ~ /^waits-on=/) { w = $i; sub(/^waits-on=/, "", w) }
+    }
+    if (b == "" || b == "no") next
+    t = $NF; sub(/ -- .*$/, "", t)
+    print "- " t " · waits on " w (b == "broken" ? " · broken: organize asks" : "")
+  }'
 }
 
 VAGUE_VERBS='(follow up|handle|deal with|work on|push forward|look into|research|check out|think about|sort out|figure out)'
@@ -198,6 +214,12 @@ out="$(tickle_lines within)"; echo "${out:-None.}"
 echo "Projects on hold (does each date still hold?):"
 out="$(projects_on_hold)"; echo "${out:-None.}"
 
+section "Blocked (waiting on another item)"
+echo "Next actions (each is still waiting on something that is moving?):"
+out="$(blocked_lines next-actions)"; echo "${out:-None.}"
+echo "Projects on hold until another item is done:"
+out="$(blocked_lines projects)"; echo "${out:-None.}"
+
 section "Next Action hygiene"
 vague="$(vague_next_actions)"
 if [ -n "$vague" ]; then
@@ -223,5 +245,6 @@ echo "- Stalled projects: add at least one concrete next action per project; att
 echo "- Waiting for: confirm which items to follow up on; AI can draft a neutral message first."
 echo "- Tickler: organize handles due tickles; confirm each on-hold project's date still holds, and flag any calendar conflict."
 echo "- Overdue routines: for each, do it now, skip this cycle, change the rule, or end it."
+echo "- Blocked: confirm what each blocked item waits on is still moving; a broken dependency needs a decision."
 echo "- Someday/maybe: confirm whether to activate, delete, or keep incubating."
 echo "- Next week's 3 things: AI proposes candidates; the user confirms."

@@ -1,6 +1,8 @@
 ---
 id: proj-short-id-YYYYMMDD
 outcome: One sentence describing what "done" looks like (a visible result, not a process).
+# depends_on:       # optional, only when the whole project has to wait — uncomment; on hold until each is done
+#   - "[[projects/Other project/README|Other project]]"   # next actions, waiting-for items or projects
 source: inbox capture
 created: YYYY-MM-DD
 ---
