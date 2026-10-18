@@ -6,6 +6,8 @@ context: [computer] # real constraints: computer, phone, errands, home, person-p
 project: "[[projects/Project name/README|Project name]]"   # optional — omit for a standalone action
 due: YYYY-MM-DD     # optional, only for a real deadline (a routine's cycle: its tickle date)
 from: "[[tickler/Routine title|Routine title]]"   # only on a cycle organize created from a recurring tickle
+# depends_on:       # optional, only when this really has to wait — uncomment; hidden from Engage until each is done
+#   - "[[next-actions/Earlier step|Earlier step]]"   # next actions, waiting-for items or projects
 source: inbox capture
 created: YYYY-MM-DD
 ---

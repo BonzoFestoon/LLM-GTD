@@ -17,6 +17,7 @@ example: "The dentist appointment got moved to Friday"
 - Hard landscape / calendar changes: read `references/capability-map.md`.
 - Unclear project outcome or next action: read `references/clarify-decision-tree.md` and `references/natural-planning-model.md` as needed.
 - Done record and after-action review (AAR): `references/done-record.md`; shapes in `_done/README.md` and `templates/after-action-review.md`.
+- Something completed or cancelled that other items wait on (`depends_on:`): `references/dependencies.md`.
 - Automation boundary: clear completions, clear waiting-for replies, and clear text corrections can be updated automatically; ask one question on multiple matches, when a whole project would be closed or cut, or when a calendar event can't be uniquely identified.
 
 ## When to run
@@ -54,7 +55,7 @@ Update does one thing: sync the change in reality the user just reported into `m
    | Project progress | The user gave facts that affect the next action | Update project support facts; move the completed next action to the done record; derive a new concrete next action |
    | Waiting For reply | Clearly matches one `waiting-for` item | Move it to the done record with what arrived as its outcome; clarify the reply into a next action / reference / project closure |
    | Event details changed | Date / time / place / departure window changed | Update the external calendar provider event; if no clear event is found and details are complete, create one; ask one question if unsure |
-   | Commitment cancelled / dropped | The user explicitly cancels | A project-linked action or waiting-for → done record with `result: cancelled` and the reason; a standalone action or a someday item → delete it; a tickle → delete it (no done record); a whole project → ask once, then close it as cancelled (the AAR is optional), removing its tickles too. If merely paused but still wanted, move it to someday-maybe |
+   | Commitment cancelled / dropped | The user explicitly cancels | A project-linked action or waiting-for → done record with `result: cancelled` and the reason; a standalone action or a someday item → delete it; a tickle → delete it (no done record); a whole project → ask once, then close it as cancelled (the AAR is optional), removing its tickles too. If merely paused but still wanted, move it to someday-maybe. Anything that waited on it (see "Dependents") → ask once, in the same question: drop the dependency, cancel those too, or link what replaces it |
    | Tickle date moved | "That can't start until X now" / "push it to December" for a tickle | Change the note's `tickle:` (the `id` stays); if the project's whole timeline moved, say so in its README's Decisions |
    | Routine cycle done | The completed action has `from:` (or exactly matches a recurring tickle's title; ask once if unsure) | Done record as `_done/<Title> YYYY-MM-DD.md`, keeping `from:`; then, in one edit, the tickle gets `last_completed: <completed>` and `tickle:` = `scripts/gtd_next_date.sh next <every> <tickle> <completed>` (add `floating` when the tickle has `cadence: floating`). `<completed>` is today unless the user names the day. Never work the date out by hand. A dangling `from:` → complete the action, skip the tickle step, say so |
    | Routine cycle skipped | "Skip it this quarter" | The action → done record with `result: skipped` and the reason; `last_completed` unchanged; `tickle:` = `gtd_next_date.sh next <every> <tickle> <today>` |
@@ -69,6 +70,8 @@ Update does one thing: sync the change in reality the user just reported into `m
 4. **Advance projects**:
    - When a completed action belongs to a project, read that project's `README.md` and its remaining open actions / waiting-for / tickles (`gtd_list.sh next-actions --project "<Name>"`, same for waiting-for and tickler). A one-shot tickle still linking it means the project is on hold until that date, not stalled: don't draft a new next action for it. A recurring tickle doesn't hold it (`list-definitions.md` "Stalled projects").
    - If the desired outcome is achieved and no next action still needs pushing → close it with an after-action review ("Project close" below).
+   - A project whose own `depends_on:` is still open is on hold too; don't draft for it either.
+   - If the completion just unblocked an action of the same project (see "Dependents"), that action is its next action: don't draft another.
    - If the project is still unfinished → draft **one** most suitable current next action from the new facts and link it to the project (a note whose `project:` links the README).
    - If the new next action needs the user's value judgment or information is missing → don't force one; list the gap and ask one question.
 
@@ -81,6 +84,13 @@ A finished item leaves its list and lands in the done record with an outcome. Ne
   - You did or watched the work in this session → write it yourself: the steps taken, errors hit, and the fix that worked. Ask nothing; the one-line report shows it, and the user can correct it in one sentence.
   - The user just says "done" with no context → ask **one optional** question, and only when the action belongs to a project or was estimated at 30 min or more / deep work: "Anything worth noting: what got in the way and how you got past it?" Silence or "no" records `Problems and fixes: none noted`. A quick standalone action is never asked.
 - A received waiting-for records what arrived under `Done:`. A cancelled project step records the reason under `Done:`.
+
+## Dependents
+
+Whenever a next action, waiting-for item or project leaves its list (done, received, cancelled or closed), find what waited on it: `gtd_list.sh next-actions --depends-on "<Title>"` and `gtd_list.sh projects --depends-on "<Title>"` (a project: its name). It matches the exact title, wherever the link points. Nothing found → nothing to do.
+
+- **Done or received**: rewrite each of those links to the item's new place, `"[[_done/<Title>|<Title>]]"` (project close rewrites `[[projects/<Name>/…` links anyway). Then list them again: each with `blocked=no` is **now unblocked**; report it by name in the output. Its project, if any, has its next action.
+- **Cancelled**: change nothing yet. Ask once, with the cancellation, for each item that waited on it: drop the dependency, cancel it too, or link what replaces it (`references/action-permissions.md`).
 
 ## Tagged notes
 
@@ -121,7 +131,7 @@ When a project's outcome is achieved (here, or when organize / review hands one 
 
 Briefly output three things:
 1. **Updated**: which list / calendar changed.
-2. **What's left now**: the project's new next action, who you're still waiting on, or confirmation that it's closed.
+2. **What's left now**: the project's new next action, who you're still waiting on, or confirmation that it's closed; and "Now unblocked: …" for anything that was waiting on what just finished.
 3. **Verified**: state that you searched or read back to confirm.
 
 ## Quality check
@@ -135,4 +145,5 @@ Briefly output three things:
 - [ ] Calendar updates claimed complete only after the calendar provider / tool succeeded
 - [ ] Asked one question on multiple matches or risky deletions; no guessing
 - [ ] A routine's completed cycle: dated done record, `last_completed` set, `tickle` moved with `gtd_next_date.sh`
+- [ ] Anything that waited on a finished item has its link rewritten to `_done/` and is reported as unblocked; anything that waited on a cancelled one was asked about, not changed
 - [ ] Tagged notes: ran `gtd_tagged.sh`; clear lines applied, unclear ones asked about in one batch; finished notes have no tag and an `Update (applied YYYY-MM-DD)` heading; partly done notes keep the tag with applied lines marked ` ✓`

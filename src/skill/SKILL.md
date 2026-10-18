@@ -36,6 +36,7 @@ Read `shared-rules.md` first: the state layer, default rules, model check and re
 | What may run automatically, what needs confirmation | `references/action-permissions.md`; read before deleting, moving, sending, or deciding on the user's behalf |
 | Tickles and recurring routines | `references/tickler.md`; read when a tickle is filed, comes due, is re-dated or completed |
 | Done record, project close | `references/done-record.md`; read when moving finished work to `_done/` |
+| Dependencies (`depends_on:`) | `references/dependencies.md`; read when a step has to wait for another, or something others wait on is completed or cancelled |
 | Notes tagged `gtd-update` | `references/tagged-updates.md`; read when applying them |
 | A note's full shape with examples | `references/note-formats.md`; the list's template is usually enough |
 | Whether a next action is good enough | `references/clarify-decision-tree.md`; read when a next action is vague or the user wants to clarify |

@@ -421,7 +421,7 @@ rl_rec="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --recurrin
 [ "$rl_rec" -eq 6 ] || fail "gtd_list.sh tickler --recurring counted $rl_rec, want 6 (bad every: is not recurring)"
 rl_soon="$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" tickler --within 30 | awk -F'\t' '{ print $NF }' | paste -sd ';' -)"
 [ "$rl_soon" = "Check the backups" ] || fail "gtd_list.sh tickler --within 30 (the lead-window routine is due, not upcoming): $rl_soon"
-LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" next-actions | grep -q "from=\[\[tickler/Water the plants|Water the plants\]\]${T}Water the plants$" \
+LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" next-actions | grep -q "from=\[\[tickler/Water the plants|Water the plants\]\]${T}blocked=no${T}waits-on=-${T}Water the plants$" \
   || fail "gtd_list.sh next-actions lacks the from= column"
 [ "$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" done --from "Water the plants" | grep -c .)" -eq 1 ] || fail "gtd_list.sh done --from did not find the routine's cycle"
 [ -z "$(LLM_GTD_ROOT="$RC" bash "$ROOT/scripts/gtd_list.sh" done --from "Check the backups")" ] || fail "gtd_list.sh done --from matched another routine"
@@ -667,6 +667,82 @@ done
 [ -z "$(echo "$chk" | grep -E "^(link-form|property-link)${T}" | grep -vF "projects/Beta/README.md${T}" | grep -F "README.md${T}")" ] \
   || fail "gtd_check.sh flagged a list README's links: $chk"
 ok "property links: text around a link or embed, several links, unquoted and [a, b] lists flagged (memory/gtd/ and reference/); long paths are link-form; one finding per property; whole links, embeds, YAML lists and the body left alone"
+
+# Dependencies: depends_on: on next actions and projects, resolved against the open lists and
+# _done/; blocked actions left out of the default list; organize's findings; stalled / on hold.
+DP="$fixture/deps"
+DG="$DP/memory/gtd"
+mkdir -p "$DG"/next-actions "$DG"/waiting-for "$DG"/tickler "$DG"/_done \
+  "$DG"/projects/P "$DG"/projects/Q "$DG"/projects/Z "$DG"/projects/K
+# dact TITLE EXTRA — an open next action with valid fields plus EXTRA frontmatter lines
+dact() { printf -- '---\ntime: 10\nenergy: low\ncontext: [phone]\n%s---\nx\n' "$2" > "$DG/next-actions/$1.md"; }
+dact A ''
+dact B $'depends_on:\n  - "[[next-actions/A|A]]"\n'
+dact C $'project: "[[projects/P/README|P]]"\ndepends_on:\n  - "[[projects/Q/README|Q]]"\n  - "[[waiting-for/W|W]]"\n'
+dact D $'depends_on:\n  - "[[next-actions/Old|Old]]"\n'
+dact E $'project: "[[projects/K/README|K]]"\ndepends_on:\n  - "[[_done/Gone|Gone]]"\n'
+dact F $'depends_on:\n  - "[[tickler/T|T]]"\n'
+dact N $'depends_on: Call Bob first\n'
+dact S $'depends_on:\n  - "[[next-actions/S|S]]"\n'
+dact X $'depends_on:\n  - "[[next-actions/Y|Y]]"\n'
+dact Y $'depends_on:\n  - "[[next-actions/X|X]]"\n'
+printf -- '---\ntime: 5\nenergy: low\ncontext:\n  - phone\n  - errands\nproject: "[[projects/P/README|P]]"\n---\nx\n' > "$DG/next-actions/R.md"
+printf -- '---\nperson: Bob\ndelegated: 2026-10-01\n---\nx\n' > "$DG/waiting-for/W.md"
+printf -- '---\nperson: Al\ndelegated: 2026-10-01\ndepends_on:\n  - "[[next-actions/A|A]]"\n---\nx\n' > "$DG/waiting-for/V.md"
+printf -- '---\noutcome: P\ndepends_on:\n  - "[[projects/Q/README|Q]]"\n---\n' > "$DG/projects/P/README.md"
+printf -- '---\noutcome: Q\n---\n' > "$DG/projects/Q/README.md"
+printf -- '---\noutcome: Z\ndepends_on:\n  - "[[projects/Q/README|Q]]"\n---\n' > "$DG/projects/Z/README.md"
+printf -- '---\noutcome: K\n---\n' > "$DG/projects/K/README.md"
+printf -- '---\ntickle: 2999-01-01\n---\nx\n' > "$DG/tickler/T.md"
+printf -- '---\ncompleted: 2026-10-01\nresult: done\nlist: next-actions\n---\nx\n' > "$DG/_done/Old.md"
+printf -- '---\ncompleted: 2026-10-01\nresult: cancelled\nlist: next-actions\n---\nx\n' > "$DG/_done/Gone.md"
+
+# titles ARGS... — the titles gtd_list.sh prints, sorted, ";"-joined
+titles() { LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_list.sh" "$@" | awk -F'\t' '{ print $NF }' | LC_ALL=C sort | paste -sd ';' -; }
+got="$(titles next-actions)"
+[ "$got" = "A;D;R" ] || fail "gtd_list.sh next-actions should leave out blocked and broken actions (want A;D;R): $got"
+got="$(titles next-actions --blocked)"
+[ "$got" = "B;C;E;F;N;S;X;Y" ] || fail "gtd_list.sh next-actions --blocked: $got"
+[ "$(titles next-actions --all | tr ';' '\n' | grep -c .)" -eq 11 ] || fail "gtd_list.sh next-actions --all did not list every action"
+[ "$(titles next-actions --depends-on "next-actions/A")" = "B" ] || fail "gtd_list.sh --depends-on did not find what A blocks"
+[ "$(titles next-actions --depends-on "old")" = "D" ] || fail "gtd_list.sh --depends-on did not match a finished item by title, ignoring case"
+[ -z "$(titles next-actions --depends-on "Ol")" ] || fail "gtd_list.sh --depends-on matched part of a title"
+[ "$(titles next-actions --depends-on "[[projects/Q/README|Q]]")" = "C" ] || fail "gtd_list.sh --depends-on did not take a project link"
+[ "$(titles projects --depends-on "Q")" = "P -- P;Z -- Z" ] || fail "gtd_list.sh projects --depends-on did not find the projects waiting on Q"
+na_all="$(LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_list.sh" next-actions --all)"
+echo "$na_all" | grep -q "blocked=yes${T}waits-on=Q; W${T}C$" || fail "gtd_list.sh blocked / waits-on columns wrong: $na_all"
+echo "$na_all" | grep -q "blocked=broken${T}waits-on=Gone (cancelled)${T}E$" || fail "gtd_list.sh did not mark a cancelled dependency broken"
+echo "$na_all" | grep -q "blocked=broken${T}waits-on=Call Bob first (not a link)${T}N$" || fail "gtd_list.sh did not mark a depends_on: with no link broken"
+pj_all="$(LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_list.sh" projects)"
+echo "$pj_all" | grep -q "project=P${T}blocked=yes${T}waits-on=Q${T}P -- P$" \
+  || fail "gtd_list.sh projects lacks blocked / waits-on for a project that waits on another: $pj_all"
+[ "$(titles next-actions --context errands)" = "R" ] || fail "gtd_list.sh did not read a context written as a YAML block list"
+
+chk="$(LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_check.sh")"
+for want in "depends-done-link${T}next-actions/D.md${T}depends_on: [[next-actions/Old]] is finished -> [[_done/Old|Old]]" \
+  "depends-cancelled${T}next-actions/E.md" "depends-target${T}next-actions/F.md" "depends-form${T}next-actions/N.md" \
+  "depends-target${T}next-actions/S.md${T}depends_on: [[next-actions/S]] can't be a dependency: the note itself" \
+  "depends-target${T}waiting-for/V.md" "depends-hold${T}projects/P/README.md" \
+  "depends-cycle${T}next-actions/X.md${T}these wait on each other, so none can start: next-actions/X -> next-actions/Y -> next-actions/X" \
+  "stalled${T}projects/Q/README.md" "stalled${T}projects/K/README.md"; do
+  echo "$chk" | grep -qF "$want" || fail "gtd_check.sh missed: $want ($chk)"
+done
+[ "$(echo "$chk" | grep -c "^depends-cycle${T}")" -eq 1 ] || fail "gtd_check.sh reported one cycle more than once: $chk"
+! echo "$chk" | grep -qF "stalled${T}projects/Z/README.md" || fail "a project waiting on an open project was called stalled"
+! echo "$chk" | grep -qF "stalled${T}projects/P/README.md" || fail "a project with an action waiting on open items was called stalled"
+! echo "$chk" | grep -qE "^field${T}next-actions/R.md" || fail "gtd_check.sh rejected a context written as a YAML block list: $chk"
+! echo "$chk" | grep -qE "^depends-[a-z-]+${T}next-actions/(A|B|C).md" || fail "gtd_check.sh flagged a good dependency: $chk"
+st="$(LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_status.sh")"
+echo "$st" | grep -q "Next Actions       : 3 (8 blocked, waiting on another item)" || fail "dashboard does not count blocked actions apart: $st"
+rp="$(LLM_GTD_ROOT="$DP" bash "$ROOT/scripts/gtd_review_prep.sh")"
+rp_bl="$(echo "$rp" | sed -n '/^## Blocked/,/^## /p')"
+echo "$rp_bl" | grep -qxF -- "- C · waits on Q; W" || fail "review prep's Blocked section lacks C: $rp_bl"
+echo "$rp_bl" | grep -qxF -- "- E · waits on Gone (cancelled) · broken: organize asks" || fail "review prep's Blocked section lacks the broken E: $rp_bl"
+echo "$rp_bl" | grep -qxF -- "- Z · waits on Q" || fail "review prep's Blocked section lacks the project Z: $rp_bl"
+! echo "$rp_bl" | grep -q -- "^- A " || fail "review prep listed an unblocked action as blocked: $rp_bl"
+grep -q "formula.blocked" "$fixture/notes/memory/gtd/next-actions.base" || fail "next-actions.base lacks the blocked formula"
+[ "$(grep -c "'!formula.blocked'" "$fixture/notes/memory/gtd/next-actions.base")" -eq 3 ] || fail "next-actions.base lens views don't all leave out blocked actions"
+ok "dependencies: blocked actions left out by default, --blocked / --all / --depends-on, broken links, done-link, bad targets, cycles, on-hold projects not stalled, block-list context"
 
 if [ "${GTD_PRIVACY_DENYLIST:-}" != "" ]; then
   if rg -n "$GTD_PRIVACY_DENYLIST" "$ROOT"; then

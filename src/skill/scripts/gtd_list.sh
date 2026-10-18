@@ -5,6 +5,7 @@
 #
 # Usage:
 #   bash gtd_list.sh <list> [--max-time N] [--energy E] [--context C] [--project SUBSTRING]
+#                    [--blocked | --all] [--depends-on SUBSTRING]
 #   bash gtd_list.sh done [--since YYYY-MM-DD] [--project SUBSTRING] [--from SUBSTRING] [--problems]
 #   bash gtd_list.sh tickler [--due | --within N | --overdue] [--recurring] [--project SUBSTRING]
 #
@@ -18,10 +19,10 @@
 #
 # Output: one tab-separated line per item — id, then key=value columns for that list, then the
 # title last ("-" for a field the item doesn't carry):
-#   next-actions   id  time=  energy=  context=  project=  due=  from=  title
+#   next-actions   id  time=  energy=  context=  project=  due=  from=  blocked=  waits-on=  title
 #   waiting-for    id  person=  delegated=  follow-up=  project=  title
 #   someday-maybe  id  trigger=  title
-#   projects       id  project=  name -- outcome
+#   projects       id  project=  blocked=  waits-on=  name -- outcome
 #   reference      id  title
 #   done           id  completed=  result=  list=  project=  problems=  title
 #   tickler        id  tickle=  project=  every=  lead=  action=  title
@@ -42,6 +43,16 @@
 #   --overdue    a recurring tickle dated before today (its cycle is late; no grace)
 #   --recurring  only recurring tickles
 # A tickle with no valid date matches none of the date filters.
+# Dependencies (next-actions and projects; list-definitions.md "Dependencies"): blocked= is no
+# (no depends_on:, or every link done), yes (one still open) or broken (one cancelled, missing or a
+# bad target: organize asks); waits-on= names the links not yet done. A blocked or broken next
+# action is left out by default, because it can't be done yet; projects are all listed.
+#   --blocked     only blocked or broken items
+#   --all         next-actions: blocked and unblocked alike
+#   --depends-on  only items with a depends_on: link to TITLE (what that item is blocking): the
+#                 link's target, wherever it is now, has exactly that title (or project name),
+#                 ignoring case; a list prefix (next-actions/, projects/<Name>/README) or a whole
+#                 [[link]] is fine too. Implies --all
 #
 # Compatible with macOS bash 3.2 (no associative arrays / mapfile) — see gtd_init.sh's note.
 
@@ -70,6 +81,9 @@ WITHIN=""
 OVERDUE=0
 RECURRING=0
 FROM=""
+BLOCKED=0
+ALL=0
+DEPENDS_ON=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --max-time) MAX_TIME="$2"; shift 2 ;;
@@ -83,6 +97,9 @@ while [ $# -gt 0 ]; do
     --overdue) OVERDUE=1; shift ;;
     --recurring) RECURRING=1; shift ;;
     --from) FROM="$2"; shift 2 ;;
+    --blocked) BLOCKED=1; shift ;;
+    --all) ALL=1; shift ;;
+    --depends-on) DEPENDS_ON="$2"; ALL=1; shift 2 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -132,6 +149,25 @@ passes_lenses() {
 ENERGY_WANT=""
 if [ -n "$ENERGY" ]; then normalize_energy "$ENERGY"; ENERGY_WANT="$ENERGY_NORM"; fi
 
+# --depends-on's TITLE as a bare title: "[[next-actions/Call Mom|Call Mom]]" -> Call Mom
+DEP_WANT="$DEPENDS_ON"
+case "$DEP_WANT" in *\[\[*) DEP_WANT="${DEP_WANT#*\[\[}"; DEP_WANT="${DEP_WANT%%]]*}"; DEP_WANT="${DEP_WANT%%|*}" ;; esac
+DEP_WANT="${DEP_WANT#memory/gtd/}"; DEP_WANT="${DEP_WANT%.md}"; DEP_WANT="${DEP_WANT%/README}"
+case "$DEP_WANT" in next-actions/*|waiting-for/*|projects/*|_done/*) DEP_WANT="${DEP_WANT#*/}" ;; esac
+
+# dep_names_want — true when one of DEP_EACH's links (gtd_dep_eval) has the title DEP_WANT
+dep_names_want() {
+  local t s p w n r=1
+  shopt -s nocasematch
+  while IFS="$SEP" read -r t s p w n; do
+    [ -n "$t" ] && [[ $n == "$DEP_WANT" ]] && { r=0; break; }
+  done <<EOF
+$DEP_EACH
+EOF
+  shopt -u nocasematch
+  return $r
+}
+
 # emit ID TITLE [VALUE ...] — the values follow this list's COLUMNS order (set below), so
 # every list prints a fixed, self-describing shape.
 emit() {
@@ -147,10 +183,10 @@ emit() {
 }
 
 case "$LIST" in
-  next-actions) COLUMNS="time energy context project due from" ;;
+  next-actions) COLUMNS="time energy context project due from blocked waits-on" ;;
   waiting-for) COLUMNS="person delegated follow-up project" ;;
   someday-maybe) COLUMNS="trigger" ;;
-  projects) COLUMNS="project" ;;
+  projects) COLUMNS="project blocked waits-on" ;;
   done) COLUMNS="completed result list project problems" ;;
   tickler) COLUMNS="tickle project every lead action" ;;
   *) COLUMNS="" ;;
@@ -270,11 +306,11 @@ fi
 
 # list_item FILE — one note of $LIST; gtd_fm_each calls it with the properties in FM_*.
 list_item() {
-  local f="$1" base title project d
+  local f="$1" base title project d self context
   if [ "$LIST" = "projects" ]; then
-    d="${f%/README.md}"; base="${d##*/}"
+    d="${f%/README.md}"; base="${d##*/}"; self="projects/$base/README"
   else
-    base="${f##*/}"; base="${base%.md}"
+    base="${f##*/}"; base="${base%.md}"; self="$LIST/$base"
   fi
   project="${FM_project:-}"
   title="$base"
@@ -283,12 +319,22 @@ list_item() {
     project="$base"
     [ -n "${FM_outcome:-}" ] && title="$base -- $FM_outcome"
   fi
-  passes_lenses "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" "$project" || return 0
+  # a context written as a YAML block list reads like the [a, b] form
+  context="${FM_context:-}"; context="${context//"$GTD_ITEM_SEP"/,}"
+  passes_lenses "${FM_time:-}" "${FM_energy:-}" "$context" "$project" || return 0
+  DEP_BLOCKED=no; DEP_WAITS=""
   case "$LIST" in
-    next-actions) emit "${FM_id:-}" "$title" "${FM_time:-}" "${FM_energy:-}" "${FM_context:-}" "$project" "${FM_due:-}" "${FM_from:-}" ;;
+    next-actions|projects)
+      [ "$DEP_ON" -eq 0 ] || gtd_dep_eval "${FM_depends_on:-}" "$self"
+      [ -z "$DEPENDS_ON" ] || { [ "$DEP_ON" -eq 1 ] && dep_names_want; } || return 0
+      if [ "$BLOCKED" -eq 1 ]; then [ "$DEP_BLOCKED" != no ] || return 0
+      elif [ "$LIST" = next-actions ] && [ "$ALL" -eq 0 ]; then [ "$DEP_BLOCKED" = no ] || return 0; fi ;;
+  esac
+  case "$LIST" in
+    next-actions) emit "${FM_id:-}" "$title" "${FM_time:-}" "${FM_energy:-}" "$context" "$project" "${FM_due:-}" "${FM_from:-}" "$DEP_BLOCKED" "$DEP_WAITS" ;;
     waiting-for) emit "${FM_id:-}" "$title" "${FM_person:-}" "${FM_delegated:-}" "${FM_follow_up:-}" "$project" ;;
     someday-maybe) emit "${FM_id:-}" "$title" "${FM_trigger:-}" ;;
-    projects) emit "${FM_id:-}" "$title" "$project" ;;
+    projects) emit "${FM_id:-}" "$title" "$project" "$DEP_BLOCKED" "$DEP_WAITS" ;;
     *) emit "${FM_id:-}" "$title" ;;
   esac
 }
@@ -317,4 +363,9 @@ case "$LIST" in
   *) echo "No such list: $LIST (one of next-actions, waiting-for, projects, someday-maybe, reference, done, tickler)" >&2; exit 2 ;;
 esac
 [ -d "$LIST_DIR" ] || exit 0
+# Resolve dependencies only when some note in this list has any (one grep).
+DEP_ON=0
+case "$LIST" in
+  next-actions|projects) if gtd_dep_needed "$LIST_DIR"; then gtd_dep_index; DEP_ON=1; fi ;;
+esac
 list_per_item

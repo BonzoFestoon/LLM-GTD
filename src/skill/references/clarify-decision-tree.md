@@ -24,6 +24,8 @@ What is it?
             ※ If the outcome takes > 1 step to complete:
               also create a project folder in 🎯 projects/ (write the desired outcome), put the currently doable action in next-actions/, and link it to the project from its `project:` field.
               If there are several current actions that don't wait on each other, attach several; don't write sequentially dependent steps as a task tree.
+              When the user names a real order ("after X, do Y"), Y may be filed now as a next action with depends_on: X; it stays out of the
+              action pool until X is done (references/dependencies.md). Only the step that follows; longer plans go in a doc in the project's folder.
               A committed project that can't start until a date still gets its project, plus a tickle linked to it instead of a next action:
               it is on hold, not stalled, and never goes to someday-maybe (that's for things not committed to) or waiting-for (that's for things someone else owes you).
 ```

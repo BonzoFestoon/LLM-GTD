@@ -181,27 +181,43 @@ _gtd_open_from_one() {
 # (a missing Project:, an empty context) survive the round trip.
 SEP=$'\x1f'
 
+# GTD_ITEM_SEP (0x1d) joins a YAML block list's items in one FM_<key> value (gtd_fm_each).
+GTD_ITEM_SEP=$'\x1d'
+
 # GTD_FM_AWK — the frontmatter line parser frontmatter_kv and frontmatter_kv_files share:
 # fm_kv(LINE) prints "key<SEP>value" for a simple frontmatter line; strips trailing
-# " # comment", surrounding quotes, and [bracket] array syntax down to a comma list.
+# " # comment", surrounding quotes, and [bracket] array syntax down to a comma list. It returns
+# the key when the value is empty (a YAML block list may follow), "-" for any other key line,
+# and "" for a line that isn't one. fm_item(KEY, LINE) prints "+key<SEP>item" for one
+# "  - item" line of KEY's block list, its quotes stripped.
 GTD_FM_AWK='
-function fm_kv(line,   key, val) {
-  sub(/[[:space:]]+#.*$/, "", line)
-  if (!match(line, /^[A-Za-z_][A-Za-z0-9_-]*:/)) return
-  key = substr(line, 1, RLENGTH-1)
-  val = substr(line, RLENGTH+1)
+function fm_unquote(val) {
   sub(/^[[:space:]]+/, "", val)
   sub(/[[:space:]]+$/, "", val)
   if (val ~ /^".*"$/) {
     # a quoted string: drop the quotes and unescape \" — commas inside are text, not a list
     val = substr(val, 2, length(val) - 2)
     gsub(/\\"/, "\"", val)
-  } else if (substr(val, 1, 1) == "[" && substr(val, 1, 2) != "[[") {
+  }
+  return val
+}
+function fm_kv(line,   key, val) {
+  sub(/[[:space:]]+#.*$/, "", line)
+  if (!match(line, /^[A-Za-z_][A-Za-z0-9_-]*:/)) return ""
+  key = substr(line, 1, RLENGTH-1)
+  val = fm_unquote(substr(line, RLENGTH+1))
+  if (substr(val, 1, 1) == "[" && substr(val, 1, 2) != "[[") {
     # a [a, b] list -> a,b
     gsub(/^\[|\]$/, "", val)
     gsub(/[[:space:]]*,[[:space:]]*/, ",", val)
   }
   printf "%s%s%s\n", key, SEP, val
+  return (val == "") ? key : "-"
+}
+function fm_item(key, line) {
+  sub(/[[:space:]]+#.*$/, "", line)
+  sub(/^[[:space:]]*-[[:space:]]+/, "", line)
+  printf "+%s%s%s\n", key, SEP, fm_unquote(line)
 }
 '
 
@@ -209,7 +225,8 @@ function fm_kv(line,   key, val) {
 frontmatter_kv() {
   awk -v SEP="$SEP" "$GTD_FM_AWK"'
     /^---[[:space:]]*$/ { infm++; if (infm==2) exit; next }
-    infm==1 { fm_kv($0) }
+    infm==1 && lk != "" && /^[[:space:]]*-[[:space:]]/ { fm_item(lk, $0); next }
+    infm==1 { r = fm_kv($0); if (r != "") lk = (r == "-") ? "" : r }
   ' "$1"
 }
 
@@ -225,7 +242,7 @@ GTD_FILE_MARK=$'\x1e'
 frontmatter_kv_files() {
   awk -v SEP="$SEP" -v MARK="$GTD_FILE_MARK" -v MARKER="${1:-}" "$GTD_FM_AWK"'
     {
-      f = $0; infm = 0
+      f = $0; infm = 0; lk = ""
       printf "%s%s\n", MARK, f
       while ((getline line < f) > 0) {
         if (infm < 2 && line ~ /^---[[:space:]]*$/) {
@@ -233,7 +250,11 @@ frontmatter_kv_files() {
           if (infm == 2 && MARKER == "") break
           continue
         }
-        if (infm == 1) { fm_kv(line); continue }
+        if (infm == 1) {
+          if (lk != "" && line ~ /^[[:space:]]*-[[:space:]]/) { fm_item(lk, line); continue }
+          r = fm_kv(line); if (r != "") lk = (r == "-") ? "" : r
+          continue
+        }
         if (infm == 2 && (p = index(line, MARKER)) > 0) {
           line = substr(line, p + length(MARKER)); sub(/^[[:space:]]+/, "", line)
           printf "@body%s%s\n", SEP, line
@@ -261,11 +282,12 @@ gtd_notes_in() {
 # call CALLBACK FILE once per file, in order, in this shell (so its variables and counters stick).
 # During the call each property is in FM_<key>, any character other than a letter, digit or _
 # turned into _ (follow-up -> FM_follow_up); when a key repeats, the first line wins. Read them
-# as "${FM_key:-}". With MARKER, GTD_FM_BODY holds the @body text (see frontmatter_kv_files).
+# as "${FM_key:-}". A YAML block list's items are joined with GTD_ITEM_SEP. With MARKER,
+# GTD_FM_BODY holds the @body text (see frontmatter_kv_files).
 # Loop over notes this way, not with frontmatter_kv per note: on Windows each awk costs tens of
 # milliseconds, and a vault has hundreds of notes.
 gtd_fm_each() {
-  local _fe_cb="$1" _fe_marker="" _fe_line _fe_cur="" _fe_started=0 _fe_k _fe_v _fe_name
+  local _fe_cb="$1" _fe_marker="" _fe_line _fe_cur="" _fe_started=0 _fe_k _fe_v _fe_name _fe_lk=""
   shift
   if [ "${1:-}" != "--" ]; then _fe_marker="${1:-}"; shift; fi
   shift
@@ -275,13 +297,150 @@ gtd_fm_each() {
       [ "$_fe_started" -eq 0 ] || "$_fe_cb" "$_fe_cur"
       _fe_started=1; _fe_cur="${_fe_line:1}"
       for _fe_name in ${!FM_@}; do unset "$_fe_name"; done
-      GTD_FM_BODY=""
+      GTD_FM_BODY=""; _fe_lk=""
       continue
     fi
     _fe_k="${_fe_line%%"$SEP"*}"; _fe_v="${_fe_line#*"$SEP"}"
     if [ "$_fe_k" = "@body" ]; then GTD_FM_BODY="$_fe_v"; continue; fi
+    if [ "${_fe_k:0:1}" = "+" ]; then
+      # one item of a block list, kept only under its key's first (winning) line
+      _fe_name="FM_${_fe_k:1}"; _fe_name="${_fe_name//[^A-Za-z0-9_]/_}"
+      [ "$_fe_name" = "$_fe_lk" ] || continue
+      if [ -z "${!_fe_name:-}" ]; then printf -v "$_fe_name" '%s' "$_fe_v"
+      else printf -v "$_fe_name" '%s%s%s' "${!_fe_name}" "$GTD_ITEM_SEP" "$_fe_v"; fi
+      continue
+    fi
     _fe_name="FM_${_fe_k//[^A-Za-z0-9_]/_}"
-    [ -n "${!_fe_name+x}" ] || printf -v "$_fe_name" '%s' "$_fe_v"
+    _fe_lk=""
+    [ -n "${!_fe_name+x}" ] || { printf -v "$_fe_name" '%s' "$_fe_v"; _fe_lk="$_fe_name"; }
   done 3< <(printf '%s\n' "$@" | frontmatter_kv_files "$_fe_marker")
   [ "$_fe_started" -eq 0 ] || "$_fe_cb" "$_fe_cur"
+}
+
+# --- dependencies (depends_on:) ---------------------------------------------------
+# A next action or project may wait on next actions, waiting-for items and projects
+# (references/list-definitions.md "Dependencies"). The link lives only on the item that waits;
+# what an item blocks is worked out by searching for links to it (gtd_list.sh --depends-on).
+
+# gtd_dep_needed DIR... — true when any note under DIR has a depends_on: line, so a script builds
+# the index only when there is something to resolve (one grep, not one per note).
+gtd_dep_needed() {
+  local d
+  local -a dirs=()
+  for d in "$@"; do [ -d "$d" ] && dirs+=("$d"); done
+  [ ${#dirs[@]} -gt 0 ] || return 1
+  grep -rqs --include='*.md' '^depends_on:' "${dirs[@]}"
+}
+
+# gtd_dep_index — read once what resolving needs, before any gtd_fm_each loop that calls
+# gtd_dep_eval (gtd_fm_each can't run inside its own callback): GTD_DEP_DONE holds
+# "<path><SEP><result>" per finished item ("_done/<Title>", or "_done/<Name>/README" for a
+# project), GTD_DEP_CYCLES "next-actions/<Title>" per open action that is one cycle of a routine.
+gtd_dep_index() {
+  local g="$GTD_WORKSPACE_ROOT/memory/gtd" f line
+  local -a notes=()
+  GTD_DEP_DONE=$'\n'; GTD_DEP_CYCLES=$'\n'
+  for f in "$g"/_done/*.md "$g"/_done/*/README.md; do
+    [ -e "$f" ] || continue
+    [ "$f" = "$g/_done/README.md" ] && continue
+    notes+=("$f")
+  done
+  [ ${#notes[@]} -eq 0 ] || gtd_fm_each _gtd_dep_index_done -- "${notes[@]}"
+  while IFS= read -r line; do
+    [ -n "$line" ] && GTD_DEP_CYCLES="${GTD_DEP_CYCLES}next-actions/${line#*"$SEP"}"$'\n'
+  done < <(gtd_open_from "$g/next-actions")
+  GTD_DEP_INDEXED=1
+}
+_gtd_dep_index_done() {
+  local rel="${1#"$GTD_WORKSPACE_ROOT/memory/gtd/"}"
+  GTD_DEP_DONE="$GTD_DEP_DONE${rel%.md}$SEP${FM_result:-done}"$'\n'
+}
+
+# gtd_dep_state TARGET — resolve one depends_on: link target (the part of the [[...]] before | or
+# #, relative to memory/gtd/). Sets DEP_STATE to open | done | cancelled | missing | bad-target,
+# DEP_NAME to its title (a project's name), DEP_PATH to where it is now (next-actions/<Title>,
+# waiting-for/<Title>, projects/<Name>/README, _done/<Title> or _done/<Name>/README; empty when
+# missing) and, for bad-target, DEP_WHY. A target is looked for where its link says first, then by
+# its title in the other places (a link not yet rewritten after a move still resolves). Anything
+# finished that isn't result: cancelled counts as done. Plain bash: no processes.
+gtd_dep_state() {
+  local g="$GTD_WORKSPACE_ROOT/memory/gtd" t="$1" kind=any name l key r
+  DEP_STATE=missing; DEP_PATH=""; DEP_WHY=""
+  t="${t#memory/gtd/}"; t="${t%.md}"
+  case "$t" in
+    projects/*/README|_done/*/README) kind=project; name="${t#*/}"; name="${name%/README}" ;;
+    projects/*/*) DEP_STATE=bad-target; DEP_WHY="a project's support doc, not the project ([[projects/<Name>/README|<Name>]])"; name="${t##*/}" ;;
+    projects/*) kind=project; name="${t#projects/}" ;;
+    next-actions/*|waiting-for/*|_done/*) kind=item; name="${t#*/}" ;;
+    tickler/*|someday-maybe/*) DEP_STATE=bad-target; DEP_WHY="a ${t%%/*} note never completes as a dependency"; name="${t#*/}" ;;
+    */*) DEP_STATE=bad-target; DEP_WHY="not a next action, waiting-for item or project"; name="${t##*/}" ;;
+    *) name="$t" ;;
+  esac
+  DEP_NAME="$name"
+  [ "$DEP_STATE" = missing ] || return 0
+  if [ "$kind" != item ] && [ -f "$g/projects/$name/README.md" ]; then
+    DEP_STATE=open; DEP_PATH="projects/$name/README"; return 0
+  fi
+  if [ "$kind" != project ]; then
+    for l in next-actions waiting-for; do
+      [ -f "$g/$l/$name.md" ] || continue
+      DEP_STATE=open; DEP_PATH="$l/$name"
+      case "$GTD_DEP_CYCLES" in
+        *$'\n'"$DEP_PATH"$'\n'*) DEP_STATE=bad-target; DEP_WHY="one cycle of a routine (from:), which comes back every period" ;;
+      esac
+      return 0
+    done
+  fi
+  for key in "_done/$name/README" "_done/$name"; do
+    [ "$kind" = project ] && [ "$key" = "_done/$name" ] && continue
+    [ "$kind" = item ] && [ "$key" = "_done/$name/README" ] && continue
+    case "$GTD_DEP_DONE" in
+      *$'\n'"$key$SEP"*)
+        r="${GTD_DEP_DONE#*$'\n'"$key$SEP"}"; r="${r%%$'\n'*}"
+        DEP_PATH="$key"
+        if [ "$r" = cancelled ]; then DEP_STATE=cancelled; else DEP_STATE=done; fi
+        return 0 ;;
+    esac
+  done
+  if [ "$kind" = any ]; then
+    for l in tickler someday-maybe; do
+      [ -f "$g/$l/$name.md" ] || continue
+      DEP_STATE=bad-target; DEP_PATH="$l/$name"; DEP_WHY="a $l note never completes as a dependency"
+      return 0
+    done
+  fi
+  return 0
+}
+
+# gtd_dep_eval VALUE SELF — all of one note's depends_on: links (VALUE as gtd_fm_each gives it;
+# SELF the note's own path, next-actions/<Title> or projects/<Name>/README). Sets DEP_BLOCKED to
+# no (no links, or all done) | yes (one still open) | broken (one cancelled, missing, or not
+# something that can be depended on, or a VALUE with no [[link]] at all: organize asks); DEP_WAITS
+# to the titles not yet done, "; "-joined, a broken one tagged (cancelled) / (missing) / (bad
+# target) / (not a link); DEP_LINKS to how many links VALUE holds; and DEP_EACH to one
+# "<target><SEP><state><SEP><path><SEP><why><SEP><title>" line per link.
+gtd_dep_eval() {
+  local v="$1" self="$2" t open=0 broken=0 tag
+  DEP_BLOCKED=no; DEP_WAITS=""; DEP_LINKS=0; DEP_EACH=""
+  [ -n "$v" ] || return 0
+  if [ "${GTD_DEP_INDEXED:-0}" != 1 ]; then echo "gtd_dep_eval: run gtd_dep_index first" >&2; return 1; fi
+  while [[ $v == *'[['*']]'* ]]; do
+    v="${v#*\[\[}"; t="${v%%]]*}"; v="${v#*]]}"
+    t="${t%%|*}"; t="${t%%#*}"
+    DEP_LINKS=$((DEP_LINKS + 1))
+    gtd_dep_state "$t"
+    if [ -n "$self" ] && [ "$DEP_PATH" = "$self" ]; then DEP_STATE=bad-target; DEP_WHY="the note itself"; fi
+    DEP_EACH="$DEP_EACH$t$SEP$DEP_STATE$SEP$DEP_PATH$SEP$DEP_WHY$SEP$DEP_NAME"$'\n'
+    case "$DEP_STATE" in
+      done) continue ;;
+      open) open=1; tag="" ;;
+      cancelled) broken=1; tag=" (cancelled)" ;;
+      missing) broken=1; tag=" (missing)" ;;
+      *) broken=1; tag=" (bad target)" ;;
+    esac
+    DEP_WAITS="${DEP_WAITS:+$DEP_WAITS; }$DEP_NAME$tag"
+  done
+  if [ "$DEP_LINKS" -eq 0 ]; then broken=1; DEP_WAITS="${1//"$GTD_ITEM_SEP"/; } (not a link)"; fi
+  if [ $broken -eq 1 ]; then DEP_BLOCKED=broken; elif [ $open -eq 1 ]; then DEP_BLOCKED=yes; fi
+  return 0
 }

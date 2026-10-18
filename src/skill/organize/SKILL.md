@@ -22,7 +22,7 @@ example: "Clean up my GTD lists"
 
 ## Loading and boundaries
 
-- Read `references/list-definitions.md` first: it is the single source of truth for list boundaries, property values and Obsidian link rules. Permissions are in `references/action-permissions.md`; due tickles and routines in `references/tickler.md` (read it when `gtd_check.sh` reports a `tickler-*` finding).
+- Read `references/list-definitions.md` first: it is the single source of truth for list boundaries, property values and Obsidian link rules. Permissions are in `references/action-permissions.md`; due tickles and routines in `references/tickler.md` (read it when `gtd_check.sh` reports a `tickler-*` finding); dependencies in `references/dependencies.md` (read it for a `depends-*` finding).
 - For external calendar reads / writes, also read `references/capability-map.md`.
 - Automation boundary: mechanical hygiene may be automatic; commitment decisions, high-consequence external actions, sending messages, and approval actions may not.
 
@@ -43,7 +43,7 @@ example: "Clean up my GTD lists"
 
 1. Scan the `memory/gtd/` core lists: run `scripts/gtd_check.sh` for the mechanical findings and `scripts/gtd_list.sh <list>` for the contents; open individual notes only to fix them (see "Fixing gtd_check.sh findings" below).
 2. Use `list-definitions.md` to check whether each item is in the right list; move mechanical misfilings directly and collect unclear ones.
-3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (`gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it) is in play: never draft a next action for it or call it stalled.
+3. Ask projects three questions: Is the outcome achieved? Is there a valid next-actions / waiting-for / tickle link (`gtd_check.sh`'s `stalled` already applies this)? Can multiple next actions really run in parallel? A project on hold (a tickle links it, or its own `depends_on:` is still open) is in play: never draft a next action for it or call it stalled. A blocked next action is not missing work either: `gtd_list.sh next-actions` leaves it out, so use `--all` when the question is what a project holds.
 4. Fill light fields on next-actions: time / energy / context.
 5. **Tickler**: handle due tickles from `gtd_list.sh tickler --due` / `gtd_check.sh` `tickler-due` as in the table above, skipping any "queued in inbox" (a recurring tickle is listed as due only while no open action links it, so a second run creates nothing); note overdue routines (`tickler-overdue`) for the summary; then check one-shot tickles due in the next 30 days (`gtd_list.sh tickler --within 30`) against the hard landscape for a blocked day (`references/capability-map.md` "Tickle date conflicts") and surface each conflict with a suggested date.
 6. Reconcile `calendar.md` fallback items against external calendar provider reachability; delete the local copy once successfully externalized, otherwise keep it and surface it. This covers `calendar.md` only: the tickler is never reconciled, exported or deleted here.
@@ -71,6 +71,12 @@ example: "Clean up my GTD lists"
 | `done-completed` | Add `completed:` with today's date | — |
 | `done-no-aar` | — | List once for the next Weekly Review: draft the AAR, or write `Skipped (YYYY-MM-DD).` under the heading so it isn't listed again |
 | `done-link` | Rewrite `project:` to `"[[_done/<Name>/README\|<Name>]]"` | — |
+| `depends-done-link` | Rewrite that `depends_on:` link to the finding's `->` `_done/` form; name what is now unblocked in the summary | — |
+| `depends-cancelled`, `depends-missing` | — | Drop the dependency, cancel this item too, or link what replaces it |
+| `depends-target` | — | Apply the suggested fix: link the project's README instead of its support doc; move a waiting-for item's or tickle's dependency to the next action that has to wait; a date → a tickle |
+| `depends-form` | Turn plain text into a link when it names exactly one open item | Otherwise: which item does it wait on? |
+| `depends-cycle` | — | Which of these goes first? Then drop that one's link |
+| `depends-hold` | — | The project waits on something yet has actions it can do now: drop its `depends_on:`, or hold those actions too |
 
 Never move a note into `_done/` from organize (that's `update/SKILL.md`), and never count `_done/` notes as open work. `inbox.md` and `calendar.md` are files, checked by reading them directly.
 
@@ -82,5 +88,6 @@ Never move a note into `_done/` from organize (that's `update/SKILL.md`), and ne
 - [ ] `calendar.md` reconciled: synced items removed, ordinary to-dos re-filed, unconfirmed hard appointments kept and surfaced
 - [ ] Tickler: due one-shot tickles moved to `next-actions/` or queued in the inbox once; each due routine got exactly one next action with `from:` and `due:`, its tickle left in place; overdue routines reported, not changed; no project with a tickle given a drafted next action or called stalled; no tickle exported or touched by the calendar reconcile; date conflicts surfaced, never re-dated
 - [ ] Every `gtd_check.sh` finding either fixed or in the confirmation batch; `README.md` never treated as an item
+- [ ] Dependencies: links to finished items rewritten to `_done/`; nothing dropped or cancelled because a dependency broke without asking; no next action drafted for a project waiting on its `depends_on:`
 - [ ] Judgment calls asked in a batch; no commitment decisions made for the user
 - [ ] No high-consequence actions taken such as sending messages, automatic approvals, or unconfirmed external writes

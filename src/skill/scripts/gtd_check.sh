@@ -45,6 +45,22 @@
 #                   (surface once, at the next Weekly Review)
 #   done-link       a _done/ note whose project: still points at projects/<Name>/ after that
 #                   project's folder moved to _done/<Name>/ (organize rewrites it)
+# Dependencies (depends_on:, on a next action or project; list-definitions.md "Dependencies"):
+#   depends-done-link   a link to an item that is finished but not yet written as [[_done/…]]
+#                       (organize rewrites it)
+#   depends-cancelled   a link to an item that was cancelled (result: cancelled): organize asks
+#   depends-missing     a link that resolves to no next action, waiting-for item or project, open
+#                       or in _done/: organize asks
+#   depends-target      a link to something that can't be a dependency (a tickle, a someday item,
+#                       a routine's cycle, a support doc, the note itself), or depends_on: on a
+#                       waiting-for item or tickle
+#   depends-form        depends_on: with no [[link]] in it
+#   depends-cycle       items that wait on each other, so none can start
+#   depends-hold        a project waiting on something (depends_on:) that still has unblocked open
+#                       next actions: is it really on hold?
+# A next action waiting on an open item still counts toward its project being in play; one with a
+# broken link (cancelled / missing / bad target) doesn't. A project whose own depends_on: is open is
+# on hold, never stalled.
 # A finished project is its whole folder moved to _done/<Project name>/ (README.md + support
 # material); a finished action or waiting-for item is a flat _done/<Title>.md.
 # README.md is never an item. _done/ is only checked for its own two findings — its notes never
@@ -226,7 +242,7 @@ fm_link_problems() {
 # check_work_fields REL TIME ENERGY CONTEXT REQUIRED — a next action's time / energy / context
 # (REQUIRED=1: each must be there); a tickle may carry them too, checked only when present.
 check_work_fields() {
-  local rel="$1" time="$2" energy="$3" context="$4" required="$5" c old_ifs
+  local rel="$1" time="$2" energy="$3" context="${4//"$GTD_ITEM_SEP"/,}" required="$5" c old_ifs
   if [ -z "$time" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing time"
   elif ! [[ $time =~ $MINUTES_RE ]]; then finding field "$rel" "time '$time' is not a number of minutes"; fi
   if [ -z "$energy" ]; then [ "$required" -eq 0 ] || finding field "$rel" "missing energy"
@@ -255,11 +271,45 @@ span_hint() {
 # --- open actions and waiting-for: project links + fields --------------------
 
 LINKED=""   # newline-separated project names with at least one open action / waiting-for / one-shot tickle
+READY=""    # newline-separated project names with at least one unblocked open next action
+HELD=""     # newline-separated project names on hold because their own depends_on: is still open
+DEP_EDGES=""   # "<waiting item><SEP><item it waits on>" per open dependency, for depends-cycle
 FORM_DONE=""   # "<rel> <key>" lines already given a link-form finding (property links skip that key)
 OPEN_FROM=""   # "<tickle title><SEP><action>" per open next action whose from: links a live tickle
 TODAY="$(date +%Y-%m-%d)"
 INBOX="$GTD_DIR/inbox.md"
 MINUTES_RE='^[0-9]+$'
+
+# check_deps REL SELF VALUE — the depends_on: VALUE of the note at REL (SELF: next-actions/<Title>
+# or projects/<Name>/README): one finding per link that is finished but not rewritten, cancelled,
+# missing or a bad target; open links go to DEP_EDGES. Leaves DEP_BLOCKED (gtd_dep_eval) set.
+check_deps() {
+  local rel="$1" self="$2" t state path why title n
+  DEP_BLOCKED=no
+  if [ "$DEP_ON" -eq 0 ]; then return 0; fi
+  gtd_dep_eval "$3" "$self"
+  if [ "$DEP_LINKS" -eq 0 ]; then
+    finding depends-form "$rel" "depends_on: holds no [[link]] -> a YAML list of quoted links to next actions, waiting-for items or projects"
+    return 0
+  fi
+  while IFS="$SEP" read -r t state path why title; do
+    [ -n "$t" ] || continue
+    case "$state" in
+      open) DEP_EDGES="$DEP_EDGES$self$SEP$path"$'\n' ;;
+      done)
+        case "$t" in
+          _done/*|memory/gtd/_done/*) ;;
+          *) n="${path#_done/}"; n="${n%/README}"
+             finding depends-done-link "$rel" "depends_on: [[$t]] is finished -> [[$path|$n]]" ;;
+        esac ;;
+      cancelled) finding depends-cancelled "$rel" "depends_on: [[$t]] was cancelled: drop the dependency, cancel this too, or link what replaces it" ;;
+      missing) finding depends-missing "$rel" "depends_on: [[$t]] resolves to no next action, waiting-for item or project" ;;
+      *) finding depends-target "$rel" "depends_on: [[$t]] can't be a dependency: $why" ;;
+    esac
+  done <<EOF
+$DEP_EACH
+EOF
+}
 
 # check_open_item FILE — one note of $list (next-actions, waiting-for or tickler); gtd_fm_each
 # calls it with the note's properties in FM_*.
@@ -273,11 +323,22 @@ check_open_item() {
   recurring=0
   if [ "$list" = "tickler" ] && gtd_is_span "${FM_every:-}"; then recurring=1; fi
 
+  DEP_BLOCKED=no
+  if [ -n "${FM_depends_on:-}" ]; then
+    case "$list" in
+      next-actions) check_deps "$rel" "next-actions/$base" "$FM_depends_on" ;;
+      waiting-for) finding depends-target "$rel" "depends_on: on a waiting-for item, which is already in someone's hands -> put it on the next action that has to wait" ;;
+      *) finding depends-target "$rel" "depends_on: on a tickle, which already waits on its date -> put it on the next action it becomes" ;;
+    esac
+  fi
+
   project="${FM_project:-}"
   if [ -n "$project" ]; then
     project_name "$project"; form="$PN_FORM"; name="$PN_NAME"
     if [ -f "$GTD_DIR/projects/$name/README.md" ]; then
-      [ "$recurring" -eq 1 ] || LINKED="$LINKED$name"$'\n'
+      # a routine never holds a project; an action whose dependency is broken can't move it
+      [ "$recurring" -eq 1 ] || [ "$DEP_BLOCKED" = broken ] || LINKED="$LINKED$name"$'\n'
+      [ "$list" != next-actions ] || [ "$DEP_BLOCKED" != no ] || READY="$READY$name"$'\n'
       if [ "$form" != "readme" ]; then
         finding link-form "$rel" "project: $project -> [[projects/$name/README|$name]]"
         FORM_DONE="$FORM_DONE$rel project"$'\n'
@@ -364,6 +425,12 @@ check_open_item() {
 
 }
 
+# Resolve dependencies only when some note has any (one grep).
+DEP_ON=0
+if gtd_dep_needed "$GTD_DIR/next-actions" "$GTD_DIR/waiting-for" "$GTD_DIR/tickler" "$GTD_DIR/projects"; then
+  gtd_dep_index; DEP_ON=1
+fi
+
 for list in next-actions waiting-for tickler; do
   dir="$GTD_DIR/$list"
   [ -d "$dir" ] || continue
@@ -381,13 +448,62 @@ done <<EOF
 $from_dupes
 EOF
 
+# --- project dependencies and cycles -------------------------------------------
+
+# check_project_deps FILE — one project README; gtd_fm_each calls it with its properties in FM_*.
+check_project_deps() {
+  local name="${1%/README.md}"
+  name="${name##*/}"
+  [ -n "${FM_depends_on:-}" ] || return 0
+  check_deps "projects/$name/README.md" "projects/$name/README" "$FM_depends_on"
+  [ "$DEP_BLOCKED" = yes ] || return 0
+  HELD="$HELD$name"$'\n'
+  case $'\n'"$READY" in
+    *$'\n'"$name"$'\n'*) finding depends-hold "projects/$name/README.md" "waits on $DEP_WAITS but still has unblocked next actions: on hold, or not?" ;;
+  esac
+}
+
+if [ "$DEP_ON" -eq 1 ] && [ -d "$GTD_DIR/projects" ]; then
+  PROJECT_READMES=()
+  for readme in "$GTD_DIR"/projects/*/README.md; do
+    [ -e "$readme" ] && PROJECT_READMES+=("$readme")
+  done
+  [ "${#PROJECT_READMES[@]}" -eq 0 ] || gtd_fm_each check_project_deps -- "${PROJECT_READMES[@]}"
+fi
+
+# Items that wait on each other: a depth-first search over the open dependencies, one line per
+# cycle (rotated to start at its smallest member, so each is reported once).
+if [ -n "$DEP_EDGES" ]; then
+  while IFS= read -r cyc; do
+    [ -n "$cyc" ] || continue
+    finding depends-cycle "${cyc%% -> *}.md" "these wait on each other, so none can start: $cyc"
+  done < <(printf '%s' "$DEP_EDGES" | awk -F"$SEP" '
+    NF == 2 { if (!($1 in deg)) { nodes[++nn] = $1; deg[$1] = 0 }; adj[$1, ++deg[$1]] = $2 }
+    function dfs(u, d,   i, v, j, m, k, s) {
+      onst[u] = 1; pos[u] = d; stk[d] = u
+      for (i = 1; i <= deg[u]; i++) {
+        v = adj[u, i]
+        if (onst[v]) {
+          m = pos[v]
+          for (j = pos[v]; j <= d; j++) if (stk[j] < stk[m]) m = j
+          s = ""
+          for (k = 0; k <= d - pos[v]; k++) s = s stk[pos[v] + (m - pos[v] + k) % (d - pos[v] + 1)] " -> "
+          s = s stk[m]
+          if (!(s in shown)) { shown[s] = 1; print s }
+        } else if (!(v in seen)) dfs(v, d + 1)
+      }
+      onst[u] = 0; seen[u] = 1
+    }
+    END { for (n = 1; n <= nn; n++) if (!(nodes[n] in seen)) dfs(nodes[n], 1) }')
+fi
+
 # --- stalled projects ---------------------------------------------------------
 
 if [ -d "$GTD_DIR/projects" ]; then
   for readme in "$GTD_DIR"/projects/*/README.md; do
     [ -e "$readme" ] || continue
     name="${readme%/README.md}"; name="${name##*/}"
-    case $'\n'"$LINKED" in
+    case $'\n'"$LINKED$HELD" in
       *$'\n'"$name"$'\n'*) ;;
       *) finding stalled "projects/$name/README.md" "no open next action, waiting-for or tickle links to it" ;;
     esac

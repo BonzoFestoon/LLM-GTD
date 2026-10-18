@@ -23,6 +23,13 @@ Constraint: needs computer, tax bill / account number, payment method.
 
 The body keeps the full concrete action text and the free-text constraint; `context` holds only the lens values Engage already uses.
 
+A next action or project that has to wait for something adds `depends_on:`, a YAML list of quoted links, one per item, even for one (`references/dependencies.md`):
+
+```yaml
+depends_on:
+  - "[[next-actions/Get the county tax bill|Get the county tax bill]]"
+```
+
 **Waiting for**: same shape, with `person`, `delegated`, `follow-up`, and optional `project` instead of `time`/`energy`/`context`.
 
 **Someday / maybe**: adds `trigger` (the condition that makes it worth starting).
